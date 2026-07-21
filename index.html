@@ -1,0 +1,1036 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#10252b">
+  <title>Calm in the Rush</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E">
+
+  <!--
+    Design research and decisions
+
+    - The scene is the medicine. Attention Restoration Theory (Kaplan, 1995) holds that
+      natural scenes offer "soft fascination" that lets directed attention recover. The
+      whole interface is built to get out of the way of that: real slow nature footage
+      fills the frame, and the controls and heading fade away after a few idle seconds so
+      nothing competes with the view. Any interaction brings them back.
+    - Sound. Alvarsson, Wiens, and Nilsson (2010) found faster sympathetic recovery after
+      stress during nature sound than during noise. Buxton et al. (2021) found the largest
+      positive-affect effects for water sounds. Every scene keeps the sound captured with
+      that same footage. There is no separate track, synthesized tone, or borrowed audio.
+      Sound is requested by default; if autoplay policy blocks it, a quiet one-time hint
+      invites the first tap, so silence never reads as a broken app.
+    - Motion and pacing. Transitions are long, eased, and opacity-only, never abrupt. The
+      heading breathes on a slow eleven-second cycle that echoes a calming breath rate; it
+      is ambient, not an instruction, and it stops entirely under reduced-motion.
+    - Color and type. #10252b is a low-saturation blue-green frame, #eef1e8 a warm off-white,
+      #b8cbbd a muted sage. Blue-green, low saturation, and low contrast are calming; contrast
+      rises only where text and controls must stay readable. Nunito is open and rounded; the
+      heading sits at a light weight with airy letter-spacing so it never shouts.
+    - Framing. Desktop centers a 9:19.5 portrait surface; viewports up to 700px go
+      edge-to-edge at 100dvh.
+
+    Sources:
+      Perception research
+        https://pubmed.ncbi.nlm.nih.gov/20617017/    (Alvarsson, Wiens, Nilsson 2010)
+        https://www.pnas.org/doi/10.1073/pnas.2013097118  (Buxton et al. 2021)
+        Kaplan, S. (1995). The restorative benefits of nature. J. Environmental Psychology.
+      Footage (all real recordings, original captured sound, cleared for redistribution).
+      The app opens on the stillest, slowest scene (the misty lake) and keeps the more
+      energetic flowing brook as the last option.
+        Misty lake  - "Misty Morning at Lake McDonald" by GlacierNPS, Public Domain
+          https://commons.wikimedia.org/wiki/File:Misty_Morning_at_Lake_McDonald_(25569241623).webm
+        Forest      - "Valla forest Nature reserve - A quiet place" by Fredrik Johansson, CC BY 3.0
+          https://commons.wikimedia.org/wiki/File:Valla_forest_Nature_reserve_-_A_quiet_place.webm
+        Wheat field - "ASMR field of wheat - nature" by Coup 53, CC BY 3.0
+          https://commons.wikimedia.org/wiki/File:ASMR_field_of_wheat_-_nature.webm
+        Mountain brook - "Mountain brook in Himalayas" by Poojilsharma07, CC BY-SA 4.0
+          https://commons.wikimedia.org/wiki/File:Mountain_brook_in_Himalayas.webm
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --deep-teal: #10252b;
+      --cream: #eef1e8;
+      --sage: #b8cbbd;
+      --glass: rgba(13, 30, 35, 0.46);
+      --glass-strong: rgba(18, 40, 46, 0.66);
+      --line: rgba(238, 241, 232, 0.22);
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+      --ease-breath: cubic-bezier(0.37, 0, 0.63, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+      margin: 0;
+      background: var(--deep-teal);
+    }
+
+    body {
+      min-height: 100dvh;
+      position: relative;
+      overflow: hidden;
+      color: var(--cream);
+      font-family: "Nunito", system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .experience {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      isolation: isolate;
+      width: min(42.46dvh, calc(100vw - 40px));
+      aspect-ratio: 9 / 19.5;
+      overflow: hidden;
+      border: 1px solid rgba(238, 241, 232, 0.12);
+      border-radius: 32px;
+      background: #17343b;
+      box-shadow: 0 34px 90px rgba(0, 0, 0, 0.46);
+      transform: translate(-50%, -50%);
+      cursor: default;
+    }
+
+    /* The scene rests when idle: the cursor hides so nothing hovers over the view. */
+    .experience.is-idle {
+      cursor: none;
+    }
+
+    .poster,
+    .scene-video,
+    .veil,
+    .scene-picker-backdrop {
+      position: absolute;
+      inset: 0;
+    }
+
+    .poster {
+      z-index: -3;
+      background-position: center;
+      background-size: cover;
+      transform: scale(1.01);
+      transition: opacity 900ms ease-in-out;
+    }
+
+    .scene-video {
+      z-index: -2;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      opacity: 0;
+      transform: translateZ(0);
+      transition: opacity 1100ms ease-in-out;
+    }
+
+    .scene-video.is-visible {
+      opacity: 1;
+    }
+
+    /* Gentle legibility layer: a soft vignette plus quiet scrims top and bottom,
+       enough to hold text without darkening the scene. */
+    .veil {
+      z-index: -1;
+      pointer-events: none;
+      background:
+        radial-gradient(120% 90% at 50% 42%, transparent 55%, rgba(4, 17, 20, 0.34) 100%),
+        linear-gradient(180deg, rgba(4, 17, 20, 0.34) 0%, transparent 26%),
+        linear-gradient(0deg, rgba(4, 17, 20, 0.5) 0%, transparent 30%);
+    }
+
+    /* Chrome (heading, hint, controls) fades away when the scene is at rest. */
+    .heading,
+    .hint,
+    .controls {
+      transition: opacity 900ms var(--ease), transform 900ms var(--ease);
+    }
+
+    .experience.is-idle .heading,
+    .experience.is-idle .hint,
+    .experience.is-idle .controls {
+      opacity: 0;
+    }
+
+    .experience.is-idle .controls {
+      pointer-events: none;
+      transform: translateY(6px);
+    }
+
+    .heading {
+      position: absolute;
+      top: 15%;
+      left: 22px;
+      right: 22px;
+      margin: 0;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--cream);
+      font-size: clamp(29px, 4dvh, 37px);
+      font-weight: 500;
+      line-height: 1.2;
+      letter-spacing: 0.045em;
+      text-shadow: 0 2px 22px rgba(0, 0, 0, 0.42);
+      animation: breathe 11s var(--ease-breath) infinite;
+      will-change: transform;
+    }
+
+    /* An ambient breath, never an instruction: a slow rise and settle. */
+    @keyframes breathe {
+      0%, 100% {
+        transform: scale(1);
+        text-shadow: 0 2px 20px rgba(0, 0, 0, 0.4);
+      }
+      50% {
+        transform: scale(1.02);
+        text-shadow: 0 2px 32px rgba(0, 0, 0, 0.52);
+      }
+    }
+
+    .hint {
+      position: absolute;
+      right: 22px;
+      bottom: max(88px, calc(env(safe-area-inset-bottom) + 84px));
+      left: 22px;
+      margin: 0;
+      color: var(--cream);
+      font-size: 13.5px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+    }
+
+    .experience.show-hint .hint {
+      opacity: 0.86;
+    }
+
+    .experience.is-idle.show-hint .hint {
+      opacity: 0;
+    }
+
+    .controls {
+      position: absolute;
+      right: max(18px, env(safe-area-inset-right));
+      bottom: max(24px, calc(env(safe-area-inset-bottom) + 16px));
+      left: max(18px, env(safe-area-inset-left));
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .control {
+      min-width: 48px;
+      min-height: 48px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin: 0;
+      padding: 0 18px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--cream);
+      background: var(--glass);
+      box-shadow: 0 8px 26px rgba(0, 0, 0, 0.18);
+      backdrop-filter: blur(16px) saturate(0.82);
+      -webkit-backdrop-filter: blur(16px) saturate(0.82);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.015em;
+      -webkit-tap-highlight-color: transparent;
+      transition:
+        background-color 260ms ease,
+        border-color 260ms ease,
+        transform 260ms var(--ease);
+    }
+
+    .control:hover {
+      border-color: rgba(238, 241, 232, 0.46);
+      background: var(--glass-strong);
+    }
+
+    .control:active {
+      transform: scale(0.96);
+    }
+
+    .control:focus-visible,
+    .scene-option:focus-visible,
+    .close-picker:focus-visible {
+      outline: 2px solid var(--cream);
+      outline-offset: 3px;
+    }
+
+    .control.icon-only {
+      width: 48px;
+      padding: 0;
+      color: var(--sage);
+    }
+
+    .control[aria-pressed="true"] {
+      color: var(--cream);
+      border-color: rgba(184, 203, 189, 0.66);
+      background: rgba(44, 72, 67, 0.66);
+    }
+
+    .icon {
+      width: 18px;
+      height: 18px;
+      flex: 0 0 auto;
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.8;
+    }
+
+    .sound-on {
+      display: none;
+    }
+
+    #sound-toggle[aria-pressed="true"] .sound-off {
+      display: none;
+    }
+
+    #sound-toggle[aria-pressed="true"] .sound-on {
+      display: block;
+    }
+
+    .scene-picker-backdrop {
+      z-index: 4;
+      background: rgba(4, 15, 18, 0.44);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 420ms ease;
+    }
+
+    .scene-picker {
+      position: absolute;
+      z-index: 5;
+      right: 12px;
+      bottom: max(12px, env(safe-area-inset-bottom));
+      left: 12px;
+      padding: 14px 14px 8px;
+      border: 1px solid rgba(238, 241, 232, 0.2);
+      border-radius: 24px;
+      background: rgba(11, 27, 32, 0.86);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.38);
+      backdrop-filter: blur(22px) saturate(0.8);
+      -webkit-backdrop-filter: blur(22px) saturate(0.8);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(22px);
+      transition:
+        opacity 420ms ease,
+        transform 420ms var(--ease);
+    }
+
+    .picker-title {
+      margin: 0 4px 11px;
+      color: var(--sage);
+      font-size: 12.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .experience.picker-open .scene-picker-backdrop,
+    .experience.picker-open .scene-picker {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .experience.picker-open .scene-picker {
+      transform: translateY(0);
+    }
+
+    .picker-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 9px;
+    }
+
+    .scene-option {
+      position: relative;
+      min-width: 0;
+      aspect-ratio: 4 / 5;
+      overflow: hidden;
+      padding: 0;
+      border: 2px solid transparent;
+      border-radius: 15px;
+      background-color: #24434a;
+      background-position: center;
+      background-size: cover;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition:
+        border-color 240ms ease,
+        transform 240ms var(--ease);
+    }
+
+    .scene-option::before {
+      content: attr(data-label);
+      position: absolute;
+      right: 6px;
+      bottom: 6px;
+      left: 6px;
+      color: var(--cream);
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.2;
+      text-align: left;
+      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+    }
+
+    .scene-option:hover {
+      transform: scale(1.02);
+    }
+
+    .scene-option[aria-pressed="true"] {
+      border-color: var(--cream);
+    }
+
+    .close-picker {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      margin: 8px auto 0;
+      padding: 0;
+      border: 0;
+      color: var(--sage);
+      background: transparent;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .status,
+    .visually-hidden {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      overflow: hidden !important;
+      clip: rect(0 0 0 0) !important;
+      clip-path: inset(50%) !important;
+      white-space: nowrap !important;
+    }
+
+    @media (max-width: 700px) {
+      .experience {
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100dvh;
+        aspect-ratio: auto;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        transform: none;
+      }
+    }
+
+    @media (max-width: 370px) {
+      .controls {
+        gap: 7px;
+      }
+
+      .control {
+        padding-right: 13px;
+        padding-left: 13px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 1ms !important;
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+      }
+
+      h1 {
+        animation: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="experience" id="experience">
+    <div
+      class="poster"
+      id="poster"
+      aria-hidden="true"
+      style="background-image: url('assets/lake.jpg')"
+    ></div>
+
+    <video
+      class="scene-video is-visible"
+      id="video-a"
+      aria-hidden="true"
+      autoplay
+      loop
+      playsinline
+      preload="auto"
+      poster="assets/lake.jpg"
+      src="assets/lake.mp4"
+    ></video>
+    <video
+      class="scene-video"
+      id="video-b"
+      aria-hidden="true"
+      loop
+      playsinline
+      preload="none"
+    ></video>
+
+    <div class="veil" aria-hidden="true"></div>
+
+    <div class="heading">
+      <h1>Take a breath.</h1>
+    </div>
+
+    <p class="hint" id="hint" aria-hidden="true">Tap anywhere to add the sound of this place</p>
+
+    <div class="controls" aria-label="Scene controls">
+      <button
+        class="control icon-only"
+        id="sound-toggle"
+        type="button"
+        aria-label="Turn nature sound off"
+        aria-pressed="true"
+      >
+        <svg class="icon sound-off" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M11 5 6.5 9H3v6h3.5L11 19V5Z"></path>
+          <path d="m16 9 5 5m0-5-5 5"></path>
+        </svg>
+        <svg class="icon sound-on" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M11 5 6.5 9H3v6h3.5L11 19V5Z"></path>
+          <path d="M15 9.5a4 4 0 0 1 0 5"></path>
+          <path d="M18 7a7 7 0 0 1 0 10"></path>
+        </svg>
+      </button>
+
+      <button class="control" id="another" type="button" aria-expanded="false" aria-controls="scene-picker">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="4" y="4" width="6" height="6" rx="1"></rect>
+          <rect x="14" y="4" width="6" height="6" rx="1"></rect>
+          <rect x="4" y="14" width="6" height="6" rx="1"></rect>
+          <rect x="14" y="14" width="6" height="6" rx="1"></rect>
+        </svg>
+        Another
+      </button>
+
+      <button class="control" id="share" type="button">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 16V4"></path>
+          <path d="m7.5 8.5 4.5-4.5 4.5 4.5"></path>
+          <path d="M5 13v6h14v-6"></path>
+        </svg>
+        <span id="share-label">Share</span>
+      </button>
+    </div>
+
+    <button class="scene-picker-backdrop" id="picker-backdrop" type="button" tabindex="-1" aria-label="Close scene picker"></button>
+
+    <section class="scene-picker" id="scene-picker" role="dialog" aria-modal="true" aria-label="Choose another scene" aria-hidden="true">
+      <p class="picker-title" id="picker-title">Another place</p>
+      <div class="picker-row" aria-labelledby="picker-title">
+        <button
+          class="scene-option"
+          type="button"
+          aria-label="Misty mountain lake"
+          aria-pressed="true"
+          data-scene="lake"
+          data-label="Misty lake"
+          style="background-image: url('assets/lake.jpg')"
+        ></button>
+        <button
+          class="scene-option"
+          type="button"
+          aria-label="Sunlit forest"
+          aria-pressed="false"
+          data-scene="forest"
+          data-label="Forest"
+          style="background-image: url('assets/forest.jpg')"
+        ></button>
+        <button
+          class="scene-option"
+          type="button"
+          aria-label="Wheat field in the wind"
+          aria-pressed="false"
+          data-scene="field"
+          data-label="Wheat field"
+          style="background-image: url('assets/field.jpg')"
+        ></button>
+        <button
+          class="scene-option"
+          type="button"
+          aria-label="Mountain brook"
+          aria-pressed="false"
+          data-scene="brook"
+          data-label="Brook"
+          style="background-image: url('assets/brook.jpg')"
+        ></button>
+      </div>
+      <button class="close-picker" id="close-picker" type="button" aria-label="Close scene picker">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m6 9 6 6 6-6"></path>
+        </svg>
+      </button>
+    </section>
+
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const scenes = {
+        lake: {
+          name: "Misty mountain lake",
+          video: "assets/lake.mp4",
+          poster: "assets/lake.jpg"
+        },
+        forest: {
+          name: "Sunlit forest",
+          video: "assets/forest.mp4",
+          poster: "assets/forest.jpg"
+        },
+        field: {
+          name: "Wheat field in the wind",
+          video: "assets/field.mp4",
+          poster: "assets/field.jpg"
+        },
+        brook: {
+          name: "Mountain brook",
+          video: "assets/brook.mp4",
+          poster: "assets/brook.jpg"
+        }
+      };
+
+      const experience = document.querySelector("#experience");
+      const poster = document.querySelector("#poster");
+      const videos = [document.querySelector("#video-a"), document.querySelector("#video-b")];
+      const anotherButton = document.querySelector("#another");
+      const shareButton = document.querySelector("#share");
+      const shareLabel = document.querySelector("#share-label");
+      const soundButton = document.querySelector("#sound-toggle");
+      const picker = document.querySelector("#scene-picker");
+      const pickerBackdrop = document.querySelector("#picker-backdrop");
+      const closePickerButton = document.querySelector("#close-picker");
+      const sceneOptions = [...document.querySelectorAll(".scene-option")];
+      const status = document.querySelector("#status");
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+      const sceneVolume = 0.4;
+
+      let currentSceneKey = "lake";
+      let currentVideoIndex = 0;
+      let sceneRequest = 0;
+      let soundPreference = true;
+      let soundAudible = false;
+      let needsSoundGesture = false;
+      let volumeFadeFrame = 0;
+      let idleTimer = 0;
+      let hintTimer = 0;
+
+      function announce(message) {
+        status.textContent = "";
+        window.setTimeout(() => {
+          status.textContent = message;
+        }, 20);
+      }
+
+      /* Rest and wake: the heading and controls fade out after a few quiet seconds so the
+         scene fills the frame, and any touch, movement, or key press brings them back.
+         Keyboard focus keeps them awake so controls are always reachable. */
+      function isFocusInControls() {
+        return Boolean(document.activeElement?.closest(".controls, .scene-picker"));
+      }
+
+      function wake({ hold = false } = {}) {
+        experience.classList.remove("is-idle");
+        window.clearTimeout(idleTimer);
+        if (hold || reducedMotion.matches || experience.classList.contains("picker-open")) {
+          return;
+        }
+        idleTimer = window.setTimeout(() => {
+          if (!isFocusInControls() && !experience.classList.contains("picker-open")) {
+            experience.classList.add("is-idle");
+          }
+        }, 5200);
+      }
+
+      function updateHint() {
+        const show = needsSoundGesture && soundPreference && !reducedMotion.matches;
+        experience.classList.toggle("show-hint", show);
+        window.clearTimeout(hintTimer);
+        if (show) {
+          hintTimer = window.setTimeout(() => {
+            experience.classList.remove("show-hint");
+          }, 9000);
+        }
+      }
+
+      function setPicker(open) {
+        experience.classList.toggle("picker-open", open);
+        picker.setAttribute("aria-hidden", String(!open));
+        anotherButton.setAttribute("aria-expanded", String(open));
+
+        if (open) {
+          wake({ hold: true });
+          sceneOptions.find((option) => option.getAttribute("aria-pressed") === "true")?.focus();
+        } else {
+          wake();
+          if (document.activeElement?.closest("#scene-picker")) {
+            anotherButton.focus();
+          }
+        }
+      }
+
+      function waitForVideo(video) {
+        if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+          return Promise.resolve(true);
+        }
+
+        return new Promise((resolve) => {
+          const timeout = window.setTimeout(() => finish(false), 8000);
+
+          function finish(ready) {
+            window.clearTimeout(timeout);
+            video.removeEventListener("loadeddata", onReady);
+            video.removeEventListener("error", onError);
+            resolve(ready);
+          }
+
+          function onReady() {
+            finish(true);
+          }
+
+          function onError() {
+            finish(false);
+          }
+
+          video.addEventListener("loadeddata", onReady, { once: true });
+          video.addEventListener("error", onError, { once: true });
+        });
+      }
+
+      async function selectScene(key) {
+        if (!scenes[key] || key === currentSceneKey) {
+          setPicker(false);
+          return;
+        }
+
+        const request = ++sceneRequest;
+        const nextScene = scenes[key];
+
+        currentSceneKey = key;
+        sceneOptions.forEach((option) => {
+          option.setAttribute("aria-pressed", String(option.dataset.scene === key));
+        });
+        setPicker(false);
+
+        if (reducedMotion.matches) {
+          videos.forEach((video) => {
+            video.pause();
+            video.classList.remove("is-visible");
+          });
+          poster.style.backgroundImage = `url("${nextScene.poster}")`;
+          announce(`${nextScene.name} selected`);
+          return;
+        }
+
+        const oldVideo = videos[currentVideoIndex];
+        const nextIndex = currentVideoIndex === 0 ? 1 : 0;
+        const nextVideo = videos[nextIndex];
+        const wantsSound = soundPreference;
+
+        nextVideo.classList.remove("is-visible");
+        nextVideo.poster = nextScene.poster;
+        nextVideo.muted = !wantsSound;
+        nextVideo.volume = wantsSound ? 0 : sceneVolume;
+        nextVideo.src = nextScene.video;
+        nextVideo.load();
+
+        const playAttempt = nextVideo.play()
+          .then(() => true)
+          .catch(() => false);
+        const ready = await waitForVideo(nextVideo);
+        if (request !== sceneRequest) {
+          nextVideo.pause();
+          return;
+        }
+
+        poster.style.backgroundImage = `url("${nextScene.poster}")`;
+
+        let played = false;
+        if (ready) {
+          played = await playAttempt;
+          if (!played && wantsSound) {
+            nextVideo.muted = true;
+            nextVideo.volume = sceneVolume;
+            played = await nextVideo.play().then(() => true).catch(() => false);
+            setSoundState(false, true);
+          }
+        }
+
+        if (!played) {
+          announce("The still scene is ready");
+        } else if (wantsSound && !nextVideo.muted) {
+          setSoundState(true, false);
+        }
+
+        nextVideo.classList.add("is-visible");
+        oldVideo.classList.remove("is-visible");
+        currentVideoIndex = nextIndex;
+        fadeSceneVolumes(oldVideo, nextVideo, played && wantsSound && !nextVideo.muted);
+
+        window.setTimeout(() => {
+          if (videos[currentVideoIndex] !== oldVideo) {
+            oldVideo.pause();
+            oldVideo.muted = true;
+            oldVideo.volume = sceneVolume;
+            oldVideo.removeAttribute("src");
+            oldVideo.load();
+          }
+        }, 1150);
+
+        announce(`${nextScene.name} selected`);
+      }
+
+      async function applyMotionPreference() {
+        const activeVideo = videos[currentVideoIndex];
+        if (reducedMotion.matches) {
+          videos.forEach((video) => {
+            video.pause();
+            video.muted = true;
+            video.classList.remove("is-visible");
+          });
+          setSoundState(false, false);
+          experience.classList.remove("is-idle");
+          return;
+        }
+
+        const currentScene = scenes[currentSceneKey];
+        if (!activeVideo.currentSrc.endsWith(currentScene.video)) {
+          activeVideo.poster = currentScene.poster;
+          activeVideo.src = currentScene.video;
+          activeVideo.load();
+        }
+        activeVideo.classList.add("is-visible");
+        await attemptCurrentPlayback();
+      }
+
+      function setSoundButton(on) {
+        soundButton.setAttribute("aria-pressed", String(on));
+        soundButton.setAttribute("aria-label", on ? "Turn nature sound off" : "Turn nature sound on");
+      }
+
+      function setSoundState(audible, waitingForGesture) {
+        soundAudible = audible;
+        needsSoundGesture = waitingForGesture;
+        setSoundButton(audible);
+        updateHint();
+      }
+
+      function fadeSceneVolumes(oldVideo, nextVideo, audible) {
+        window.cancelAnimationFrame(volumeFadeFrame);
+
+        if (!audible) {
+          oldVideo.volume = sceneVolume;
+          nextVideo.volume = sceneVolume;
+          return;
+        }
+
+        const start = performance.now();
+        const oldStartVolume = oldVideo.volume;
+
+        function frame(now) {
+          const progress = Math.min(1, (now - start) / 1000);
+          oldVideo.volume = oldStartVolume * (1 - progress);
+          nextVideo.volume = sceneVolume * progress;
+          if (progress < 1) {
+            volumeFadeFrame = window.requestAnimationFrame(frame);
+          }
+        }
+
+        volumeFadeFrame = window.requestAnimationFrame(frame);
+      }
+
+      async function attemptCurrentPlayback() {
+        const activeVideo = videos[currentVideoIndex];
+        activeVideo.volume = sceneVolume;
+        activeVideo.muted = !soundPreference;
+
+        try {
+          await activeVideo.play();
+          setSoundState(soundPreference, false);
+          return;
+        } catch (error) {
+          if (!soundPreference) {
+            setSoundState(false, false);
+            return;
+          }
+        }
+
+        activeVideo.muted = true;
+        await activeVideo.play().catch(() => {});
+        setSoundState(false, true);
+      }
+
+      function activateSoundFromFirstGesture(event) {
+        if (
+          !needsSoundGesture ||
+          !soundPreference ||
+          reducedMotion.matches ||
+          event.target.closest("#sound-toggle")
+        ) {
+          return;
+        }
+
+        const activeVideo = videos[currentVideoIndex];
+        activeVideo.muted = false;
+        activeVideo.volume = sceneVolume;
+        setSoundState(true, false);
+        activeVideo.play().catch(() => {
+          activeVideo.muted = true;
+          setSoundState(false, true);
+        });
+      }
+
+      async function toggleSound() {
+        const activeVideo = videos[currentVideoIndex];
+
+        if (soundAudible) {
+          soundPreference = false;
+          videos.forEach((video) => {
+            video.muted = true;
+          });
+          setSoundState(false, false);
+          announce("Nature sound off");
+          return;
+        }
+
+        soundPreference = true;
+        activeVideo.muted = false;
+        activeVideo.volume = sceneVolume;
+        try {
+          await activeVideo.play();
+          setSoundState(true, false);
+          announce("Nature sound on");
+        } catch (error) {
+          activeVideo.muted = true;
+          setSoundState(false, true);
+          announce("Nature sound could not start");
+        }
+      }
+
+      async function copyShareLink(url) {
+        try {
+          await navigator.clipboard.writeText(url);
+        } catch (error) {
+          const field = document.createElement("textarea");
+          field.value = url;
+          field.setAttribute("readonly", "");
+          field.className = "visually-hidden";
+          document.body.append(field);
+          field.select();
+          document.execCommand("copy");
+          field.remove();
+        }
+
+        shareLabel.textContent = "Copied";
+        announce("Link copied");
+        window.setTimeout(() => {
+          shareLabel.textContent = "Share";
+        }, 1600);
+      }
+
+      async function shareMoment() {
+        const shareUrl = location.protocol === "http:" || location.protocol === "https:"
+          ? location.href
+          : "https://calmintherush.org";
+        const data = {
+          title: "Calm in the Rush",
+          text: "Take a quiet moment.",
+          url: shareUrl
+        };
+
+        if (navigator.share) {
+          try {
+            await navigator.share(data);
+            return;
+          } catch (error) {
+            if (error.name === "AbortError") {
+              return;
+            }
+          }
+        }
+
+        await copyShareLink(shareUrl);
+      }
+
+      anotherButton.addEventListener("click", () => setPicker(true));
+      closePickerButton.addEventListener("click", () => setPicker(false));
+      pickerBackdrop.addEventListener("click", () => setPicker(false));
+      soundButton.addEventListener("click", toggleSound);
+      shareButton.addEventListener("click", shareMoment);
+      experience.addEventListener("pointerdown", activateSoundFromFirstGesture, { capture: true });
+      sceneOptions.forEach((option) => {
+        option.addEventListener("click", () => selectScene(option.dataset.scene));
+      });
+
+      // Wake the resting chrome on any sign of presence.
+      ["pointermove", "pointerdown", "touchstart", "keydown", "focusin"].forEach((type) => {
+        experience.addEventListener(type, () => wake(), { passive: true });
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && experience.classList.contains("picker-open")) {
+          setPicker(false);
+        }
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+          videos.forEach((video) => video.pause());
+          return;
+        }
+
+        if (!reducedMotion.matches) {
+          attemptCurrentPlayback();
+        }
+      });
+
+      reducedMotion.addEventListener?.("change", applyMotionPreference);
+      applyMotionPreference();
+      wake();
+    })();
+  </script>
+</body>
+</html>
