@@ -1,0 +1,14 @@
+node_modules
+.next
+dist
+build
+coverage
+playwright-report
+test-results
+standards
+docs
+apps/web/public/media
+apps/web/next-env.d.ts
+*.mp4
+*.jpg
+*.png

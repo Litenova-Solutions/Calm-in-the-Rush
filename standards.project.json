@@ -1,0 +1,49 @@
+{
+  "$schema": "./standards/schemas/standards-project.schema.json",
+  "project": {
+    "name": "Calm in the Rush"
+  },
+  "profile": "frontend-demo",
+  "paths": {
+    "apiSolution": "not-applicable",
+    "domainDocs": "docs/domain",
+    "uiDocs": "docs/ui",
+    "frontends": [
+      {
+        "name": "web",
+        "path": "apps/web"
+      },
+      {
+        "name": "mobile",
+        "path": "apps/mobile"
+      }
+    ]
+  },
+  "selectedExtensions": [],
+  "overrides": [
+    {
+      "ruleId": "FRONTEND.STRUCTURE.001",
+      "decision": "docs/decisions/frontend-demo-profile.md"
+    },
+    {
+      "ruleId": "REPO.PACKAGES.001",
+      "decision": "docs/decisions/shared-ui-package.md"
+    },
+    {
+      "ruleId": "FRONTEND.PACKAGES.001",
+      "decision": "docs/decisions/shared-ui-package.md"
+    },
+    {
+      "ruleId": "UI.SHADCN.001",
+      "decision": "docs/decisions/shared-ui-package.md"
+    },
+    {
+      "ruleId": "DEP.PINS.001",
+      "decision": "docs/decisions/frontend-demo-profile.md"
+    },
+    {
+      "ruleId": "DEP.APPROVAL.001",
+      "decision": "docs/decisions/frontend-demo-profile.md"
+    }
+  ]
+}

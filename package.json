@@ -1,0 +1,35 @@
+{
+  "name": "calm-in-the-rush",
+  "version": "0.1.0",
+  "private": true,
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "packageManager": "pnpm@11.13.1",
+  "engines": {
+    "node": "24.16.0",
+    "pnpm": "11.13.1"
+  },
+  "scripts": {
+    "dev:web": "pnpm --filter @calm/web dev",
+    "dev:mobile": "pnpm --filter @calm/mobile start",
+    "build": "pnpm content:sync && pnpm --recursive --if-present build",
+    "lint": "pnpm --recursive --if-present lint",
+    "type-check": "pnpm --recursive --if-present type-check",
+    "test": "pnpm --recursive --if-present test",
+    "test:e2e": "pnpm --filter @calm/web test:e2e",
+    "docs:check": "node scripts/validate-docs.mjs",
+    "standards:check": "node standards/tools/validate-consumer.mjs",
+    "content:check": "node scripts/validate-content.mjs",
+    "version:check": "node scripts/validate-version.mjs",
+    "content:sync": "node scripts/sync-web-media.mjs",
+    "format:check": "pnpm exec prettier --check .",
+    "format": "pnpm exec prettier --write .",
+    "verify": "pnpm format:check && pnpm version:check && pnpm lint && pnpm type-check && pnpm test && pnpm docs:check && pnpm standards:check && pnpm content:check && pnpm --filter @calm/mobile doctor && pnpm build && pnpm test:e2e && git diff --check"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1",
+    "@types/node": "24.0.15",
+    "prettier": "3.6.2",
+    "typescript": "6.0.3",
+    "vitest": "4.1.10"
+  }
+}

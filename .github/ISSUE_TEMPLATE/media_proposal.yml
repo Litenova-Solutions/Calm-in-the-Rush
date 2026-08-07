@@ -1,0 +1,29 @@
+name: Media proposal
+description: Propose a scene with source and license evidence
+title: 'media: '
+labels: [media]
+body:
+  - type: input
+    id: source
+    attributes:
+      label: Source URL
+    validations:
+      required: true
+  - type: input
+    id: creator
+    attributes:
+      label: Creator
+    validations:
+      required: true
+  - type: input
+    id: license
+    attributes:
+      label: License identifier
+    validations:
+      required: true
+  - type: textarea
+    id: changes
+    attributes:
+      label: Changes and review notes
+    validations:
+      required: true

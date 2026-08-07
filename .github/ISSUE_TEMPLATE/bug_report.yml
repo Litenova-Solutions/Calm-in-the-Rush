@@ -1,0 +1,25 @@
+name: Bug report
+description: Report a reproducible defect
+title: 'bug: '
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Include the route, browser, viewport, steps, and evidence.
+  - type: input
+    id: route
+    attributes:
+      label: Route
+      placeholder: /demo
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps and result
+    validations:
+      required: true
+  - type: textarea
+    id: checks
+    attributes:
+      label: Checks run

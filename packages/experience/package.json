@@ -1,0 +1,30 @@
+{
+  "name": "@calm/experience",
+  "version": "0.1.0",
+  "private": true,
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./share": {
+      "browser": "./src/share.web.ts",
+      "react-native": "./src/share.native.ts",
+      "default": "./src/share.web.ts"
+    }
+  },
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.0",
+    "react-native": "0.86.2",
+    "vitest": "4.1.10"
+  },
+  "dependencies": {
+    "@calm/content": "workspace:*",
+    "@calm/ui": "workspace:*",
+    "react": "19.2.3",
+    "tamagui": "2.7.2"
+  }
+}
