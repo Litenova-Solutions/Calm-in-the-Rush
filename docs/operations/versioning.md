@@ -1,5 +1,5 @@
 ---
-{"kind":"operating-procedure","id":"versioning","specStatus":"approved","implementationStatus":"planned","owner":"Product and engineering","lastReviewed":"2026-08-07","releaseRole":"repository","applicableExtensions":[]}
+{"kind":"runbook","id":"versioning","specStatus":"approved","owner":"Product and engineering","lastReviewed":"2026-08-07"}
 ---
 
 # Versioning
