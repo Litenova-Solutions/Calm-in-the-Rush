@@ -1,26 +1,34 @@
-import Link from 'next/link';
-import { CalmMark } from '@calm/ui/mark';
+import { Box, Brand, ButtonLink, Link, PaperText } from '@calm/ui';
 
-export function SiteHeader() {
+export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
   return (
-    <header className="site-header">
-      <Link className="brand" href="/" aria-label="Calm in the Rush home">
-        <span className="brand-mark" aria-hidden="true">
-          <CalmMark color="var(--paper)" size={22} />
-        </span>
-        <span>Calm in the Rush</span>
-      </Link>
-      <nav className="header-nav" aria-label="Primary navigation">
-        <Link className="requirements-link" href="/requirements">
+    <Box
+      className={overlay ? 'site-header site-header-overlay' : 'site-header'}
+      accessibilityRole="banner"
+    >
+      <Brand
+        href="/"
+        label="Calm in the Rush"
+        tone={overlay ? 'onDark' : 'default'}
+        className="site-brand"
+      />
+      <Box className="header-nav" accessibilityRole="navigation" aria-label="Primary navigation">
+        <Link href="/requirements" variant="nav" tone={overlay ? 'onDark' : 'default'}>
           Requirements
         </Link>
-        <a className="github-link" href="https://github.com/Litenova-Solutions/Calm-in-the-Rush">
+        <Link
+          href="https://github.com/Litenova-Solutions/Calm-in-the-Rush"
+          external
+          variant="nav"
+          tone={overlay ? 'onDark' : 'default'}
+          className="github-link"
+        >
           GitHub
-        </a>
-        <Link className="button button-primary" href="/demo">
-          Open the demo
         </Link>
-      </nav>
-    </header>
+        <ButtonLink href="/demo" tone="primary" className="header-action">
+          Open the demo
+        </ButtonLink>
+      </Box>
+    </Box>
   );
 }

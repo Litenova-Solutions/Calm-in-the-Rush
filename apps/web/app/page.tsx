@@ -1,6 +1,5 @@
-import Link from 'next/link';
-
 import { seedScenes } from '@calm/content';
+import { Box, ButtonLink, Card, CardContent, Image, PaperText, Screen } from '@calm/ui';
 
 import { SiteFooter } from './components/SiteFooter';
 import { SiteHeader } from './components/SiteHeader';
@@ -9,96 +8,135 @@ const poster = (id: string) => `/media/scenes/${id}/poster.jpg`;
 
 export default function LandingPage() {
   return (
-    <div className="site-shell">
+    <Screen className="site-shell">
       <SiteHeader />
-      <main>
-        <section className="hero">
-          <div>
-            <div className="eyebrow">Calm, without a checklist.</div>
-            <h1>A quiet minute in the middle of everything.</h1>
-            <p className="hero-copy">
+      <Box accessibilityRole="main">
+        <Box className="hero">
+          <Box className="hero-copy-block">
+            <PaperText variant="labelLarge" tone="muted" className="eyebrow">
+              Calm, without a checklist.
+            </PaperText>
+            <PaperText
+              variant="displayLarge"
+              accessibilityRole="header"
+              accessibilityLevel={1}
+              className="hero-title"
+            >
+              A quiet minute in the middle of everything.
+            </PaperText>
+            <PaperText variant="bodyLarge" tone="muted" className="hero-copy">
               Open a real place and stay as long as you like. No account. No streak. Nothing to
               finish.
-            </p>
-            <div className="actions">
-              <Link className="button button-primary" href="/demo">
-                Open the demo
-              </Link>
-              <Link className="button button-secondary" href="/requirements">
+            </PaperText>
+            <Box className="actions">
+              <ButtonLink href="/demo">Open the demo</ButtonLink>
+              <ButtonLink href="/requirements" tone="secondary">
                 Read the plan
-              </Link>
-              <Link className="button button-secondary" href="/admin">
+              </ButtonLink>
+              <ButtonLink href="/admin" tone="secondary">
                 Open admin
-              </Link>
-            </div>
-          </div>
-          <div className="phone-preview" aria-label="Static preview of the Lake McDonald scene">
-            <img src={poster('lake')} alt="Mist above Lake McDonald" />
-          </div>
-        </section>
-        <section className="section">
-          <div className="eyebrow">A small pause</div>
-          <h2>Make room for one quiet thing.</h2>
-          <p className="section-lead">
+              </ButtonLink>
+            </Box>
+          </Box>
+          <Box className="phone-preview">
+            <Image
+              source={poster('lake')}
+              alt="Mist above Lake McDonald"
+              className="phone-preview-image"
+            />
+          </Box>
+        </Box>
+        <Box className="section">
+          <PaperText variant="labelLarge" tone="muted" className="eyebrow">
+            A small pause
+          </PaperText>
+          <PaperText variant="headlineLarge" accessibilityRole="header" accessibilityLevel={2}>
+            Make room for one quiet thing.
+          </PaperText>
+          <PaperText variant="bodyLarge" tone="muted" className="section-lead">
             The experience keeps the choice small. Pick a real place and leave whenever you are
             ready.
-          </p>
-          <div className="principles">
-            <article className="principle">
-              <h3>Real places</h3>
-              <p>Footage and ambient audio remain paired so each scene has a sense of place.</p>
-            </article>
-            <article className="principle">
-              <h3>No pressure</h3>
-              <p>No goals, timers, streaks, notifications, or progress to maintain.</p>
-            </article>
-            <article className="principle">
-              <h3>Private by default</h3>
-              <p>
-                No accounts, analytics, cookies, or tracking. Local demo edits stay in this browser.
-              </p>
-            </article>
-          </div>
-        </section>
-        <section className="section">
-          <div className="eyebrow">The scene shelf</div>
-          <h2>Four places to begin.</h2>
-          <div className="gallery">
+          </PaperText>
+          <Box className="principles">
+            <Card className="principle">
+              <CardContent>
+                <PaperText variant="titleLarge">Real places</PaperText>
+                <PaperText variant="bodyMedium" tone="muted">
+                  Footage and ambient audio remain paired so each scene has a sense of place.
+                </PaperText>
+              </CardContent>
+            </Card>
+            <Card className="principle">
+              <CardContent>
+                <PaperText variant="titleLarge">No pressure</PaperText>
+                <PaperText variant="bodyMedium" tone="muted">
+                  No goals, timers, streaks, notifications, or progress to maintain.
+                </PaperText>
+              </CardContent>
+            </Card>
+            <Card className="principle">
+              <CardContent>
+                <PaperText variant="titleLarge">Private by default</PaperText>
+                <PaperText variant="bodyMedium" tone="muted">
+                  No accounts, analytics, cookies, or tracking. Local demo edits stay in this
+                  browser.
+                </PaperText>
+              </CardContent>
+            </Card>
+          </Box>
+        </Box>
+        <Box className="section">
+          <PaperText variant="labelLarge" tone="muted" className="eyebrow">
+            The scene shelf
+          </PaperText>
+          <PaperText variant="headlineLarge" accessibilityRole="header" accessibilityLevel={2}>
+            Four places to begin.
+          </PaperText>
+          <Box className="gallery">
             {seedScenes.map((scene) => (
-              <article className="scene-card" key={scene.id}>
-                <img src={poster(scene.id)} alt={`${scene.title} poster`} />
-                <div className="scene-card-copy">
-                  <h3>{scene.title}</h3>
-                  <p>{scene.location}</p>
-                  <p>{scene.attribution.creator}</p>
-                </div>
-              </article>
+              <Card className="scene-card" key={scene.id}>
+                <Image
+                  source={poster(scene.id)}
+                  alt={`${scene.title} poster`}
+                  className="scene-card-image"
+                />
+                <CardContent>
+                  <PaperText variant="titleMedium">{scene.title}</PaperText>
+                  <PaperText variant="bodySmall" tone="muted">
+                    {scene.location}
+                  </PaperText>
+                  <PaperText variant="bodySmall" tone="muted">
+                    {scene.attribution.creator}
+                  </PaperText>
+                </CardContent>
+              </Card>
             ))}
-          </div>
-        </section>
-        <section className="section source-panel">
-          <div className="source-card">
-            <div className="eyebrow">Source-available project</div>
-            <h2>Read the plan. See every boundary.</h2>
-            <p>
+          </Box>
+        </Box>
+        <Box className="source-panel">
+          <Box className="source-card">
+            <PaperText variant="labelLarge" tone="muted" className="eyebrow">
+              Source-available project
+            </PaperText>
+            <PaperText variant="headlineLarge" accessibilityRole="header" accessibilityLevel={2}>
+              Read the plan. See every boundary.
+            </PaperText>
+            <PaperText variant="bodyLarge">
               The repository includes the web demo, an Expo app, shared experience code, content
               provenance, and the checks that protect the privacy line.
-            </p>
-            <div className="actions">
-              <a
-                className="button button-primary"
-                href="https://github.com/Litenova-Solutions/Calm-in-the-Rush"
-              >
+            </PaperText>
+            <Box className="actions">
+              <ButtonLink href="https://github.com/Litenova-Solutions/Calm-in-the-Rush" external>
                 View on GitHub
-              </a>
-              <Link className="button button-secondary" href="/requirements">
+              </ButtonLink>
+              <ButtonLink href="/requirements" tone="secondary">
                 Read requirements
-              </Link>
-            </div>
-          </div>
-        </section>
-      </main>
+              </ButtonLink>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
       <SiteFooter />
-    </div>
+    </Screen>
   );
 }

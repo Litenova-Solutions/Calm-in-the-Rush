@@ -1,18 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Image,
-  Modal,
-  Platform,
-  Pressable,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
-} from 'react-native';
+import { Platform, SafeAreaView, StyleSheet, useWindowDimensions } from 'react-native';
 import type { CalmScene } from '@calm/content';
-import { colors, icons, radii, spacing } from '@calm/ui';
+import {
+  Box,
+  CalmIcon,
+  colors,
+  fontSizes,
+  IconButton,
+  Image as UiImage,
+  overlays,
+  PaperText,
+  radii,
+  Scroll,
+  shadows,
+  Sheet,
+  spacing,
+  Touchable,
+} from '@calm/ui';
 
 import type { CalmExperienceProps } from './types';
 import { useReducedMotion } from './use-reduced-motion';
@@ -33,7 +37,6 @@ export function CalmExperience({
   const [focused, setFocused] = useState(false);
   const reducedMotion = useReducedMotion();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const sceneButtonRef = useRef<any>(null);
   const idleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const scene = useMemo(
@@ -69,12 +72,10 @@ export function CalmExperience({
     setSelectedId(next.id);
     setPickerOpen(false);
     showControls();
-    setTimeout(() => sceneButtonRef.current?.focus?.(), 0);
   };
 
   const closePicker = () => {
     setPickerOpen(false);
-    setTimeout(() => sceneButtonRef.current?.focus?.(), 0);
   };
 
   const share = async () => {
@@ -95,9 +96,11 @@ export function CalmExperience({
 
   if (!scene) {
     return (
-      <View style={styles.empty}>
-        <Text style={styles.emptyText}>No published scenes are available.</Text>
-      </View>
+      <Box viewStyle={styles.empty}>
+        <PaperText tone="onDark" textStyle={styles.emptyText}>
+          No published scenes are available.
+        </PaperText>
+      </Box>
     );
   }
 
@@ -107,8 +110,6 @@ export function CalmExperience({
     Math.min(windowWidth - spacing[8], 430, Math.max(1, windowHeight - spacing[12]) * (9 / 19.5)),
   );
   const frameHeight = frameWidth * (19.5 / 9);
-  const imageSource = (source: string | number) =>
-    typeof source === 'number' ? source : { uri: source };
   const statusMessage = playerError ? 'Video could not load. Showing the scene poster.' : null;
   const shareLabel =
     shareState === 'busy'
@@ -121,8 +122,8 @@ export function CalmExperience({
 
   return (
     <SafeAreaView style={[styles.safe, compact && styles.safeCompact]}>
-      <View
-        style={styles.canvas}
+      <Box
+        viewStyle={styles.canvas}
         onTouchStart={showControls}
         onFocus={() => {
           setFocused(true);
@@ -130,16 +131,16 @@ export function CalmExperience({
         }}
         onBlur={() => setFocused(false)}
       >
-        <View
-          style={[styles.mediaFrame, { width: frameWidth, height: frameHeight }]}
+        <Box
+          viewStyle={[styles.mediaFrame, { width: frameWidth, height: frameHeight }]}
           testID="experience-media-surface"
         >
           {playerError || reducedMotion ? (
-            <Image
-              source={imageSource(media.poster)}
-              style={styles.media}
+            <UiImage
+              source={media.poster}
+              imageStyle={styles.media}
               resizeMode="cover"
-              accessibilityLabel={`${scene.title} poster`}
+              alt={`${scene.title} poster`}
             />
           ) : (
             renderPlayer({
@@ -152,104 +153,95 @@ export function CalmExperience({
               onReady: () => setPlayerError(false),
             })
           )}
-          <View pointerEvents="none" style={styles.scrim} />
+          <Box pointerEvents="none" viewStyle={styles.scrim} />
           {!controlsVisible ? (
-            <Pressable
+            <Touchable
               accessibilityRole="button"
               accessibilityLabel="Show scene controls"
               onPress={showControls}
               style={styles.tapTarget}
               testID="experience-reveal-controls"
-            />
+            >
+              <Box />
+            </Touchable>
           ) : null}
           {controlsVisible ? (
-            <View style={styles.headingWrap}>
-              <Text style={styles.heading}>Take a breath.</Text>
-            </View>
+            <Box viewStyle={styles.headingWrap}>
+              <PaperText tone="onDark" variant="headlineSmall" textStyle={styles.heading}>
+                Take a breath.
+              </PaperText>
+            </Box>
           ) : null}
           {statusMessage ? (
-            <Text accessibilityRole="alert" style={styles.status}>
+            <PaperText accessibilityRole="alert" tone="onDark" textStyle={styles.status}>
               {statusMessage}
-            </Text>
+            </PaperText>
           ) : null}
           {controlsVisible ? (
-            <View style={styles.dock} accessibilityLabel="Scene controls">
-              <Pressable
-                ref={sceneButtonRef}
-                accessibilityRole="button"
+            <Box viewStyle={styles.dock}>
+              <IconButton
+                icon="list"
+                iconColor={colors.paper}
+                containerColor={overlays.dock}
                 accessibilityLabel="Choose a scene"
                 onPress={() => {
                   setPickerOpen(true);
                   showControls();
                 }}
-                style={styles.iconButton}
-              >
-                <icons.scene size={19} color={colors.paper} strokeWidth={2} />
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
+              />
+              <IconButton
+                icon="share"
+                iconColor={colors.paper}
+                containerColor={overlays.dock}
                 accessibilityLabel={shareLabel}
                 onPress={share}
-                style={styles.iconButton}
-              >
-                <icons.share size={19} color={colors.paper} strokeWidth={2} />
-              </Pressable>
-            </View>
+              />
+            </Box>
           ) : null}
-        </View>
-      </View>
-      <Modal
-        visible={pickerOpen}
-        transparent
-        animationType={reducedMotion ? 'none' : 'slide'}
-        onRequestClose={closePicker}
-      >
-        <View style={styles.sheetBackdrop}>
-          <View style={styles.sheet} accessibilityViewIsModal>
-            <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>Choose a place</Text>
-              <Pressable
+        </Box>
+      </Box>
+      <Sheet visible={pickerOpen} onDismiss={closePicker}>
+        <Box viewStyle={styles.sheetHeader}>
+          <PaperText variant="titleLarge">Choose a place</PaperText>
+          <IconButton
+            icon="close"
+            iconColor={colors.ink}
+            containerColor={colors.paper}
+            accessibilityLabel="Close scene picker"
+            onPress={closePicker}
+          />
+        </Box>
+        <Scroll contentStyle={styles.sceneList} keyboardShouldPersistTaps="handled">
+          {scenes.map((candidate) => {
+            const candidateMedia = resolveMedia(candidate);
+            const selected = candidate.id === scene.id;
+            return (
+              <Touchable
+                key={candidate.id}
                 accessibilityRole="button"
-                accessibilityLabel="Close scene picker"
-                onPress={closePicker}
-                style={styles.closeButton}
+                accessibilityState={{ selected }}
+                accessibilityLabel={`${candidate.title}, ${candidate.location}${selected ? ', selected' : ''}`}
+                onPress={() => selectScene(candidate)}
+                style={[styles.sceneTile, selected && styles.sceneTileSelected]}
               >
-                <icons.close size={18} color={colors.ink} strokeWidth={2} />
-              </Pressable>
-            </View>
-            <ScrollView
-              contentContainerStyle={styles.sceneList}
-              keyboardShouldPersistTaps="handled"
-            >
-              {scenes.map((candidate) => {
-                const candidateMedia = resolveMedia(candidate);
-                const selected = candidate.id === scene.id;
-                return (
-                  <Pressable
-                    key={candidate.id}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected }}
-                    accessibilityLabel={`${candidate.title}, ${candidate.location}${selected ? ', selected' : ''}`}
-                    onPress={() => selectScene(candidate)}
-                    style={[styles.sceneTile, selected && styles.sceneTileSelected]}
-                  >
-                    <Image
-                      source={imageSource(candidateMedia.poster)}
-                      style={styles.thumbnail}
-                      accessibilityElementsHidden
-                    />
-                    {selected ? (
-                      <View accessibilityElementsHidden style={styles.selectedMarker}>
-                        <icons.check size={15} color={colors.paper} strokeWidth={2.5} />
-                      </View>
-                    ) : null}
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
+                <Box>
+                  <UiImage
+                    source={candidateMedia.poster}
+                    imageStyle={styles.thumbnail}
+                    alt=""
+                    accessibilityElementsHidden
+                  />
+                  {selected ? (
+                    <Box accessibilityElementsHidden viewStyle={styles.selectedMarker}>
+                      <CalmIcon name="check" size={15} color={colors.paper} strokeWidth={2.5} />
+                    </Box>
+                  ) : null}
+                </Box>
+              </Touchable>
+            );
+          })}
+        </Scroll>
+      </Sheet>
     </SafeAreaView>
   );
 }
@@ -268,22 +260,27 @@ const styles = StyleSheet.create({
     maxWidth: 430,
     overflow: 'hidden',
     borderRadius: radii.lg,
-    backgroundColor: '#0A1B20',
+    backgroundColor: colors.deepTeal,
     position: 'relative',
     ...(Platform.OS === 'web'
-      ? { boxShadow: '0 12px 24px rgba(0, 0, 0, 0.25)' }
+      ? { boxShadow: shadows.frame }
       : {
-          shadowColor: '#000',
+          shadowColor: colors.deepTeal,
           shadowOpacity: 0.25,
-          shadowRadius: 24,
-          shadowOffset: { width: 0, height: 12 },
+          shadowRadius: spacing[6],
+          shadowOffset: { width: 0, height: spacing[3] },
         }),
   },
   media: { ...StyleSheet.absoluteFill, width: '100%', height: '100%' },
-  scrim: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(7, 23, 27, 0.12)' },
+  scrim: { ...StyleSheet.absoluteFill, backgroundColor: overlays.mediaScrim },
   tapTarget: { ...StyleSheet.absoluteFill, zIndex: 1 },
-  headingWrap: { position: 'absolute', top: spacing[8], left: spacing[6], right: spacing[6] },
-  heading: { color: colors.paper, fontSize: 28, fontWeight: '400', letterSpacing: -0.4 },
+  headingWrap: {
+    position: 'absolute',
+    top: spacing[8],
+    left: spacing[6],
+    right: spacing[6],
+  },
+  heading: { color: colors.paper, fontWeight: '400', letterSpacing: -0.4 },
   dock: {
     position: 'absolute',
     bottom: spacing[5],
@@ -296,16 +293,6 @@ const styles = StyleSheet.create({
     gap: spacing[3],
     zIndex: 2,
   },
-  iconButton: {
-    width: 44,
-    height: 44,
-    minHeight: 44,
-    flexShrink: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 22,
-    backgroundColor: 'rgba(16, 37, 43, 0.66)',
-  },
   status: {
     position: 'absolute',
     bottom: 120,
@@ -313,7 +300,7 @@ const styles = StyleSheet.create({
     right: spacing[5],
     color: colors.paper,
     textAlign: 'center',
-    backgroundColor: 'rgba(16, 37, 43, 0.8)',
+    backgroundColor: overlays.status,
     padding: spacing[2],
     borderRadius: radii.sm,
   },
@@ -324,30 +311,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: spacing[6],
   },
-  emptyText: { color: colors.paper, fontSize: 16 },
-  sheetBackdrop: { flex: 1, backgroundColor: 'rgba(16, 37, 43, 0.58)', justifyContent: 'flex-end' },
-  sheet: {
-    maxHeight: '82%',
-    backgroundColor: colors.warmCanvas,
-    borderTopLeftRadius: radii.lg,
-    borderTopRightRadius: radii.lg,
-    padding: spacing[5],
-  },
+  emptyText: { color: colors.paper, fontSize: fontSizes.md },
   sheetHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: spacing[4],
     marginBottom: spacing[4],
-  },
-  sheetTitle: { color: colors.ink, fontSize: 22, fontWeight: '700' },
-  closeButton: {
-    width: 44,
-    height: 44,
-    borderRadius: radii.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.paper,
   },
   sceneList: {
     flexDirection: 'row',
@@ -373,7 +343,7 @@ const styles = StyleSheet.create({
     right: spacing[2],
     width: 28,
     height: 28,
-    borderRadius: 14,
+    borderRadius: radii.sm,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.ink,

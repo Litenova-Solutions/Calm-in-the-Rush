@@ -9,8 +9,7 @@ import { resolveBundledMedia } from '@calm/content/media';
 import { seedCatalog, sortPublishedScenes } from '@calm/content';
 import { CalmExperience } from '@calm/experience';
 import { shareMoment } from '@calm/experience/share';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { colors } from '@calm/ui';
+import { ActivityIndicator, PaperText, Screen, Stack } from '@calm/ui';
 import { NativePlayer } from '../components/NativePlayer';
 
 export default function HomeScreen() {
@@ -22,10 +21,14 @@ export default function HomeScreen() {
   });
   if (!loaded)
     return (
-      <View style={styles.loading}>
-        <ActivityIndicator color={colors.sage} />
-        <Text style={styles.loadingText}>Loading a quiet place...</Text>
-      </View>
+      <Screen tone="deep" className="mobile-loading">
+        <Stack align="center" justify="center" space={3} className="mobile-loading-content">
+          <ActivityIndicator />
+          <PaperText tone="onDark" variant="bodyMedium">
+            Loading a quiet place...
+          </PaperText>
+        </Stack>
+      </Screen>
     );
   const scenes = sortPublishedScenes(seedCatalog.scenes);
   return (
@@ -40,14 +43,3 @@ export default function HomeScreen() {
     />
   );
 }
-
-const styles = StyleSheet.create({
-  loading: {
-    flex: 1,
-    backgroundColor: colors.deepTeal,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  loadingText: { color: colors.paper, fontFamily: 'Manrope_500Medium' },
-});

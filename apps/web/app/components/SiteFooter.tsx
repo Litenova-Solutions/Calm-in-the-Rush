@@ -1,17 +1,42 @@
+import { Box, Link, PaperText } from '@calm/ui';
+
 export function SiteFooter() {
   return (
-    <footer className="site-footer">
-      <span>Calm in the Rush, a source-available demo.</span>
-      <nav className="footer-links" aria-label="Footer navigation">
-        <a href="/requirements">Requirements</a>
-        <a href="/admin">Admin</a>
-        <a href="/privacy">Privacy</a>
-        <a href="/credits">Credits</a>
-        <a href="/security">Security</a>
-        <a href="/ai-policy">AI policy</a>
-        <a href="https://github.com/Litenova-Solutions/Calm-in-the-Rush">GitHub</a>
-        <a href="/license">License</a>
-      </nav>
-    </footer>
+    <Box className="site-footer" accessibilityRole="contentinfo">
+      <PaperText tone="muted" variant="bodySmall">
+        Calm in the Rush, a source-available demo.
+      </PaperText>
+      <Box className="footer-links" accessibilityRole="navigation" aria-label="Footer navigation">
+        <Link href="/requirements" variant="nav" tone="muted">
+          Requirements
+        </Link>
+        <Link href="/admin" variant="nav" tone="muted">
+          Admin
+        </Link>
+        <Link href="/privacy" variant="nav" tone="muted">
+          Privacy
+        </Link>
+        <Link href="/credits" variant="nav" tone="muted">
+          Credits
+        </Link>
+        <Link href="/security" variant="nav" tone="muted">
+          Security
+        </Link>
+        <Link href="/ai-policy" variant="nav" tone="muted">
+          AI policy
+        </Link>
+        <Link
+          href="https://github.com/Litenova-Solutions/Calm-in-the-Rush"
+          external
+          variant="nav"
+          tone="muted"
+        >
+          GitHub
+        </Link>
+        <Link href="/license" variant="nav" tone="muted">
+          License
+        </Link>
+      </Box>
+    </Box>
   );
 }

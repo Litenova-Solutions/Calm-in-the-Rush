@@ -1,5 +1,4 @@
-import Link from 'next/link';
-import { CalmMark } from '@calm/ui/mark';
+import { Brand, Box, Link, Screen } from '@calm/ui';
 
 import DemoClient from './DemoClient';
 
@@ -10,21 +9,16 @@ export const metadata = {
 
 export default function DemoPage() {
   return (
-    <main className="demo-page">
-      <div className="demo-header">
-        <Link className="brand" href="/" aria-label="Back to Calm in the Rush home">
-          <span className="brand-mark" aria-hidden="true">
-            <CalmMark color="var(--deep-teal)" size={22} />
-          </span>
-          <span>Calm in the Rush</span>
-        </Link>
-        <Link className="demo-exit" href="/">
+    <Screen tone="deep" className="demo-page">
+      <Box className="demo-header" pointerEvents="box-none">
+        <Brand href="/" label="Calm in the Rush" tone="onDark" className="demo-brand" />
+        <Link href="/" variant="nav" tone="onDark" className="demo-exit">
           Leave the demo
         </Link>
-      </div>
-      <div className="demo-stage">
+      </Box>
+      <Box className="demo-stage">
         <DemoClient />
-      </div>
-    </main>
+      </Box>
+    </Screen>
   );
 }

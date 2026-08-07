@@ -115,15 +115,6 @@ function WebPlayer({
     [],
   );
 
-  const videoStyle = {
-    position: 'absolute' as const,
-    inset: 0,
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover' as const,
-    transition: 'opacity 700ms ease',
-  };
-
   return (
     <>
       <video
@@ -140,7 +131,7 @@ function WebPlayer({
         muted={muted}
         onLoadedData={onReady}
         onError={onError}
-        style={{ ...videoStyle, opacity: incomingReady ? 0 : 1 }}
+        className={`experience-video ${incomingReady ? 'experience-video-hidden' : 'experience-video-visible'}`}
       />
       {incoming ? (
         <video
@@ -159,7 +150,7 @@ function WebPlayer({
             setIncomingReady(false);
             onError();
           }}
-          style={{ ...videoStyle, opacity: incomingReady ? 1 : 0 }}
+          className={`experience-video ${incomingReady ? 'experience-video-visible' : 'experience-video-hidden'}`}
         />
       ) : null}
     </>

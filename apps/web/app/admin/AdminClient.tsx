@@ -1,6 +1,8 @@
+// Client boundary: the admin owns IndexedDB, file selection, and browser confirmation dialogs.
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import type { ComponentProps } from 'react';
 import dynamic from 'next/dynamic';
 import {
   getLicenseUrl,
@@ -11,7 +13,22 @@ import {
   type MediaRef,
   type SceneCatalog,
 } from '@calm/content';
-import { CalmMark } from '@calm/ui/mark';
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CheckboxField,
+  FileInput,
+  IconButton,
+  Image,
+  PaperText,
+  Screen,
+  SelectField,
+  StatusMessage,
+  TextInput,
+  ButtonLink,
+} from '@calm/ui';
 
 import { BrowserSceneRepository, type StorageReport } from '../../lib/content/browser-repository';
 
@@ -307,271 +324,230 @@ export default function AdminClient() {
     }
   };
 
+  const licenseOptions = Object.entries(licenseDefinitions).map(([value, definition]) => ({
+    value,
+    label: definition.label,
+  }));
+
   return (
-    <div className="admin-page">
-      <header className="site-header">
-        <a className="brand" href="/">
-          <span className="brand-mark" aria-hidden="true">
-            <CalmMark color="var(--paper)" size={22} />
-          </span>
-          <span>Calm in the Rush</span>
-        </a>
-        <a className="button button-primary" href="/demo">
+    <Screen className="admin-page">
+      <Box className="admin-header">
+        <ButtonLink href="/">Back home</ButtonLink>
+        <ButtonLink href="/demo" tone="secondary">
           Open demo
-        </a>
-      </header>
-      <main className="admin-content">
-        <div className="eyebrow">Local administration</div>
-        <h1>Keep the scene shelf close.</h1>
-        <p className="section-lead">
+        </ButtonLink>
+      </Box>
+      <Box className="admin-content" accessibilityRole="main">
+        <PaperText variant="labelLarge" tone="muted" className="eyebrow">
+          Local administration
+        </PaperText>
+        <PaperText variant="displaySmall" accessibilityRole="header" accessibilityLevel={1}>
+          Keep the scene shelf close.
+        </PaperText>
+        <PaperText variant="bodyLarge" tone="muted" className="section-lead">
           Add a private scene for this browser, preview it in the real phone surface, and decide
           whether it stays a draft or appears in the demo.
-        </p>
-        <p className="admin-banner" role="status">
+        </PaperText>
+        <StatusMessage>
           Local demo admin. Changes stay in this browser and are not published to other people.
-        </p>
-        <div className="admin-layout">
-          <section className="admin-card" aria-labelledby="catalog-title">
-            <h2 id="catalog-title">Scene catalog</h2>
-            <div className="form-actions">
-              <button className="button button-primary" type="button" onClick={newScene}>
-                Add scene
-              </button>
-              <button className="button button-secondary" type="button" onClick={reset}>
-                Reset local edits
-              </button>
-            </div>
-            <div className="admin-list" style={{ marginTop: 16 }}>
-              {[...catalog.scenes]
-                .sort((a, b) => a.sortOrder - b.sortOrder || a.title.localeCompare(b.title))
-                .map((scene, index, list) => (
-                  <div
-                    className={`admin-row ${form.id === scene.id ? 'selected' : ''}`}
-                    key={scene.id}
-                  >
-                    <img
-                      src={
-                        scene.poster.kind === 'bundled'
-                          ? `/media/scenes/${scene.id}/poster.jpg`
-                          : (posterUrls[scene.id] ?? '')
-                      }
-                      alt=""
-                    />
-                    <div>
-                      <h3>{scene.title}</h3>
-                      <p>
-                        {scene.status} - order {scene.sortOrder + 1}
-                      </p>
-                    </div>
-                    <div className="admin-row-actions">
-                      <button
-                        className="icon-button"
-                        type="button"
-                        aria-label={`Move ${scene.title} up`}
-                        disabled={index === 0}
-                        onClick={() => void move(scene, -1)}
-                      >
-                        Up
-                      </button>
-                      <button
-                        className="icon-button"
-                        type="button"
-                        aria-label={`Move ${scene.title} down`}
-                        disabled={index === list.length - 1}
-                        onClick={() => void move(scene, 1)}
-                      >
-                        Down
-                      </button>
-                      <button
-                        className="icon-button"
-                        type="button"
-                        aria-label={`Edit ${scene.title}`}
-                        onClick={() => selectScene(scene)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="icon-button"
-                        type="button"
-                        aria-label={`Delete ${scene.title}`}
-                        onClick={() => void remove(scene)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                ))}
-            </div>
-            <p className="storage">
-              Used storage: {bytes(storage.usedBytes)}. Estimated quota: {bytes(storage.quotaBytes)}
-              . Private mode or site-data clearing may remove edits.
-            </p>
-          </section>
-          <section className="admin-card" aria-labelledby="form-title">
-            <h2 id="form-title">{form.id ? 'Edit scene' : 'Add scene'}</h2>
-            <div className="form-grid">
-              <div className="form-field">
-                <label htmlFor="scene-title">Title</label>
-                <input
-                  id="scene-title"
-                  value={form.title}
-                  onChange={(event) => update('title', event.target.value)}
-                  maxLength={80}
-                />
-              </div>
-              <div className="form-field">
-                <label htmlFor="scene-location">Location</label>
-                <input
-                  id="scene-location"
-                  value={form.location}
-                  onChange={(event) => update('location', event.target.value)}
-                  maxLength={100}
-                />
-              </div>
-              <div className="form-field full">
-                <label htmlFor="scene-description">Description</label>
-                <textarea
-                  id="scene-description"
-                  value={form.description}
-                  onChange={(event) => update('description', event.target.value)}
-                  maxLength={240}
-                />
-              </div>
-              <div className="form-field">
-                <label htmlFor="scene-sound">Sound label</label>
-                <input
-                  id="scene-sound"
-                  value={form.soundLabel}
-                  onChange={(event) => update('soundLabel', event.target.value)}
-                  maxLength={80}
-                />
-              </div>
-              <div className="form-field">
-                <label htmlFor="scene-creator">Creator</label>
-                <input
-                  id="scene-creator"
-                  value={form.creator}
-                  onChange={(event) => update('creator', event.target.value)}
-                  maxLength={120}
-                />
-              </div>
-              <div className="form-field full">
-                <label htmlFor="scene-source">Source URL</label>
-                <input
-                  id="scene-source"
-                  type="url"
-                  value={form.sourceUrl}
-                  onChange={(event) => update('sourceUrl', event.target.value)}
-                />
-              </div>
-              <div className="form-field">
-                <label htmlFor="scene-license">License</label>
-                <select
-                  id="scene-license"
-                  value={form.licenseId}
-                  onChange={(event) => update('licenseId', event.target.value as LicenseId)}
-                >
-                  {Object.entries(licenseDefinitions).map(([id, definition]) => (
-                    <option key={id} value={id}>
-                      {definition.label}
-                    </option>
+        </StatusMessage>
+        <Box className="admin-layout">
+          <Card className="admin-card">
+            <CardContent>
+              <PaperText variant="headlineSmall" accessibilityRole="header" accessibilityLevel={2}>
+                Scene catalog
+              </PaperText>
+              <Box className="form-actions">
+                <Button icon="plus" onPress={newScene}>
+                  Add scene
+                </Button>
+                <Button icon="reset" tone="secondary" onPress={reset}>
+                  Reset local edits
+                </Button>
+              </Box>
+              <Box className="admin-list">
+                {[...catalog.scenes]
+                  .sort((a, b) => a.sortOrder - b.sortOrder || a.title.localeCompare(b.title))
+                  .map((scene, index, list) => (
+                    <Box
+                      className={`admin-row ${form.id === scene.id ? 'admin-row-selected' : ''}`}
+                      key={scene.id}
+                    >
+                      <Image
+                        source={
+                          scene.poster.kind === 'bundled'
+                            ? `/media/scenes/${scene.id}/poster.jpg`
+                            : (posterUrls[scene.id] ?? '')
+                        }
+                        alt=""
+                        className="admin-row-image"
+                      />
+                      <Box className="admin-row-copy">
+                        <PaperText variant="titleSmall">{scene.title}</PaperText>
+                        <PaperText variant="bodySmall" tone="muted">
+                          {scene.status} - order {scene.sortOrder + 1}
+                        </PaperText>
+                      </Box>
+                      <Box className="admin-row-actions">
+                        <IconButton
+                          icon="arrowUp"
+                          accessibilityLabel={`Move ${scene.title} up`}
+                          disabled={index === 0}
+                          onPress={() => void move(scene, -1)}
+                        />
+                        <IconButton
+                          icon="arrowDown"
+                          accessibilityLabel={`Move ${scene.title} down`}
+                          disabled={index === list.length - 1}
+                          onPress={() => void move(scene, 1)}
+                        />
+                        <IconButton
+                          icon="edit"
+                          accessibilityLabel={`Edit ${scene.title}`}
+                          onPress={() => selectScene(scene)}
+                        />
+                        <IconButton
+                          icon="trash"
+                          accessibilityLabel={`Delete ${scene.title}`}
+                          onPress={() => void remove(scene)}
+                        />
+                      </Box>
+                    </Box>
                   ))}
-                </select>
-              </div>
-              <div className="form-field">
-                <label htmlFor="scene-order">Order</label>
-                <input
-                  id="scene-order"
-                  type="number"
-                  min={0}
-                  value={form.sortOrder}
-                  onChange={(event) => update('sortOrder', Number(event.target.value))}
+              </Box>
+              <PaperText variant="bodySmall" tone="muted" className="storage">
+                Used storage: {bytes(storage.usedBytes)}. Estimated quota:{' '}
+                {bytes(storage.quotaBytes)}. Private mode or site-data clearing may remove edits.
+              </PaperText>
+            </CardContent>
+          </Card>
+          <Card className="admin-card">
+            <CardContent>
+              <PaperText variant="headlineSmall" accessibilityRole="header" accessibilityLevel={2}>
+                {form.id ? 'Edit scene' : 'Add scene'}
+              </PaperText>
+              <Box className="form-grid">
+                <FieldText
+                  label="Title"
+                  value={form.title}
+                  maxLength={80}
+                  onChangeText={(value) => update('title', value)}
                 />
-              </div>
-              <div className="form-field full">
-                <label htmlFor="scene-changes">Changes made</label>
-                <textarea
-                  id="scene-changes"
+                <FieldText
+                  label="Location"
+                  value={form.location}
+                  maxLength={100}
+                  onChangeText={(value) => update('location', value)}
+                />
+                <FieldText
+                  label="Description"
+                  value={form.description}
+                  maxLength={240}
+                  multiline
+                  className="form-field-full form-textarea"
+                  onChangeText={(value) => update('description', value)}
+                />
+                <FieldText
+                  label="Sound label"
+                  value={form.soundLabel}
+                  maxLength={80}
+                  onChangeText={(value) => update('soundLabel', value)}
+                />
+                <FieldText
+                  label="Creator"
+                  value={form.creator}
+                  maxLength={120}
+                  onChangeText={(value) => update('creator', value)}
+                />
+                <FieldText
+                  label="Source URL"
+                  value={form.sourceUrl}
+                  keyboardType="url"
+                  className="form-field-full"
+                  onChangeText={(value) => update('sourceUrl', value)}
+                />
+                <SelectField
+                  label="License"
+                  value={form.licenseId}
+                  options={licenseOptions}
+                  onChange={(value) => update('licenseId', value as LicenseId)}
+                />
+                <FieldText
+                  label="Order"
+                  value={String(form.sortOrder)}
+                  keyboardType="numeric"
+                  onChangeText={(value) => update('sortOrder', Number(value))}
+                />
+                <FieldText
+                  label="Changes made"
                   value={form.changesMade}
-                  onChange={(event) => update('changesMade', event.target.value)}
                   maxLength={500}
+                  multiline
+                  className="form-field-full form-textarea"
+                  onChangeText={(value) => update('changesMade', value)}
                 />
-              </div>
-              <div className="form-field">
-                <label htmlFor="scene-video">MP4 video</label>
-                <input
-                  id="scene-video"
-                  type="file"
+                <FileInput
+                  label="MP4 video"
                   accept="video/mp4"
-                  onChange={(event) => setVideoFile(event.target.files?.[0])}
+                  hint={
+                    form.video
+                      ? `Current: ${form.video.kind === 'local' ? form.video.fileName : 'bundled scene'}`
+                      : 'Required for a new scene.'
+                  }
+                  onChange={setVideoFile}
                 />
-                <small>
-                  {form.video
-                    ? `Current: ${form.video.kind === 'local' ? form.video.fileName : 'bundled scene'}`
-                    : 'Required for a new scene.'}
-                </small>
-              </div>
-              <div className="form-field">
-                <label htmlFor="scene-poster">Poster</label>
-                <input
-                  id="scene-poster"
-                  type="file"
+                <FileInput
+                  label="Poster"
                   accept="image/jpeg,image/png,image/webp"
-                  onChange={(event) => setPosterFile(event.target.files?.[0])}
+                  hint={
+                    form.poster
+                      ? `Current: ${form.poster.kind === 'local' ? form.poster.fileName : 'bundled poster'}`
+                      : 'Required for a new scene.'
+                  }
+                  onChange={setPosterFile}
                 />
-                <small>
-                  {form.poster
-                    ? `Current: ${form.poster.kind === 'local' ? form.poster.fileName : 'bundled poster'}`
-                    : 'Required for a new scene.'}
-                </small>
-              </div>
-              <label className="checkbox-field full">
-                <input
-                  type="checkbox"
+                <CheckboxField
+                  className="form-field-full"
                   checked={audioConfirmed}
-                  onChange={(event) => setAudioConfirmed(event.target.checked)}
+                  onChange={setAudioConfirmed}
+                  label="I confirm that the uploaded video contains embedded audio. This demo does not accept a separate audio upload."
                 />
-                <span>
-                  I confirm that the uploaded video contains embedded audio. This demo does not
-                  accept a separate audio upload.
-                </span>
-              </label>
-            </div>
-            <div className="form-actions">
-              <button
-                className="button button-secondary"
-                type="button"
-                onClick={() => void save('draft')}
-              >
-                Save draft
-              </button>
-              <button
-                className="button button-primary"
-                type="button"
-                onClick={() => void save('published')}
-              >
-                Publish
-              </button>
-            </div>
-            {message ? (
-              <p className="message" role="status">
-                {message}
-              </p>
-            ) : null}
-            {error ? (
-              <p className="message error" role="alert">
-                {error}
-              </p>
-            ) : null}
-          </section>
-        </div>
-        <section className="admin-card" style={{ marginTop: 22 }} aria-labelledby="preview-title">
-          <h2 id="preview-title">Phone preview</h2>
-          <div className="admin-preview">
-            <WebExperience repository={repo} compact />
-          </div>
-        </section>
-      </main>
-    </div>
+              </Box>
+              <Box className="form-actions">
+                <Button tone="secondary" onPress={() => void save('draft')}>
+                  Save draft
+                </Button>
+                <Button onPress={() => void save('published')}>Publish</Button>
+              </Box>
+              {message ? <StatusMessage>{message}</StatusMessage> : null}
+              {error ? <StatusMessage error>{error}</StatusMessage> : null}
+            </CardContent>
+          </Card>
+        </Box>
+        <Card className="admin-card admin-preview-card">
+          <CardContent>
+            <PaperText variant="headlineSmall" accessibilityRole="header" accessibilityLevel={2}>
+              Phone preview
+            </PaperText>
+            <Box className="admin-preview">
+              <WebExperience repository={repo} compact />
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
+    </Screen>
+  );
+}
+
+function FieldText({
+  label,
+  className,
+  ...props
+}: ComponentProps<typeof TextInput> & { label: string; className?: string }) {
+  return (
+    <Box className={className}>
+      <PaperText variant="labelLarge">{label}</PaperText>
+      <TextInput {...props} accessibilityLabel={label} />
+    </Box>
   );
 }
