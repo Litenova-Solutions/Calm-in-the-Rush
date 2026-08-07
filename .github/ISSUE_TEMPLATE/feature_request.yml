@@ -1,0 +1,25 @@
+name: Feature request
+description: Propose a change to the demo
+title: 'feature: '
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: User need
+      description: Describe the person and the moment this would support.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+    validations:
+      required: true
+  - type: checkboxes
+    id: boundary
+    attributes:
+      label: Boundary
+      options:
+        - label: I checked the product brief and privacy boundary.
+          required: true

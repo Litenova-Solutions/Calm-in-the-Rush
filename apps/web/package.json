@@ -1,0 +1,46 @@
+{
+  "name": "@calm/web",
+  "version": "0.1.0",
+  "private": true,
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --dir ../.. content:sync && next dev --webpack --hostname 127.0.0.1 --port 3200",
+    "build": "pnpm --dir ../.. content:sync && next build --webpack",
+    "start": "next start",
+    "lint": "eslint .",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@fontsource-variable/manrope": "5.2.6",
+    "@calm/content": "workspace:*",
+    "@calm/experience": "workspace:*",
+    "@calm/ui": "workspace:*",
+    "@tamagui/next-plugin": "2.7.2",
+    "idb": "8.0.3",
+    "lucide-react": "0.468.0",
+    "next": "16.2.10",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-markdown": "10.1.0",
+    "react-native-web": "0.21.2",
+    "remark-gfm": "4.0.1",
+    "tamagui": "2.7.2",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.36.0",
+    "@testing-library/jest-dom": "6.8.0",
+    "@testing-library/react": "16.3.0",
+    "@playwright/test": "1.62.1",
+    "@types/react": "19.2.0",
+    "@types/react-dom": "19.2.0",
+    "axe-playwright": "2.2.2",
+    "fake-indexeddb": "6.2.4",
+    "eslint": "9.36.0",
+    "typescript-eslint": "8.44.0",
+    "vitest": "4.1.10"
+  }
+}

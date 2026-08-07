@@ -1,0 +1,17 @@
+{
+  "name": "@calm/config",
+  "version": "0.1.0",
+  "private": true,
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "type": "module",
+  "exports": {
+    "./vitest": "./vitest.config.ts",
+    "./eslint": "./eslint.config.mjs"
+  },
+  "dependencies": {
+    "@typescript-eslint/eslint-plugin": "8.44.0",
+    "@typescript-eslint/parser": "8.44.0",
+    "eslint": "9.36.0",
+    "eslint-config-next": "16.2.10"
+  }
+}
