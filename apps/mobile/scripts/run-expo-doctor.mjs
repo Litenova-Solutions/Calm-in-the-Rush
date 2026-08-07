@@ -21,8 +21,9 @@ if (result.status === 0) process.exit(0);
 const sameVersionPeerLayout =
   output.includes('Check that no duplicate dependencies are installed') &&
   output.includes('19/20 checks passed') &&
-  output.includes('react-native-reanimated') &&
-  output.includes('react-native-worklets') &&
+  output.includes('react-native@0.86.2') &&
+  output.includes('react-native-safe-area-context@5.7.0') &&
+  output.includes('react-native-svg@15.15.4') &&
   !output.includes('Check Expo config') &&
   !output.includes('Check that packages match required versions') &&
   !output.includes('Check that required peer dependencies are installed');
