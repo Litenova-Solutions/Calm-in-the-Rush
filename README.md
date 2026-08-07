@@ -37,7 +37,7 @@ apps/mobile    Expo Router application
 packages/config       Shared lint and test configuration
 packages/content      Scene schema, seed catalog, media maps, and assets
 packages/experience   Calm experience state and presentation
-packages/ui           Tamagui tokens and project-owned primitives
+packages/ui           React Native Paper theme and project-owned primitives
 docs                 Product, domain, UI, decisions, operations, and research records
 standards            Engineering Standards v1.9.0 submodule
 scripts              Media sync and repository validators
@@ -79,7 +79,8 @@ or remote content service is included.
 
 The repository follows the pinned Engineering Standards submodule with a local `frontend-demo` profile.
 Next.js and Expo Router are separate deployables. Shared contracts and real cross-target consumers live
-in packages. Tamagui owns shared tokens and primitives. PolyForm Noncommercial 1.0.0 covers repository
+in packages. React Native Paper owns the shared component system and `@calm/ui` owns its theme and
+public wrappers. PolyForm Noncommercial 1.0.0 covers repository
 software, while third-party media keeps its own license.
 
 Read the [product brief](docs/product/brief.md), [media provenance record](docs/research/media-provenance.md),

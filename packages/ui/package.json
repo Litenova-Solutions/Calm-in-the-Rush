@@ -7,23 +7,22 @@
   "exports": {
     ".": "./src/index.ts",
     "./tokens": "./src/tokens.ts",
-    "./tamagui.config": "./src/tamagui.config.ts",
-    "./mark": "./src/mark.tsx"
+    "./theme.css": "./src/theme.css"
   },
   "scripts": {
     "type-check": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --config vitest.config.ts --passWithNoTests"
   },
   "devDependencies": {
     "@types/react": "19.2.0",
+    "react-native-web": "0.21.2",
     "vitest": "4.1.10"
   },
   "dependencies": {
-    "@tamagui/config": "2.7.2",
-    "@tamagui/core": "2.7.2",
     "lucide-react-native": "0.468.0",
     "react": "19.2.3",
     "react-native": "0.86.2",
-    "tamagui": "2.7.2"
+    "react-native-paper": "5.15.3",
+    "react-native-safe-area-context": "5.7.0"
   }
 }

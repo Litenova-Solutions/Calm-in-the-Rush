@@ -24,7 +24,6 @@
   "dependencies": {
     "@calm/content": "workspace:*",
     "@calm/ui": "workspace:*",
-    "react": "19.2.3",
-    "tamagui": "2.7.2"
+    "react": "19.2.3"
   }
 }

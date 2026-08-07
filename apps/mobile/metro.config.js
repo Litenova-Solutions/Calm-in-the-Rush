@@ -1,5 +1,4 @@
 const { getDefaultConfig } = require('expo/metro-config');
-const { withTamagui } = require('@tamagui/metro-plugin');
 
 const config = getDefaultConfig(__dirname);
 config.watchFolders = [
@@ -12,8 +11,4 @@ config.resolver.nodeModulesPaths = [
   require('path').resolve(__dirname, '../../node_modules'),
 ];
 
-module.exports = withTamagui(config, {
-  components: ['tamagui'],
-  config: '../../packages/ui/src/tamagui.config.ts',
-  outputCSS: './src/tamagui.css',
-});
+module.exports = config;

@@ -98,7 +98,7 @@ metadata. This project retains those files for the demo and does not describe th
 
 - Use pnpm workspaces with deployables in `apps/` and shared packages in `packages/`.
 - Use Next.js for the web origin and Expo Router for native routes.
-- Use Tamagui tokens and project-owned primitives in `@calm/ui`.
+- Use React Native Paper components with the governed theme and project-owned wrappers in `@calm/ui`.
 - Keep scene schema and seed media in `@calm/content`.
 - Keep state and presentation in `@calm/experience`.
 - Use IndexedDB only for same-browser demo content. There is no server database.

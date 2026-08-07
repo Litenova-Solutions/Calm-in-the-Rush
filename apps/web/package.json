@@ -18,7 +18,6 @@
     "@calm/content": "workspace:*",
     "@calm/experience": "workspace:*",
     "@calm/ui": "workspace:*",
-    "@tamagui/next-plugin": "2.7.2",
     "idb": "8.0.3",
     "lucide-react": "0.468.0",
     "next": "16.2.11",
@@ -27,7 +26,6 @@
     "react-markdown": "10.1.0",
     "react-native-web": "0.21.2",
     "remark-gfm": "4.0.1",
-    "tamagui": "2.7.2",
     "zod": "4.4.3"
   },
   "devDependencies": {

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { CalmProvider } from '@calm/ui';
 
 import './globals.css';
 
@@ -18,7 +19,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <CalmProvider>{children}</CalmProvider>
+      </body>
     </html>
   );
 }

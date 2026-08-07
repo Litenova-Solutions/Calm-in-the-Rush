@@ -1,0 +1,36 @@
+:root {
+  --calm-deep-teal: #10252b;
+  --calm-warm-canvas: #eef1e8;
+  --calm-sage: #b8cbbd;
+  --calm-ink: #183036;
+  --calm-fog: #dde5de;
+  --calm-paper: #fafbf7;
+  --calm-muted: #5b706d;
+  --calm-danger: #9e3e36;
+  --calm-danger-container: #f7e4df;
+  --calm-danger-text: #6d2823;
+  --calm-focus: #6c9b86;
+  --calm-media-scrim: rgba(7, 23, 27, 0.12);
+  --calm-dock: rgba(16, 37, 43, 0.66);
+  --calm-status: rgba(16, 37, 43, 0.8);
+  --calm-backdrop: rgba(16, 37, 43, 0.58);
+  --calm-paper-overlay: rgba(250, 251, 247, 0.75);
+  --calm-border-overlay: rgba(250, 251, 247, 0.22);
+  --calm-shadow-frame: 0 12px 24px rgba(0, 0, 0, 0.25);
+  --calm-shadow-preview: 0 22px 50px rgba(16, 37, 43, 0.2);
+  --calm-space-1: 4px;
+  --calm-space-2: 8px;
+  --calm-space-3: 12px;
+  --calm-space-4: 16px;
+  --calm-space-5: 20px;
+  --calm-space-6: 24px;
+  --calm-space-8: 32px;
+  --calm-space-10: 40px;
+  --calm-space-12: 48px;
+  --calm-space-16: 64px;
+  --calm-radius-sm: 14px;
+  --calm-radius-md: 16px;
+  --calm-radius-lg: 20px;
+  --calm-radius-xl: 28px;
+  --calm-font-family: 'Manrope Variable', Manrope, system-ui, sans-serif;
+}

@@ -16,11 +16,11 @@ are pinned at the root. The web and native applications share packages only wher
 ## Overrides
 
 - `FRONTEND.STRUCTURE.001`: Expo Router is permitted beside Next.js.
-- `DEP.PINS.001`: Expo, Tamagui, IndexedDB, and cross-platform test packages use the pins in the root manifest.
+- `DEP.PINS.001`: Expo, React Native Paper, IndexedDB, and cross-platform test packages use the pins in the root manifest.
 - `DEP.APPROVAL.001`: These packages are approved for the demo and have no remote service access.
 
 Expo Doctor can report same-version duplicate native peer paths when pnpm installs Expo Router
-and Tamagui peers in separate package contexts. The mobile doctor command tolerates only that
+and React Native Paper peers in separate package contexts. The mobile doctor command tolerates only that
 exact 19-of-20 diagnostic; all other Expo Doctor failures remain blocking.
 
 ## Rejected option

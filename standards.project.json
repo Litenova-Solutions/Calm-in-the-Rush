@@ -34,8 +34,8 @@
       "decision": "docs/decisions/shared-ui-package.md"
     },
     {
-      "ruleId": "UI.SHADCN.001",
-      "decision": "docs/decisions/shared-ui-package.md"
+      "ruleId": "UI.GOVERNANCE.001",
+      "decision": "docs/decisions/frontend-ui-governance.md"
     },
     {
       "ruleId": "DEP.PINS.001",
