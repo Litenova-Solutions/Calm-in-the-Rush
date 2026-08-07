@@ -181,20 +181,32 @@ export default function AdminClient() {
 
   const validateDuration = async (file: File | undefined) => {
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    try {
-      const duration = await new Promise<number>((resolve, reject) => {
-        const video = document.createElement('video');
-        video.preload = 'metadata';
-        video.onloadedmetadata = () => resolve(video.duration);
-        video.onerror = () => reject(new Error('Video metadata could not be read.'));
-        video.src = url;
-      });
-      if (!Number.isFinite(duration) || duration < 5 || duration > 120)
-        throw new Error('Video duration must be between 5 and 120 seconds.');
-    } finally {
-      URL.revokeObjectURL(url);
-    }
+    const duration = await new Promise<number>((resolve, reject) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      const cleanup = () => {
+        video.onloadedmetadata = null;
+        video.onerror = null;
+        video.srcObject = null;
+      };
+      video.onloadedmetadata = () => {
+        const value = video.duration;
+        cleanup();
+        resolve(value);
+      };
+      video.onerror = () => {
+        cleanup();
+        reject(new Error('Video metadata could not be read.'));
+      };
+      try {
+        video.srcObject = file;
+      } catch {
+        cleanup();
+        reject(new Error('Video metadata could not be read.'));
+      }
+    });
+    if (!Number.isFinite(duration) || duration < 5 || duration > 120)
+      throw new Error('Video duration must be between 5 and 120 seconds.');
   };
 
   const save = async (status: CalmScene['status']) => {
