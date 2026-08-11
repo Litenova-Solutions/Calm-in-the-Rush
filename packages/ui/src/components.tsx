@@ -92,12 +92,20 @@ export type BoxProps = Omit<ViewProps, 'style' | 'accessibilityRole' | 'role'> &
   ClassNameProps &
   CalmSemanticProps & { viewStyle?: ViewProps['style'] };
 
-export function Box({ className, viewStyle, accessibilityRole, role, ...props }: BoxProps) {
+export function Box({
+  className,
+  viewStyle,
+  accessibilityElementsHidden,
+  accessibilityRole,
+  role,
+  ...props
+}: BoxProps) {
   if (Platform.OS === 'web') {
     return createClassedWebElement(
       'div',
       {
         ...props,
+        'aria-hidden': accessibilityElementsHidden ? true : undefined,
         accessibilityRole,
         role: role ?? normalizeRole(accessibilityRole),
         style: [styles.webBox, viewStyle],
@@ -109,6 +117,7 @@ export function Box({ className, viewStyle, accessibilityRole, role, ...props }:
   return (
     <NativeViewWithClassName
       {...props}
+      accessibilityElementsHidden={accessibilityElementsHidden}
       accessibilityRole={accessibilityRole}
       role={role ?? normalizeRole(accessibilityRole)}
       className={className}
@@ -396,12 +405,20 @@ export const CardCover = PaperCard.Cover;
 export type ImageProps = Omit<ComponentProps<typeof NativeImage>, 'source' | 'style'> &
   ClassNameProps & { source: string | number; alt: string; imageStyle?: ImageStyle };
 
-export function Image({ source, alt, className, imageStyle, ...props }: ImageProps) {
+export function Image({
+  source,
+  alt,
+  className,
+  imageStyle,
+  accessibilityElementsHidden,
+  ...props
+}: ImageProps) {
   if (Platform.OS === 'web') {
     return createClassedWebElement(
       'img',
       {
         ...props,
+        'aria-hidden': accessibilityElementsHidden ? true : undefined,
         alt,
         accessibilityLabel: alt || undefined,
         accessibilityRole: alt ? 'image' : 'none',
@@ -417,6 +434,7 @@ export function Image({ source, alt, className, imageStyle, ...props }: ImagePro
     <NativeImageWithClassName
       {...props}
       source={imageSource}
+      accessibilityElementsHidden={accessibilityElementsHidden}
       accessibilityLabel={alt || undefined}
       accessibilityRole={alt ? 'image' : 'none'}
       className={className}
@@ -506,6 +524,7 @@ export function SelectField({
           <Button
             tone="secondary"
             icon="chevronDown"
+            className="calm-field-control"
             onPress={() => setVisible(true)}
             accessibilityLabel={`${label}: ${selected}`}
           >
@@ -555,15 +574,15 @@ export function FileInput({
             accept={accept}
             onChange={(event) => onChange(event.currentTarget.files?.[0])}
           />
-          <PaperButton
-            mode="outlined"
-            icon={iconSource('externalLink')}
+          <Button
+            tone="secondary"
+            icon="externalLink"
+            className="calm-field-control"
             onPress={() => document.getElementById(inputId)?.click()}
             accessibilityLabel={`Choose ${label.toLowerCase()}`}
-            style={styles.fileButton}
           >
             Choose file
-          </PaperButton>
+          </Button>
         </>
       ) : (
         <PaperText tone="muted">File selection is available in the browser admin.</PaperText>
@@ -691,14 +710,18 @@ const styles = StyleSheet.create({
   iconButton: { minWidth: 44, minHeight: 44 },
   surface: { overflow: 'hidden' },
   textInput: { minHeight: 56 },
-  fileButton: { minHeight: 44 },
-  sheetWrapper: { justifyContent: 'flex-end' },
+  sheetWrapper:
+    Platform.OS === 'web'
+      ? { alignItems: 'center', justifyContent: 'center', padding: spacing[4] }
+      : { justifyContent: 'flex-end' },
   sheet: {
     width: '100%',
+    maxWidth: Platform.OS === 'web' ? 430 : undefined,
     maxHeight: '82%',
     backgroundColor: colors.warmCanvas,
-    borderTopLeftRadius: radii.lg,
-    borderTopRightRadius: radii.lg,
+    borderRadius: Platform.OS === 'web' ? radii.lg : undefined,
+    borderTopLeftRadius: Platform.OS === 'web' ? undefined : radii.lg,
+    borderTopRightRadius: Platform.OS === 'web' ? undefined : radii.lg,
     padding: spacing[5],
   },
 });

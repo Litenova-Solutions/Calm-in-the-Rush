@@ -107,14 +107,27 @@ a {
   display: inline-flex;
   flex-direction: row;
   align-items: center;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
   gap: var(--calm-space-2);
   font-weight: 700;
   letter-spacing: -0.02em;
   text-decoration: none;
+  white-space: nowrap;
+}
+
+.calm-brand > * {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--calm-space-2);
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 
 .calm-brand-mark {
   display: flex;
+  flex: 0 0 34px;
   width: 34px;
   height: 34px;
   align-items: center;
@@ -249,53 +262,8 @@ a {
   padding: var(--calm-space-16) var(--calm-space-6);
 }
 
-.section > .calm-text + .calm-text,
-.source-card > .calm-text + .calm-text {
+.section > .calm-text + .calm-text {
   margin-top: var(--calm-space-3);
-}
-
-.principles,
-.gallery {
-  display: grid;
-  gap: var(--calm-space-4);
-  margin-top: var(--calm-space-6);
-}
-
-.principles {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.gallery {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.principle,
-.scene-card {
-  min-width: 0;
-}
-
-.principle .calm-text + .calm-text,
-.scene-card .calm-text + .calm-text {
-  margin-top: var(--calm-space-2);
-}
-
-.scene-card-image {
-  width: 100%;
-  aspect-ratio: 9 / 13;
-  object-fit: cover;
-}
-
-.source-panel {
-  padding: var(--calm-space-16) max(var(--calm-space-6), calc((100% - 1180px) / 2));
-  background: var(--calm-sage);
-}
-
-.source-card {
-  max-width: 700px;
-  padding: var(--calm-space-6);
-  border: 1px solid var(--calm-fog);
-  border-radius: var(--calm-radius-md);
-  background: var(--calm-paper-overlay);
 }
 
 .site-footer {
@@ -309,6 +277,12 @@ a {
   margin: 0 auto;
   padding: var(--calm-space-6);
   border-top: 1px solid var(--calm-fog);
+}
+
+.footer-links {
+  justify-content: flex-end;
+  gap: var(--calm-space-4);
+  font-size: 13px;
 }
 
 .page-main {
@@ -498,7 +472,7 @@ a {
 
 .admin-layout {
   display: grid;
-  grid-template-columns: minmax(280px, 0.85fr) minmax(0, 1.35fr);
+  grid-template-columns: minmax(300px, 340px) minmax(0, 1fr);
   align-items: start;
   gap: var(--calm-space-5);
   margin-top: var(--calm-space-5);
@@ -508,12 +482,22 @@ a {
   min-width: 0;
 }
 
+.admin-card .calm-card {
+  border: 1px solid var(--calm-fog);
+  border-radius: var(--calm-radius-md);
+  background: var(--calm-paper);
+  box-shadow: none;
+}
+
 .admin-card .calm-text + .calm-text {
   margin-top: var(--calm-space-2);
 }
 
 .form-actions {
-  margin-top: var(--calm-space-4);
+  justify-content: flex-end;
+  margin-top: var(--calm-space-5);
+  padding-top: var(--calm-space-5);
+  border-top: 1px solid var(--calm-fog);
 }
 
 .admin-list {
@@ -524,8 +508,10 @@ a {
 
 .admin-row {
   display: grid;
-  grid-template-columns: 54px minmax(0, 1fr) auto;
-  align-items: center;
+  grid-template-columns: 54px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: start;
+  row-gap: var(--calm-space-2);
   gap: var(--calm-space-3);
   padding: var(--calm-space-2);
   border: 1px solid var(--calm-fog);
@@ -550,8 +536,20 @@ a {
 }
 
 .admin-row-actions {
+  grid-column: 2;
+  grid-row: 2;
+  justify-content: flex-start;
   flex-wrap: nowrap;
   gap: var(--calm-space-1);
+}
+
+.admin-layout > .admin-card:first-child .form-actions {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.admin-layout > .admin-card:first-child .form-actions .calm-button {
+  width: 100%;
 }
 
 .storage {
@@ -562,7 +560,9 @@ a {
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--calm-space-4);
+  column-gap: var(--calm-space-5);
+  row-gap: var(--calm-space-4);
+  align-items: start;
   margin-top: var(--calm-space-5);
 }
 
@@ -578,7 +578,13 @@ a {
 
 .form-grid .calm-text-input {
   width: 100%;
-  margin-top: var(--calm-space-2);
+  margin-top: 0;
+}
+
+.form-grid .calm-field-control {
+  width: 100%;
+  min-height: 56px;
+  margin-top: 0;
 }
 
 .form-textarea .calm-text-input {
@@ -589,6 +595,11 @@ a {
 .calm-file-field {
   display: grid;
   gap: var(--calm-space-2);
+}
+
+.calm-field > .calm-text,
+.calm-file-field > .calm-text {
+  line-height: 1.35;
 }
 
 .calm-file-input {
@@ -642,11 +653,6 @@ a {
     width: min(72vw, 320px);
   }
 
-  .principles,
-  .gallery {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .admin-layout {
     grid-template-columns: 1fr;
   }
@@ -663,12 +669,24 @@ a {
     padding-left: var(--calm-space-5);
   }
 
-  .calm-brand > .calm-brand-mark + * {
-    display: none;
+  .site-header {
+    gap: var(--calm-space-2);
+  }
+
+  .calm-brand {
+    font-size: 14px;
+  }
+
+  .calm-brand > * {
+    font-size: 14px !important;
   }
 
   .header-nav {
     font-size: 12px;
+  }
+
+  .site-header .requirements-link {
+    display: none;
   }
 
   .header-action {
@@ -676,8 +694,6 @@ a {
     padding-left: var(--calm-space-2);
   }
 
-  .principles,
-  .gallery,
   .form-grid {
     grid-template-columns: 1fr;
   }
@@ -703,10 +719,6 @@ a {
 
   .demo-header {
     padding: var(--calm-space-3) var(--calm-space-4);
-  }
-
-  .demo-brand > .calm-brand-mark + * {
-    display: none;
   }
 
   .admin-row {

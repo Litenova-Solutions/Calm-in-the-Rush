@@ -20,6 +20,7 @@ import {
   CardContent,
   CheckboxField,
   FileInput,
+  Field,
   IconButton,
   Image,
   PaperText,
@@ -545,9 +546,8 @@ function FieldText({
   ...props
 }: ComponentProps<typeof TextInput> & { label: string; className?: string }) {
   return (
-    <Box className={className}>
-      <PaperText variant="labelLarge">{label}</PaperText>
+    <Field label={label} className={className}>
       <TextInput {...props} accessibilityLabel={label} />
-    </Box>
+    </Field>
   );
 }

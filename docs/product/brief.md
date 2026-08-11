@@ -49,9 +49,8 @@ may become `verified` only when the named test evidence is recorded.
 
 - Use the heading `A quiet minute in the middle of everything.`.
 - Show a static lake poster in a phone-shaped preview. Do not request landing video.
-- Link to the demo, this plan, the source repository, privacy, credits, security, AI policy, and license.
-- Show the three principles: real places, no pressure, and private by default.
-- Show the four bundled scenes with concise credits.
+- Link to the demo, this plan, the source repository, privacy, and license.
+- Keep the landing page focused on the header, hero, and compact footer.
 
 ## Demo requirements
 

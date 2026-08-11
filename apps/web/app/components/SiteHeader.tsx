@@ -13,7 +13,12 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
         className="site-brand"
       />
       <Box className="header-nav" accessibilityRole="navigation" aria-label="Primary navigation">
-        <Link href="/requirements" variant="nav" tone={overlay ? 'onDark' : 'default'}>
+        <Link
+          href="/requirements"
+          variant="nav"
+          tone={overlay ? 'onDark' : 'default'}
+          className="requirements-link"
+        >
           Requirements
         </Link>
         <Link

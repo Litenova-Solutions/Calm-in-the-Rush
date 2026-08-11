@@ -20,6 +20,10 @@ test('landing has the calm hierarchy and does not request a video', async ({ pag
   await expect(page.getByRole('link', { name: 'Open the demo' }).first()).toBeVisible();
   await expect(page.getByRole('link', { name: 'Open admin' })).toBeVisible();
   expect(videos).toHaveLength(0);
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+  );
+  expect(overflow).toBe(false);
 });
 
 test('requirements are sourced and admin is excluded from robots', async ({ page }) => {
@@ -80,6 +84,23 @@ test('demo keeps the scene surface quiet and uses image-led controls', async ({ 
   );
   await expect(page.getByRole('button', { name: /Lake McDonald/ })).toBeVisible();
   await expect(page.getByText('Lake McDonald', { exact: true })).toHaveCount(0);
+});
+
+test('scene picker opens as a centered mobile-sized surface on desktop', async ({ page }) => {
+  await page.goto('/demo');
+  await page.getByRole('button', { name: 'Choose a scene' }).click();
+  await expect(page.getByText('Choose a place')).toBeVisible();
+
+  const surface = page.getByTestId('modal-surface');
+  await expect(surface).toBeVisible();
+  const box = await surface.boundingBox();
+  const viewport = page.viewportSize();
+
+  expect(box).not.toBeNull();
+  expect(box?.width ?? 0).toBeLessThanOrEqual(430);
+  expect(box?.width ?? 0).toBeGreaterThanOrEqual(Math.min(320, (viewport?.width ?? 0) - 32));
+  expect(box?.x ?? 0).toBeGreaterThan(0);
+  expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThan(viewport?.width ?? 0);
 });
 
 test('tapping the scene after idle reveals the calm controls', async ({ page }) => {

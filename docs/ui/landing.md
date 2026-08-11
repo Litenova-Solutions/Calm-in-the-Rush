@@ -4,6 +4,7 @@
 
 # Landing page
 
-Use a desktop header with the mark, Requirements link, GitHub link, and `Open the demo` button.
-On narrow screens keep the mark, Requirements, and demo button in the header, and move GitHub to the
-footer. The hero uses a static lake poster. The gallery shows lake, forest, field, and brook credits.
+Use a desktop header with the mark and the `Calm in the Rush` label beside it, a Requirements link,
+GitHub link, and `Open the demo` button. On narrow screens keep the full brand and demo button in the
+header, move the plan, privacy, source, and license links to the footer, and keep the footer compact.
+The landing page contains only the header, hero, and footer. The hero uses a static lake poster.
