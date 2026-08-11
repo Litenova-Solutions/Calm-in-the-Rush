@@ -1,5 +1,4 @@
-import { Link, PaperText } from '@calm/ui';
-
+import { ProseLink, ProseText } from '../components/Prose';
 import { PublicPage } from '../components/PublicPage';
 
 export const metadata = { title: 'Security | Calm in the Rush' };
@@ -11,13 +10,11 @@ export default function SecurityPage() {
       title="Report a concern privately."
       lead="This demo has no server API or remote content write."
     >
-      <PaperText variant="bodyLarge">
+      <ProseText>
         Send vulnerability reports to{' '}
-        <Link href="mailto:info@litenova.solutions" external>
-          info@litenova.solutions
-        </Link>{' '}
-        with a route, reproduction steps, and evidence. Do not post private data in a public issue.
-      </PaperText>
+        <ProseLink href="mailto:info@litenova.solutions">info@litenova.solutions</ProseLink> with a
+        route, reproduction steps, and evidence. Do not post private data in a public issue.
+      </ProseText>
     </PublicPage>
   );
 }

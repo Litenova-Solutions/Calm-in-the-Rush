@@ -1,39 +1,42 @@
-import { Box, Brand, ButtonLink, Link, PaperText } from '@calm/ui';
+import Link from 'next/link';
 
-export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
+import { buttonVariants } from '@/components/ui/button';
+
+import { CalmMark } from './CalmMark';
+
+const externalRepository = 'https://github.com/Litenova-Solutions/Calm-in-the-Rush';
+
+export function SiteHeader() {
   return (
-    <Box
-      className={overlay ? 'site-header site-header-overlay' : 'site-header'}
-      accessibilityRole="banner"
-    >
-      <Brand
-        href="/"
-        label="Calm in the Rush"
-        tone={overlay ? 'onDark' : 'default'}
-        className="site-brand"
-      />
-      <Box className="header-nav" accessibilityRole="navigation" aria-label="Primary navigation">
+    <header className="border-b border-border">
+      <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4">
         <Link
-          href="/requirements"
-          variant="nav"
-          tone={overlay ? 'onDark' : 'default'}
-          className="requirements-link"
+          href="/"
+          className="flex items-center gap-2 rounded-md font-medium focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
         >
-          Requirements
+          <CalmMark />
+          <span>Calm in the Rush</span>
         </Link>
-        <Link
-          href="https://github.com/Litenova-Solutions/Calm-in-the-Rush"
-          external
-          variant="nav"
-          tone={overlay ? 'onDark' : 'default'}
-          className="github-link"
+        <nav
+          aria-label="Primary navigation"
+          className="flex flex-wrap items-center justify-end gap-1"
         >
-          GitHub
-        </Link>
-        <ButtonLink href="/demo" tone="primary" className="header-action">
-          Open the demo
-        </ButtonLink>
-      </Box>
-    </Box>
+          <Link href="/requirements" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
+            Requirements
+          </Link>
+          <a
+            href={externalRepository}
+            rel="noreferrer noopener"
+            target="_blank"
+            className={buttonVariants({ variant: 'ghost', size: 'sm' })}
+          >
+            GitHub
+          </a>
+          <Link href="/demo" className={buttonVariants({ size: 'sm' })}>
+            Open the demo
+          </Link>
+        </nav>
+      </div>
+    </header>
   );
 }

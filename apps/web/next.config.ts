@@ -1,4 +1,3 @@
-import path from 'node:path';
 import type { NextConfig } from 'next';
 
 const securityHeaders = [
@@ -15,30 +14,9 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   devIndicators: false,
-  transpilePackages: [
-    '@calm/content',
-    '@calm/experience',
-    '@calm/ui',
-    'react-native-paper',
-    'react-native-safe-area-context',
-  ],
+  transpilePackages: ['@calm/content', '@calm/experience'],
   experimental: {
     externalDir: true,
-  },
-  webpack(config) {
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      'react-native$': 'react-native-web',
-      'lucide-react-native$': 'lucide-react',
-      '@react-native-vector-icons/material-design-icons$': false,
-      '@expo/vector-icons/MaterialCommunityIcons$': false,
-      'react-native-vector-icons/MaterialCommunityIcons$': false,
-      'react-native-safe-area-context$': path.resolve(
-        __dirname,
-        '../../packages/ui/src/safe-area-context.web.tsx',
-      ),
-    };
-    return config;
   },
   async headers() {
     return [

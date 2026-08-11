@@ -11,6 +11,12 @@ A person opens `/admin` in a browser.
 ## Rules
 
 - The route has no authentication and is not a security boundary.
+- A scene is created from a title and one MP4 file. There is no other input.
+- The cover is the first frame of the uploaded video. It is derived, never uploaded separately.
+- The MP4 must be between 5 and 120 seconds and no larger than 50 MB. The file is validated when it is
+  chosen, before any write.
+- A locally uploaded scene records local provenance and a creator-owned license. It has no source URL
+  because there is no third-party source to cite.
 - First edit clones the complete seed catalog to IndexedDB.
 - New blobs are stored before scene metadata is committed.
 - A catalog must retain one published scene.

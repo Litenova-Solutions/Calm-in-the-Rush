@@ -1,0 +1,79 @@
+{
+  "$schema": "../../standards/schemas/ui-page.schema.json",
+  "schemaVersion": 1,
+  "page": "web.landing",
+  "profile": "public-light",
+  "shell": "public-shell/default",
+  "regions": [
+    {
+      "id": "header",
+      "pattern": "site-header/default",
+      "components": [
+        "button"
+      ],
+      "order": 1,
+      "contentLimits": "One brand link and three navigation targets.",
+      "overflow": "Navigation wraps to a second line on narrow viewports and stays right aligned."
+    },
+    {
+      "id": "hero",
+      "pattern": "hero/default",
+      "components": [
+        "button"
+      ],
+      "order": 2,
+      "contentLimits": "One eyebrow, one h1 under 60 characters, one lead under 160 characters, three actions, and one phone-framed still of the demo with its photograph credit.",
+      "overflow": "Actions wrap. The phone frame shrinks to the column width and never exceeds the phone container token; the credit line wraps beneath it."
+    },
+    {
+      "id": "footer",
+      "pattern": "site-footer/default",
+      "components": [
+        "button"
+      ],
+      "order": 3,
+      "contentLimits": "One wordmark and five links.",
+      "overflow": "Links wrap with row and column gaps."
+    }
+  ],
+  "states": [
+    "ready",
+    "not-found"
+  ],
+  "initial": {
+    "scroll": "top",
+    "focus": "body"
+  },
+  "responsive": {
+    "compact": "Hero stacks to one column with the poster below the copy, and navigation wraps.",
+    "wide": "Hero is a two-column grid with the poster beside the copy."
+  },
+  "focus": {
+    "order": [
+      "header-brand",
+      "header-navigation",
+      "hero-actions",
+      "footer-navigation"
+    ],
+    "onOpen": "No overlay on this route.",
+    "onClose": "No overlay on this route.",
+    "onError": "Not applicable; the route has no form."
+  },
+  "accessibility": {
+    "landmarks": [
+      "banner",
+      "navigation",
+      "main",
+      "contentinfo"
+    ],
+    "headings": "One h1 for the product promise. No h2 on this route.",
+    "labels": "Every action is a link with visible text. The brand mark and the phone frame furniture are decorative and hidden. The hero photograph has descriptive alternative text and a visible credit with license and source links.",
+    "statusAnnouncements": "None; the route is static."
+  },
+  "evidence": [
+    "UI-LANDING-READY",
+    "UI-LANDING-INITIAL",
+    "UI-LANDING-KEYBOARD",
+    "UI-WEB-VISUAL"
+  ]
+}

@@ -1,30 +1,41 @@
-import { Box, Link, PaperText } from '@calm/ui';
+import Link from 'next/link';
+
+const externalRepository = 'https://github.com/Litenova-Solutions/Calm-in-the-Rush';
+
+const linkClass =
+  'rounded-md text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none';
 
 export function SiteFooter() {
   return (
-    <Box className="site-footer" accessibilityRole="contentinfo">
-      <PaperText tone="muted" variant="bodySmall">
-        Calm in the Rush
-      </PaperText>
-      <Box className="footer-links" accessibilityRole="navigation" aria-label="Footer navigation">
-        <Link href="/requirements" variant="nav" tone="muted">
-          Requirements
-        </Link>
-        <Link href="/privacy" variant="nav" tone="muted">
-          Privacy
-        </Link>
-        <Link
-          href="https://github.com/Litenova-Solutions/Calm-in-the-Rush"
-          external
-          variant="nav"
-          tone="muted"
+    <footer className="mt-auto border-t border-border">
+      <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-6">
+        <p className="text-sm text-muted-foreground">Calm in the Rush</p>
+        <nav
+          aria-label="Footer navigation"
+          className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm"
         >
-          GitHub
-        </Link>
-        <Link href="/license" variant="nav" tone="muted">
-          License
-        </Link>
-      </Box>
-    </Box>
+          <Link href="/requirements" className={linkClass}>
+            Requirements
+          </Link>
+          <Link href="/privacy" className={linkClass}>
+            Privacy
+          </Link>
+          <Link href="/credits" className={linkClass}>
+            Credits
+          </Link>
+          <a
+            href={externalRepository}
+            rel="noreferrer noopener"
+            target="_blank"
+            className={linkClass}
+          >
+            GitHub
+          </a>
+          <Link href="/license" className={linkClass}>
+            License
+          </Link>
+        </nav>
+      </div>
+    </footer>
   );
 }

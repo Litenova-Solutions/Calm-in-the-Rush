@@ -1,7 +1,13 @@
 import type { Metadata } from 'next';
-import { CalmProvider } from '@calm/ui';
+import { Geist, Geist_Mono } from 'next/font/google';
 
+import { cn } from '@/lib/utils';
+
+import { ThemeProvider } from './components/ThemeProvider';
 import './globals.css';
+
+const fontSans = Geist({ subsets: ['latin'], variable: '--font-sans' });
+const fontMono = Geist_Mono({ subsets: ['latin'], variable: '--font-mono' });
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://calmintherush.org'),
@@ -18,9 +24,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body>
-        <CalmProvider>{children}</CalmProvider>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={cn('antialiased', fontSans.variable, fontMono.variable, 'font-sans')}
+    >
+      <body className="min-h-dvh bg-background text-foreground">
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );

@@ -1,5 +1,4 @@
-import { Link, PaperText } from '@calm/ui';
-
+import { ProseLink, ProseText } from '../components/Prose';
 import { PublicPage } from '../components/PublicPage';
 
 export const metadata = { title: 'AI policy | Calm in the Rush' };
@@ -11,17 +10,16 @@ export default function AiPolicyPage() {
       title="Assistance needs evidence."
       lead="AI-assisted work follows the same review, license, security, and test requirements as human-written work."
     >
-      <PaperText variant="bodyLarge">
+      <ProseText>
         Material AI assistance must be disclosed. Do not submit secrets, private user information,
         or confidential source material to AI services. AI-generated media requires provenance and
         license evidence. Fabricated citations and test results are prohibited.
-      </PaperText>
-      <Link
-        href="https://github.com/Litenova-Solutions/Calm-in-the-Rush/blob/main/AI_POLICY.md"
-        external
-      >
-        Read the full policy.
-      </Link>
+      </ProseText>
+      <ProseText>
+        <ProseLink href="https://github.com/Litenova-Solutions/Calm-in-the-Rush/blob/main/AI_POLICY.md">
+          Read the full policy.
+        </ProseLink>
+      </ProseText>
     </PublicPage>
   );
 }

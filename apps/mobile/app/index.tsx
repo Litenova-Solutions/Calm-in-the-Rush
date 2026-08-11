@@ -7,9 +7,9 @@ import {
 } from '@expo-google-fonts/manrope';
 import { resolveBundledMedia } from '@calm/content/media';
 import { seedCatalog, sortPublishedScenes } from '@calm/content';
-import { CalmExperience } from '@calm/experience';
 import { shareMoment } from '@calm/experience/share';
 import { ActivityIndicator, PaperText, Screen, Stack } from '@calm/ui';
+import { CalmExperience } from '../components/CalmExperience';
 import { NativePlayer } from '../components/NativePlayer';
 
 export default function HomeScreen() {

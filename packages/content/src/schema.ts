@@ -66,7 +66,9 @@ const httpUrl = z
 
 export const attributionSchema = z.object({
   creator: z.string().trim().min(1).max(120),
-  sourceUrl: httpUrl,
+  // A scene uploaded through the local admin has no third-party source, and an
+  // invented URL would misstate its provenance.
+  sourceUrl: httpUrl.optional(),
   licenseId: licenseIdSchema,
   licenseUrl: httpUrl,
   changesMade: z.string().trim().min(1).max(500),

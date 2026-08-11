@@ -17,3 +17,6 @@ apps/mobile/.expo/
 !.env.example
 .DS_Store
 *.log
+
+# Local codebase-context cache
+.fuse/

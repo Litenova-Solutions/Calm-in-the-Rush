@@ -1,52 +1,47 @@
-import { Box, ButtonLink, Image, PaperText, Screen } from '@calm/ui';
+import Link from 'next/link';
 
+import { buttonVariants } from '@/components/ui/button';
+
+import { PhonePreview } from './components/PhonePreview';
 import { SiteFooter } from './components/SiteFooter';
 import { SiteHeader } from './components/SiteHeader';
 
-const poster = (id: string) => `/media/scenes/${id}/poster.jpg`;
-
 export default function LandingPage() {
   return (
-    <Screen className="site-shell">
+    <div className="flex min-h-dvh flex-col">
       <SiteHeader />
-      <Box accessibilityRole="main">
-        <Box className="hero">
-          <Box className="hero-copy-block">
-            <PaperText variant="labelLarge" tone="muted" className="eyebrow">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-12">
+        <div className="grid items-center gap-12 lg:grid-cols-2">
+          <div className="flex flex-col gap-5">
+            <p className="text-sm font-medium tracking-wide text-muted-foreground uppercase">
               Calm, without a checklist.
-            </PaperText>
-            <PaperText
-              variant="displayLarge"
-              accessibilityRole="header"
-              accessibilityLevel={1}
-              className="hero-title"
-            >
+            </p>
+            <h1 className="text-4xl font-normal tracking-tight text-balance sm:text-5xl">
               A quiet minute in the middle of everything.
-            </PaperText>
-            <PaperText variant="bodyLarge" tone="muted" className="hero-copy">
+            </h1>
+            <p className="max-w-xl text-lg text-muted-foreground">
               Open a real place and stay as long as you like. No account. No streak. Nothing to
               finish.
-            </PaperText>
-            <Box className="actions">
-              <ButtonLink href="/demo">Open the demo</ButtonLink>
-              <ButtonLink href="/requirements" tone="secondary">
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <Link href="/demo" className={buttonVariants({ size: 'lg' })}>
+                Open the demo
+              </Link>
+              <Link
+                href="/requirements"
+                className={buttonVariants({ variant: 'outline', size: 'lg' })}
+              >
                 Read the plan
-              </ButtonLink>
-              <ButtonLink href="/admin" tone="secondary">
+              </Link>
+              <Link href="/admin" className={buttonVariants({ variant: 'ghost', size: 'lg' })}>
                 Open admin
-              </ButtonLink>
-            </Box>
-          </Box>
-          <Box className="phone-preview">
-            <Image
-              source={poster('lake')}
-              alt="Mist above Lake McDonald"
-              className="phone-preview-image"
-            />
-          </Box>
-        </Box>
-      </Box>
+              </Link>
+            </div>
+          </div>
+          <PhonePreview />
+        </div>
+      </main>
       <SiteFooter />
-    </Screen>
+    </div>
   );
 }

@@ -5,7 +5,12 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   resolve: {
     alias: {
-      'react-native': resolve(import.meta.dirname, '../../apps/web/node_modules/react-native-web'),
+      // The web target of the native package resolves through react-native-web,
+      // which now lives with the native application rather than the web one.
+      'react-native': resolve(
+        import.meta.dirname,
+        '../../apps/mobile/node_modules/react-native-web',
+      ),
     },
   },
   test: {

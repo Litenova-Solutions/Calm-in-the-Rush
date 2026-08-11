@@ -1,35 +1,36 @@
-// Client boundary: the admin owns IndexedDB, file selection, and browser confirmation dialogs.
+// Client boundary: the admin owns IndexedDB, file selection, cover capture, and
+// confirmation dialogs.
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import type { ComponentProps } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { ArrowDown, ArrowUp, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-react';
 import {
   getLicenseUrl,
-  licenseDefinitions,
   seedCatalog,
   type CalmScene,
-  type LicenseId,
   type MediaRef,
   type SceneCatalog,
 } from '@calm/content';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  CheckboxField,
-  FileInput,
-  Field,
-  IconButton,
-  Image,
-  PaperText,
-  Screen,
-  SelectField,
-  StatusMessage,
-  TextInput,
-  ButtonLink,
-} from '@calm/ui';
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
 import { BrowserSceneRepository, type StorageReport } from '../../lib/content/browser-repository';
 
@@ -38,16 +39,25 @@ const WebExperience = dynamic(
   { ssr: false },
 );
 
+const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
+const MIN_SECONDS = 5;
+const MAX_SECONDS = 120;
+
+/**
+ * A locally uploaded scene has no third-party source, so its provenance says so
+ * rather than inventing a creator or a source URL.
+ */
+const localProvenance = {
+  creator: 'Uploaded in this browser',
+  licenseId: 'creator-owned' as const,
+  changesMade: 'Uploaded through the local admin. The cover is the first frame of the video.',
+};
+
+const localSoundLabel = 'Original audio from the uploaded video';
+
 type FormState = {
   id: string;
   title: string;
-  location: string;
-  description: string;
-  soundLabel: string;
-  creator: string;
-  sourceUrl: string;
-  licenseId: LicenseId;
-  changesMade: string;
   status: CalmScene['status'];
   sortOrder: number;
   video: MediaRef | null;
@@ -58,14 +68,6 @@ type FormState = {
 const blankForm = (sortOrder = 4): FormState => ({
   id: '',
   title: '',
-  location: '',
-  description: '',
-  soundLabel: '',
-  creator: '',
-  sourceUrl: '',
-  licenseId: 'cc-by-4.0',
-  changesMade:
-    'Trimmed, cropped to portrait, transcoded to H.264 with AAC audio, and used to derive a poster frame.',
   status: 'draft',
   sortOrder,
   video: null,
@@ -76,13 +78,6 @@ function formFromScene(scene: CalmScene): FormState {
   return {
     id: scene.id,
     title: scene.title,
-    location: scene.location,
-    description: scene.description,
-    soundLabel: scene.soundLabel,
-    creator: scene.attribution.creator,
-    sourceUrl: scene.attribution.sourceUrl,
-    licenseId: scene.attribution.licenseId,
-    changesMade: scene.attribution.changesMade,
     status: scene.status,
     sortOrder: scene.sortOrder,
     video: scene.video,
@@ -120,17 +115,75 @@ function recoverableMessage(caught: unknown, fallback: string): string {
   return caught instanceof Error ? caught.message : fallback;
 }
 
+/** Loads the video once and returns its duration plus the first decoded frame. */
+async function readVideo(file: File): Promise<{ duration: number; cover: File }> {
+  const url = URL.createObjectURL(file);
+  const video = document.createElement('video');
+  video.muted = true;
+  video.playsInline = true;
+  video.preload = 'auto';
+  video.src = url;
+
+  try {
+    await new Promise<void>((resolve, reject) => {
+      video.onloadeddata = () => resolve();
+      video.onerror = () => reject(new Error('The video could not be read.'));
+    });
+
+    const duration = video.duration;
+    if (!Number.isFinite(duration) || duration < MIN_SECONDS || duration > MAX_SECONDS)
+      throw new Error(`Video duration must be between ${MIN_SECONDS} and ${MAX_SECONDS} seconds.`);
+
+    // Seek a fraction in so the decoder has a painted frame to copy.
+    await new Promise<void>((resolve, reject) => {
+      video.onseeked = () => resolve();
+      video.onerror = () => reject(new Error('The video could not be read.'));
+      video.currentTime = Math.min(0.1, duration / 2);
+    });
+
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    if (!canvas.width || !canvas.height)
+      throw new Error('The video has no picture to use as a cover.');
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('The cover image could not be created.');
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob((result) => resolve(result), 'image/jpeg', 0.82),
+    );
+    if (!blob) throw new Error('The cover image could not be created.');
+
+    const baseName = file.name.replace(/\.[^.]+$/, '') || 'scene';
+    return {
+      duration,
+      cover: new File([blob], `${baseName}-cover.jpg`, { type: 'image/jpeg' }),
+    };
+  } finally {
+    video.removeAttribute('src');
+    video.load();
+    URL.revokeObjectURL(url);
+  }
+}
+
 export default function AdminClient() {
   const repo = useMemo(() => new BrowserSceneRepository(), []);
   const [catalog, setCatalog] = useState<SceneCatalog>(seedCatalog);
   const [form, setForm] = useState<FormState>(blankForm());
   const [videoFile, setVideoFile] = useState<File | undefined>();
-  const [posterFile, setPosterFile] = useState<File | undefined>();
-  const [audioConfirmed, setAudioConfirmed] = useState(false);
+  const [coverPreview, setCoverPreview] = useState<string>('');
+  const [coverFile, setCoverFile] = useState<File | undefined>();
+  const [busy, setBusy] = useState(false);
+  // The catalog is read on the client, so saving before it arrives would compute
+  // an order from stale data.
+  const [ready, setReady] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [storage, setStorage] = useState<StorageReport>({ usedBytes: 0, quotaBytes: null });
   const [posterUrls, setPosterUrls] = useState<Record<string, string>>({});
+  const [pendingDelete, setPendingDelete] = useState<CalmScene | null>(null);
+  const [resetOpen, setResetOpen] = useState(false);
 
   const refresh = async () => {
     const next = await repo.readCatalog();
@@ -146,6 +199,7 @@ export default function AdminClient() {
     const selected = form.id ? next.scenes.find((scene) => scene.id === form.id) : undefined;
     if (selected) setForm(formFromScene(selected));
     setStorage(await repo.getStorageReport());
+    setReady(true);
   };
 
   useEffect(() => {
@@ -157,14 +211,25 @@ export default function AdminClient() {
     };
   }, [repo]);
 
-  const update = <K extends keyof FormState>(key: K, value: FormState[K]) =>
-    setForm((current) => ({ ...current, [key]: value }));
+  useEffect(
+    () => () => {
+      if (coverPreview) URL.revokeObjectURL(coverPreview);
+    },
+    [coverPreview],
+  );
+
+  const clearUpload = () => {
+    setVideoFile(undefined);
+    setCoverFile(undefined);
+    setCoverPreview((current) => {
+      if (current) URL.revokeObjectURL(current);
+      return '';
+    });
+  };
 
   const selectScene = (scene: CalmScene) => {
     setForm(formFromScene(scene));
-    setVideoFile(undefined);
-    setPosterFile(undefined);
-    setAudioConfirmed(false);
+    clearUpload();
     setMessage('');
     setError('');
   };
@@ -175,105 +240,63 @@ export default function AdminClient() {
         catalog.scenes.length ? Math.max(...catalog.scenes.map((scene) => scene.sortOrder)) + 1 : 0,
       ),
     );
-    setVideoFile(undefined);
-    setPosterFile(undefined);
-    setAudioConfirmed(false);
+    clearUpload();
     setMessage('');
     setError('');
   };
 
-  const validateFile = (file: File | undefined, type: 'video' | 'poster') => {
+  /** Validates the file, then derives the cover from its first frame. */
+  const chooseVideo = async (file: File | undefined) => {
+    setMessage('');
+    setError('');
+    clearUpload();
     if (!file) return;
-    const max = type === 'video' ? 50 * 1024 * 1024 : 5 * 1024 * 1024;
-    const accepted =
-      type === 'video'
-        ? file.type === 'video/mp4'
-        : ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
-    if (!accepted)
-      throw new Error(
-        type === 'video' ? 'Video must be an MP4 file.' : 'Poster must be JPEG, PNG, or WebP.',
-      );
-    if (file.size > max)
-      throw new Error(`${type === 'video' ? 'Video' : 'Poster'} is larger than the allowed limit.`);
-  };
-
-  const validateDuration = async (file: File | undefined) => {
-    if (!file) return;
-    const duration = await new Promise<number>((resolve, reject) => {
-      const video = document.createElement('video');
-      video.preload = 'metadata';
-      const cleanup = () => {
-        video.onloadedmetadata = null;
-        video.onerror = null;
-        video.srcObject = null;
-      };
-      video.onloadedmetadata = () => {
-        const value = video.duration;
-        cleanup();
-        resolve(value);
-      };
-      video.onerror = () => {
-        cleanup();
-        reject(new Error('Video metadata could not be read.'));
-      };
-      try {
-        video.srcObject = file;
-      } catch {
-        cleanup();
-        reject(new Error('Video metadata could not be read.'));
-      }
-    });
-    if (!Number.isFinite(duration) || duration < 5 || duration > 120)
-      throw new Error('Video duration must be between 5 and 120 seconds.');
+    setBusy(true);
+    try {
+      if (file.type !== 'video/mp4') throw new Error('Video must be an MP4 file.');
+      if (file.size > MAX_VIDEO_BYTES)
+        throw new Error('Video is larger than the allowed limit of 50 MB.');
+      const { cover } = await readVideo(file);
+      setVideoFile(file);
+      setCoverFile(cover);
+      setCoverPreview(URL.createObjectURL(cover));
+    } catch (caught) {
+      setError(recoverableMessage(caught, 'The video could not be read. Try another file.'));
+    } finally {
+      setBusy(false);
+    }
   };
 
   const save = async (status: CalmScene['status']) => {
     setError('');
     setMessage('');
+    setBusy(true);
     try {
-      validateFile(videoFile, 'video');
-      validateFile(posterFile, 'poster');
-      await validateDuration(videoFile);
-      if ((videoFile || !form.video) && !audioConfirmed)
-        throw new Error('Confirm that the uploaded video contains embedded audio.');
       if (!form.title.trim() || form.title.length > 80)
         throw new Error('Title must be between 1 and 80 characters.');
-      if (
-        form.location.length > 100 ||
-        form.description.length > 240 ||
-        form.soundLabel.length < 1 ||
-        form.soundLabel.length > 80
-      )
-        throw new Error('Location, description, and sound label exceed their limits.');
-      if (!form.creator.trim() || form.creator.length > 120)
-        throw new Error('Creator must be between 1 and 120 characters.');
-      const source = new URL(form.sourceUrl);
-      if (!['http:', 'https:'].includes(source.protocol))
-        throw new Error('Source URL must use HTTP or HTTPS.');
       const video = videoFile ? makeLocalRef(videoFile) : form.video;
-      const poster = posterFile ? makeLocalRef(posterFile) : form.poster;
-      if (!video || !poster) throw new Error('A video and poster are required for every scene.');
+      const poster = coverFile ? makeLocalRef(coverFile) : form.poster;
+      if (!video || !poster) throw new Error('An MP4 video is required for every scene.');
       await repo.saveScene(
         {
           id: form.id || undefined,
           title: form.title,
-          location: form.location,
-          description: form.description,
-          soundLabel: form.soundLabel,
+          location: '',
+          description: '',
+          soundLabel: localSoundLabel,
           video,
           poster,
           attribution: {
-            creator: form.creator,
-            sourceUrl: form.sourceUrl,
-            licenseId: form.licenseId,
-            licenseUrl: getLicenseUrl(form.licenseId),
-            changesMade: form.changesMade,
+            creator: localProvenance.creator,
+            licenseId: localProvenance.licenseId,
+            licenseUrl: getLicenseUrl(localProvenance.licenseId),
+            changesMade: localProvenance.changesMade,
           },
           status,
           sortOrder: form.sortOrder,
           createdAt: form.createdAt,
         },
-        { video: videoFile, poster: posterFile },
+        { video: videoFile, poster: coverFile },
       );
       setMessage(
         status === 'published'
@@ -281,16 +304,16 @@ export default function AdminClient() {
           : 'Draft saved in this browser.',
       );
       await refresh();
-      setVideoFile(undefined);
-      setPosterFile(undefined);
-      setAudioConfirmed(false);
+      clearUpload();
     } catch (caught) {
       setError(recoverableMessage(caught, 'The scene could not be saved. Try again.'));
+    } finally {
+      setBusy(false);
     }
   };
 
   const remove = async (scene: CalmScene) => {
-    if (!window.confirm(`Delete ${scene.title} from this browser?`)) return;
+    setPendingDelete(null);
     try {
       await repo.removeScene(scene.id);
       setMessage('Scene deleted from this browser.');
@@ -314,10 +337,11 @@ export default function AdminClient() {
   };
 
   const reset = async () => {
-    if (!window.confirm('Reset local edits and restore the four bundled scenes?')) return;
+    setResetOpen(false);
     try {
       await repo.reset();
       setForm(blankForm());
+      clearUpload();
       setMessage('Local edits were reset.');
       await refresh();
     } catch (caught) {
@@ -325,229 +349,302 @@ export default function AdminClient() {
     }
   };
 
-  const licenseOptions = Object.entries(licenseDefinitions).map(([value, definition]) => ({
-    value,
-    label: definition.label,
-  }));
+  const orderedScenes = [...catalog.scenes].sort(
+    (a, b) => a.sortOrder - b.sortOrder || a.title.localeCompare(b.title),
+  );
+
+  const existingCover =
+    form.video && !coverPreview
+      ? form.poster?.kind === 'bundled'
+        ? `/media/scenes/${form.id}/poster.jpg`
+        : (posterUrls[form.id] ?? '')
+      : '';
 
   return (
-    <Screen className="admin-page">
-      <Box className="admin-header">
-        <ButtonLink href="/">Back home</ButtonLink>
-        <ButtonLink href="/demo" tone="secondary">
-          Open demo
-        </ButtonLink>
-      </Box>
-      <Box className="admin-content" accessibilityRole="main">
-        <PaperText variant="labelLarge" tone="muted" className="eyebrow">
-          Local administration
-        </PaperText>
-        <PaperText variant="displaySmall" accessibilityRole="header" accessibilityLevel={1}>
-          Keep the scene shelf close.
-        </PaperText>
-        <PaperText variant="bodyLarge" tone="muted" className="section-lead">
-          Add a private scene for this browser, preview it in the real phone surface, and decide
-          whether it stays a draft or appears in the demo.
-        </PaperText>
-        <StatusMessage>
-          Local demo admin. Changes stay in this browser and are not published to other people.
-        </StatusMessage>
-        <Box className="admin-layout">
-          <Card className="admin-card">
-            <CardContent>
-              <PaperText variant="headlineSmall" accessibilityRole="header" accessibilityLevel={2}>
-                Scene catalog
-              </PaperText>
-              <Box className="form-actions">
-                <Button icon="plus" onPress={newScene}>
+    <div className="flex min-h-dvh flex-col">
+      <header className="border-b border-border">
+        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-3">
+          <p className="text-sm font-medium">Local administration</p>
+          <nav aria-label="Administration navigation" className="flex items-center gap-1">
+            <Link href="/" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
+              Back home
+            </Link>
+            <Link href="/demo" className={buttonVariants({ variant: 'outline', size: 'sm' })}>
+              Open demo
+            </Link>
+          </nav>
+        </div>
+      </header>
+
+      <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-normal tracking-tight sm:text-3xl">
+            Keep the scene shelf close.
+          </h1>
+          <p className="max-w-2xl text-muted-foreground">
+            Give a scene a title and an MP4. The cover is taken from the first frame of the video.
+          </p>
+        </div>
+
+        <Alert className="mt-6">
+          <AlertDescription>
+            Local demo admin. Changes stay in this browser and are not published to other people.
+          </AlertDescription>
+        </Alert>
+
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                <h2>Scene catalog</h2>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" onClick={newScene}>
+                  <Plus data-icon="inline-start" />
                   Add scene
                 </Button>
-                <Button icon="reset" tone="secondary" onPress={reset}>
+                <Button size="sm" variant="outline" onClick={() => setResetOpen(true)}>
+                  <RotateCcw data-icon="inline-start" />
                   Reset local edits
                 </Button>
-              </Box>
-              <Box className="admin-list">
-                {[...catalog.scenes]
-                  .sort((a, b) => a.sortOrder - b.sortOrder || a.title.localeCompare(b.title))
-                  .map((scene, index, list) => (
-                    <Box
-                      className={`admin-row ${form.id === scene.id ? 'admin-row-selected' : ''}`}
-                      key={scene.id}
-                    >
-                      <Image
-                        source={
-                          scene.poster.kind === 'bundled'
-                            ? `/media/scenes/${scene.id}/poster.jpg`
-                            : (posterUrls[scene.id] ?? '')
-                        }
-                        alt=""
-                        className="admin-row-image"
-                      />
-                      <Box className="admin-row-copy">
-                        <PaperText variant="titleSmall">{scene.title}</PaperText>
-                        <PaperText variant="bodySmall" tone="muted">
-                          {scene.status} - order {scene.sortOrder + 1}
-                        </PaperText>
-                      </Box>
-                      <Box className="admin-row-actions">
-                        <IconButton
-                          icon="arrowUp"
-                          accessibilityLabel={`Move ${scene.title} up`}
-                          disabled={index === 0}
-                          onPress={() => void move(scene, -1)}
+              </div>
+
+              <ul className="flex flex-col gap-2">
+                {orderedScenes.map((scene, index) => (
+                  <li
+                    key={scene.id}
+                    className={cn(
+                      'flex items-center gap-3 rounded-md border p-2',
+                      form.id === scene.id ? 'border-primary bg-muted' : 'border-border',
+                    )}
+                    aria-current={form.id === scene.id ? 'true' : undefined}
+                  >
+                    <div className="relative size-12 shrink-0 overflow-hidden rounded-md bg-muted">
+                      {scene.poster.kind === 'bundled' || posterUrls[scene.id] ? (
+                        <Image
+                          src={
+                            scene.poster.kind === 'bundled'
+                              ? `/media/scenes/${scene.id}/poster.jpg`
+                              : posterUrls[scene.id]
+                          }
+                          alt=""
+                          fill
+                          sizes="48px"
+                          unoptimized
+                          className="object-cover"
                         />
-                        <IconButton
-                          icon="arrowDown"
-                          accessibilityLabel={`Move ${scene.title} down`}
-                          disabled={index === list.length - 1}
-                          onPress={() => void move(scene, 1)}
-                        />
-                        <IconButton
-                          icon="edit"
-                          accessibilityLabel={`Edit ${scene.title}`}
-                          onPress={() => selectScene(scene)}
-                        />
-                        <IconButton
-                          icon="trash"
-                          accessibilityLabel={`Delete ${scene.title}`}
-                          onPress={() => void remove(scene)}
-                        />
-                      </Box>
-                    </Box>
-                  ))}
-              </Box>
-              <PaperText variant="bodySmall" tone="muted" className="storage">
+                      ) : null}
+                    </div>
+                    <div className="flex min-w-0 flex-1 flex-col gap-1">
+                      <span className="truncate text-sm font-medium">{scene.title}</span>
+                      <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Badge variant={scene.status === 'published' ? 'default' : 'secondary'}>
+                          {scene.status}
+                        </Badge>
+                        order {scene.sortOrder + 1}
+                      </span>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={`Move ${scene.title} up`}
+                        disabled={index === 0}
+                        onClick={() => void move(scene, -1)}
+                      >
+                        <ArrowUp />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={`Move ${scene.title} down`}
+                        disabled={index === orderedScenes.length - 1}
+                        onClick={() => void move(scene, 1)}
+                      >
+                        <ArrowDown />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={`Edit ${scene.title}`}
+                        onClick={() => selectScene(scene)}
+                      >
+                        <Pencil />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="icon-sm"
+                        aria-label={`Delete ${scene.title}`}
+                        onClick={() => setPendingDelete(scene)}
+                      >
+                        <Trash2 />
+                      </Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+
+              <p className="text-sm text-muted-foreground">
                 Used storage: {bytes(storage.usedBytes)}. Estimated quota:{' '}
                 {bytes(storage.quotaBytes)}. Private mode or site-data clearing may remove edits.
-              </PaperText>
+              </p>
             </CardContent>
           </Card>
-          <Card className="admin-card">
-            <CardContent>
-              <PaperText variant="headlineSmall" accessibilityRole="header" accessibilityLevel={2}>
-                {form.id ? 'Edit scene' : 'Add scene'}
-              </PaperText>
-              <Box className="form-grid">
-                <FieldText
-                  label="Title"
+
+          <Card data-ready={ready ? 'true' : undefined}>
+            <CardHeader>
+              <CardTitle>
+                <h2>{form.id ? 'Edit scene' : 'Add scene'}</h2>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              <Field>
+                <FieldLabel htmlFor="scene-title">Title</FieldLabel>
+                <Input
+                  id="scene-title"
                   value={form.title}
                   maxLength={80}
-                  onChangeText={(value) => update('title', value)}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, title: event.target.value }))
+                  }
                 />
-                <FieldText
-                  label="Location"
-                  value={form.location}
-                  maxLength={100}
-                  onChangeText={(value) => update('location', value)}
-                />
-                <FieldText
-                  label="Description"
-                  value={form.description}
-                  maxLength={240}
-                  multiline
-                  className="form-field-full form-textarea"
-                  onChangeText={(value) => update('description', value)}
-                />
-                <FieldText
-                  label="Sound label"
-                  value={form.soundLabel}
-                  maxLength={80}
-                  onChangeText={(value) => update('soundLabel', value)}
-                />
-                <FieldText
-                  label="Creator"
-                  value={form.creator}
-                  maxLength={120}
-                  onChangeText={(value) => update('creator', value)}
-                />
-                <FieldText
-                  label="Source URL"
-                  value={form.sourceUrl}
-                  keyboardType="url"
-                  className="form-field-full"
-                  onChangeText={(value) => update('sourceUrl', value)}
-                />
-                <SelectField
-                  label="License"
-                  value={form.licenseId}
-                  options={licenseOptions}
-                  onChange={(value) => update('licenseId', value as LicenseId)}
-                />
-                <FieldText
-                  label="Order"
-                  value={String(form.sortOrder)}
-                  keyboardType="numeric"
-                  onChangeText={(value) => update('sortOrder', Number(value))}
-                />
-                <FieldText
-                  label="Changes made"
-                  value={form.changesMade}
-                  maxLength={500}
-                  multiline
-                  className="form-field-full form-textarea"
-                  onChangeText={(value) => update('changesMade', value)}
-                />
-                <FileInput
-                  label="MP4 video"
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="scene-video">MP4 video</FieldLabel>
+                <Input
+                  id="scene-video"
+                  type="file"
                   accept="video/mp4"
-                  hint={
-                    form.video
+                  onChange={(event) => void chooseVideo(event.target.files?.[0])}
+                />
+                <FieldDescription>
+                  {videoFile
+                    ? `Selected: ${videoFile.name}`
+                    : form.video
                       ? `Current: ${form.video.kind === 'local' ? form.video.fileName : 'bundled scene'}`
-                      : 'Required for a new scene.'
-                  }
-                  onChange={setVideoFile}
-                />
-                <FileInput
-                  label="Poster"
-                  accept="image/jpeg,image/png,image/webp"
-                  hint={
-                    form.poster
-                      ? `Current: ${form.poster.kind === 'local' ? form.poster.fileName : 'bundled poster'}`
-                      : 'Required for a new scene.'
-                  }
-                  onChange={setPosterFile}
-                />
-                <CheckboxField
-                  className="form-field-full"
-                  checked={audioConfirmed}
-                  onChange={setAudioConfirmed}
-                  label="I confirm that the uploaded video contains embedded audio. This demo does not accept a separate audio upload."
-                />
-              </Box>
-              <Box className="form-actions">
-                <Button tone="secondary" onPress={() => void save('draft')}>
+                      : `MP4 between ${MIN_SECONDS} and ${MAX_SECONDS} seconds, up to 50 MB. The cover is taken from the first frame.`}
+                </FieldDescription>
+              </Field>
+
+              <div className="flex items-start gap-3">
+                <div
+                  data-testid="scene-cover-preview"
+                  className="relative aspect-tile w-24 shrink-0 overflow-hidden rounded-md border border-border bg-muted"
+                >
+                  {coverPreview || existingCover ? (
+                    <Image
+                      src={coverPreview || existingCover}
+                      alt="Cover taken from the first frame of the video"
+                      fill
+                      sizes="96px"
+                      unoptimized
+                      className="object-cover"
+                    />
+                  ) : null}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {busy
+                    ? 'Reading the video and taking the cover.'
+                    : coverPreview
+                      ? 'Cover taken from the first frame of the video.'
+                      : existingCover
+                        ? 'Current cover.'
+                        : 'The cover appears here once a video is chosen.'}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  disabled={busy || !ready}
+                  onClick={() => void save('draft')}
+                >
                   Save draft
                 </Button>
-                <Button onPress={() => void save('published')}>Publish</Button>
-              </Box>
-              {message ? <StatusMessage>{message}</StatusMessage> : null}
-              {error ? <StatusMessage error>{error}</StatusMessage> : null}
+                <Button disabled={busy || !ready} onClick={() => void save('published')}>
+                  Publish
+                </Button>
+              </div>
+
+              <div aria-live="polite" className="flex flex-col gap-2 empty:hidden">
+                {message ? (
+                  <Alert>
+                    <AlertDescription>{message}</AlertDescription>
+                  </Alert>
+                ) : null}
+                {error ? (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                ) : null}
+              </div>
             </CardContent>
           </Card>
-        </Box>
-        <Card className="admin-card admin-preview-card">
+        </div>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>
+              <h2>Phone preview</h2>
+            </CardTitle>
+          </CardHeader>
           <CardContent>
-            <PaperText variant="headlineSmall" accessibilityRole="header" accessibilityLevel={2}>
-              Phone preview
-            </PaperText>
-            <Box className="admin-preview">
+            <div className="overflow-hidden rounded-lg">
               <WebExperience repository={repo} compact />
-            </Box>
+            </div>
           </CardContent>
         </Card>
-      </Box>
-    </Screen>
-  );
-}
+      </main>
 
-function FieldText({
-  label,
-  className,
-  ...props
-}: ComponentProps<typeof TextInput> & { label: string; className?: string }) {
-  return (
-    <Field label={label} className={className}>
-      <TextInput {...props} accessibilityLabel={label} />
-    </Field>
+      <Dialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => (open ? undefined : setPendingDelete(null))}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete this scene?</DialogTitle>
+            <DialogDescription>
+              {pendingDelete
+                ? `${pendingDelete.title} is removed from this browser. This cannot be undone.`
+                : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" nativeButton={false} render={<DialogClose />}>
+              Keep the scene
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => pendingDelete && void remove(pendingDelete)}
+            >
+              Delete scene
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={resetOpen} onOpenChange={setResetOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset local edits?</DialogTitle>
+            <DialogDescription>
+              Local scenes are removed and the four bundled scenes are restored. This cannot be
+              undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" nativeButton={false} render={<DialogClose />}>
+              Keep my edits
+            </Button>
+            <Button variant="destructive" onClick={() => void reset()}>
+              Reset catalog
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

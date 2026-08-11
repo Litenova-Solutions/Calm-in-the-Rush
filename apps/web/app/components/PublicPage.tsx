@@ -1,10 +1,14 @@
 import type { ReactNode } from 'react';
 
-import { Box, PaperText, Screen, Surface } from '@calm/ui';
+import { Card, CardContent } from '@/components/ui/card';
 
 import { SiteFooter } from './SiteFooter';
 import { SiteHeader } from './SiteHeader';
 
+/**
+ * The public content shell: header, one page header region, one content card,
+ * footer. Declared as `public-shell/default` in the UI vocabulary.
+ */
 export function PublicPage({
   eyebrow,
   title,
@@ -17,30 +21,21 @@ export function PublicPage({
   children: ReactNode;
 }) {
   return (
-    <Screen className="site-shell">
+    <div className="flex min-h-dvh flex-col">
       <SiteHeader />
-      <Box className="page-main" accessibilityRole="main">
-        <Box className="page-header">
-          <PaperText variant="labelLarge" tone="muted" className="eyebrow">
+      <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-12">
+        <div className="flex flex-col gap-3">
+          <p className="text-sm font-medium tracking-wide text-muted-foreground uppercase">
             {eyebrow}
-          </PaperText>
-          <PaperText
-            variant="displaySmall"
-            accessibilityRole="header"
-            accessibilityLevel={1}
-            className="page-title"
-          >
-            {title}
-          </PaperText>
-          <PaperText variant="bodyLarge" tone="muted" className="lead">
-            {lead}
-          </PaperText>
-        </Box>
-        <Surface className="markdown-card">
-          <Box className="markdown-content">{children}</Box>
-        </Surface>
-      </Box>
+          </p>
+          <h1 className="text-3xl font-normal tracking-tight text-balance sm:text-4xl">{title}</h1>
+          <p className="max-w-2xl text-lg text-muted-foreground">{lead}</p>
+        </div>
+        <Card className="mt-10">
+          <CardContent>{children}</CardContent>
+        </Card>
+      </main>
       <SiteFooter />
-    </Screen>
+    </div>
   );
 }

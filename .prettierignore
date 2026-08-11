@@ -12,3 +12,5 @@ apps/web/next-env.d.ts
 *.mp4
 *.jpg
 *.png
+# pnpm owns the lockfile format; every install would otherwise fail format:check.
+pnpm-lock.yaml

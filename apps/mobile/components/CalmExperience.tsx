@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, SafeAreaView, StyleSheet, useWindowDimensions } from 'react-native';
 import type { CalmScene } from '@calm/content';
+import { useCalmExperience, type CalmExperienceOptions, type PlayerProps } from '@calm/experience';
+import { useReducedMotion } from '@calm/experience/reduced-motion';
 import {
   Box,
   CalmIcon,
@@ -18,83 +19,25 @@ import {
   Touchable,
 } from '@calm/ui';
 
-import type { CalmExperienceProps } from './types';
-import { useReducedMotion } from './use-reduced-motion';
+interface CalmExperienceViewProps extends Omit<CalmExperienceOptions, 'reducedMotion'> {
+  renderPlayer: (props: PlayerProps) => React.ReactNode;
+  compact?: boolean;
+}
 
+/**
+ * Native rendering of the shared experience model. The web frontend renders the
+ * same model with shadcn/ui; neither owns the behavior.
+ */
 export function CalmExperience({
-  scenes,
-  resolveMedia,
   renderPlayer,
-  initialSceneId,
-  onShare,
   compact = false,
-}: CalmExperienceProps) {
-  const [selectedId, setSelectedId] = useState(initialSceneId ?? scenes[0]?.id ?? '');
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [playerError, setPlayerError] = useState(false);
-  const [shareState, setShareState] = useState<'idle' | 'busy' | 'copied' | 'failed'>('idle');
-  const [controlsVisible, setControlsVisible] = useState(true);
-  const [focused, setFocused] = useState(false);
+  ...options
+}: CalmExperienceViewProps) {
   const reducedMotion = useReducedMotion();
+  const model = useCalmExperience({ ...options, reducedMotion });
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const idleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  const scene = useMemo(
-    () => scenes.find((candidate) => candidate.id === selectedId) ?? scenes[0],
-    [scenes, selectedId],
-  );
-
-  const showControls = useCallback(() => {
-    setControlsVisible(true);
-    if (idleTimer.current) clearTimeout(idleTimer.current);
-    idleTimer.current = setTimeout(() => {
-      if (!focused && !pickerOpen) setControlsVisible(false);
-    }, 6000);
-  }, [focused, pickerOpen]);
-
-  useEffect(() => {
-    showControls();
-    return () => {
-      if (idleTimer.current) clearTimeout(idleTimer.current);
-    };
-  }, [showControls, selectedId]);
-
-  useEffect(() => {
-    setPlayerError(false);
-  }, [selectedId]);
-
-  useEffect(() => {
-    if (!scenes.some((candidate) => candidate.id === selectedId))
-      setSelectedId(scenes[0]?.id ?? '');
-  }, [scenes, selectedId]);
-
-  const selectScene = (next: CalmScene) => {
-    setSelectedId(next.id);
-    setPickerOpen(false);
-    showControls();
-  };
-
-  const closePicker = () => {
-    setPickerOpen(false);
-  };
-
-  const share = async () => {
-    if (!scene || !onShare) return;
-    setShareState('busy');
-    const result = await onShare(scene);
-    setShareState(
-      result === undefined
-        ? 'idle'
-        : result === 'copied'
-          ? 'copied'
-          : result === 'failed'
-            ? 'failed'
-            : 'idle',
-    );
-    setTimeout(() => setShareState('idle'), 2400);
-  };
-
-  if (!scene) {
+  if (!model.scene || !model.media) {
     return (
       <Box viewStyle={styles.empty}>
         <PaperText tone="onDark" textStyle={styles.emptyText}>
@@ -104,103 +47,90 @@ export function CalmExperience({
     );
   }
 
-  const media = resolveMedia(scene);
   const frameWidth = Math.max(
     1,
     Math.min(windowWidth - spacing[8], 430, Math.max(1, windowHeight - spacing[12]) * (9 / 19.5)),
   );
   const frameHeight = frameWidth * (19.5 / 9);
-  const statusMessage = playerError ? 'Video could not load. Showing the scene poster.' : null;
-  const shareLabel =
-    shareState === 'busy'
-      ? 'Sharing this calm moment'
-      : shareState === 'copied'
-        ? 'Calm moment link copied'
-        : shareState === 'failed'
-          ? 'Share failed. Try again.'
-          : 'Share this calm moment';
 
   return (
     <SafeAreaView style={[styles.safe, compact && styles.safeCompact]}>
       <Box
         viewStyle={styles.canvas}
-        onTouchStart={showControls}
+        onTouchStart={model.revealControls}
         onFocus={() => {
-          setFocused(true);
-          showControls();
+          model.setFocused(true);
+          model.revealControls();
         }}
-        onBlur={() => setFocused(false)}
+        onBlur={() => model.setFocused(false)}
       >
         <Box
           viewStyle={[styles.mediaFrame, { width: frameWidth, height: frameHeight }]}
           testID="experience-media-surface"
         >
-          {playerError || reducedMotion ? (
+          {model.showPoster ? (
             <UiImage
-              source={media.poster}
+              source={model.media.poster}
               imageStyle={styles.media}
               resizeMode="cover"
-              alt={`${scene.title} poster`}
+              alt={`${model.scene.title} poster`}
             />
           ) : (
             renderPlayer({
-              video: media.video,
-              poster: media.poster,
+              video: model.media.video,
+              poster: model.media.poster,
               muted: true,
               paused: false,
-              reducedMotion,
-              onError: () => setPlayerError(true),
-              onReady: () => setPlayerError(false),
+              reducedMotion: model.reducedMotion,
+              onError: model.reportPlayerError,
+              onReady: model.reportPlayerReady,
             })
           )}
           <Box pointerEvents="none" viewStyle={styles.scrim} />
-          {!controlsVisible ? (
+          {!model.controlsVisible ? (
             <Touchable
               accessibilityRole="button"
               accessibilityLabel="Show scene controls"
-              onPress={showControls}
+              onPress={model.revealControls}
               style={styles.tapTarget}
               testID="experience-reveal-controls"
             >
               <Box />
             </Touchable>
           ) : null}
-          {controlsVisible ? (
+          {model.controlsVisible ? (
             <Box viewStyle={styles.headingWrap}>
               <PaperText tone="onDark" variant="headlineSmall" textStyle={styles.heading}>
                 Take a breath.
               </PaperText>
             </Box>
           ) : null}
-          {statusMessage ? (
+          {model.statusMessage ? (
             <PaperText accessibilityRole="alert" tone="onDark" textStyle={styles.status}>
-              {statusMessage}
+              {model.statusMessage}
             </PaperText>
           ) : null}
-          {controlsVisible ? (
+          {model.controlsVisible ? (
             <Box viewStyle={styles.dock}>
               <IconButton
                 icon="list"
                 iconColor={colors.paper}
                 containerColor={overlays.dock}
                 accessibilityLabel="Choose a scene"
-                onPress={() => {
-                  setPickerOpen(true);
-                  showControls();
-                }}
+                onPress={model.openPicker}
               />
               <IconButton
                 icon="share"
                 iconColor={colors.paper}
                 containerColor={overlays.dock}
-                accessibilityLabel={shareLabel}
-                onPress={share}
+                accessibilityLabel={model.shareLabel}
+                onPress={() => void model.share()}
               />
             </Box>
           ) : null}
         </Box>
       </Box>
-      <Sheet visible={pickerOpen} onDismiss={closePicker}>
+      <Sheet visible={model.pickerOpen} onDismiss={model.closePicker}>
         <Box viewStyle={styles.sheetHeader}>
           <PaperText variant="titleLarge">Choose a place</PaperText>
           <IconButton
@@ -208,25 +138,24 @@ export function CalmExperience({
             iconColor={colors.ink}
             containerColor={colors.paper}
             accessibilityLabel="Close scene picker"
-            onPress={closePicker}
+            onPress={model.closePicker}
           />
         </Box>
         <Scroll contentStyle={styles.sceneList} keyboardShouldPersistTaps="handled">
-          {scenes.map((candidate) => {
-            const candidateMedia = resolveMedia(candidate);
-            const selected = candidate.id === scene.id;
+          {model.scenes.map((candidate: CalmScene) => {
+            const selected = model.isSelected(candidate);
             return (
               <Touchable
                 key={candidate.id}
                 accessibilityRole="button"
                 accessibilityState={{ selected }}
-                accessibilityLabel={`${candidate.title}, ${candidate.location}${selected ? ', selected' : ''}`}
-                onPress={() => selectScene(candidate)}
+                accessibilityLabel={model.sceneLabel(candidate)}
+                onPress={() => model.selectScene(candidate)}
                 style={[styles.sceneTile, selected && styles.sceneTileSelected]}
               >
                 <Box>
                   <UiImage
-                    source={candidateMedia.poster}
+                    source={options.resolveMedia(candidate).poster}
                     imageStyle={styles.thumbnail}
                     alt=""
                     accessibilityElementsHidden

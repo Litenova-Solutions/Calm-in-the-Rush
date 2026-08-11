@@ -19,7 +19,7 @@
     "docs:check": "node scripts/validate-docs.mjs",
     "standards:check": "node standards/tools/validate-consumer.mjs",
     "content:check": "node scripts/validate-content.mjs",
-    "ui:check": "node scripts/validate-ui-governance.mjs",
+    "ui:check": "node standards/tools/validate-ui.mjs",
     "version:check": "node scripts/validate-version.mjs",
     "content:sync": "node scripts/sync-web-media.mjs",
     "format:check": "pnpm exec prettier --check .",
@@ -28,8 +28,9 @@
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",
-    "@types/node": "24.0.15",
-    "prettier": "3.6.2",
+    "@types/node": "26.2.0",
+    "prettier": "3.9.6",
+    "prettier-plugin-tailwindcss": "0.8.1",
     "typescript": "6.0.3",
     "vitest": "4.1.10"
   }

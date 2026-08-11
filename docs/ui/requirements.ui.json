@@ -1,0 +1,91 @@
+{
+  "$schema": "../../standards/schemas/ui-page.schema.json",
+  "schemaVersion": 1,
+  "page": "web.requirements",
+  "profile": "public-light",
+  "shell": "public-shell/default",
+  "regions": [
+    {
+      "id": "header",
+      "pattern": "site-header/default",
+      "components": [
+        "button"
+      ],
+      "order": 1,
+      "contentLimits": "Same as the landing header.",
+      "overflow": "Navigation wraps."
+    },
+    {
+      "id": "brief",
+      "pattern": "content-card/default",
+      "components": [
+        "card",
+        "separator"
+      ],
+      "order": 2,
+      "contentLimits": "One page header plus the full product brief rendered from the source document.",
+      "overflow": "Tables and preformatted blocks scroll horizontally inside their own keyboard-reachable region."
+    },
+    {
+      "id": "prose",
+      "pattern": "prose/default",
+      "components": [
+        "separator",
+        "table"
+      ],
+      "order": 3,
+      "contentLimits": "Markdown headings h1 to h3, lists, tables, code, and rules.",
+      "overflow": "The forked table owns a named, focusable scroll region."
+    },
+    {
+      "id": "footer",
+      "pattern": "site-footer/default",
+      "components": [
+        "button"
+      ],
+      "order": 4,
+      "contentLimits": "One wordmark and four links.",
+      "overflow": "Links wrap."
+    }
+  ],
+  "states": [
+    "ready",
+    "error"
+  ],
+  "initial": {
+    "scroll": "top",
+    "focus": "body"
+  },
+  "responsive": {
+    "compact": "Single column; tables and code blocks scroll horizontally.",
+    "wide": "Content is capped at the reading measure and centered."
+  },
+  "focus": {
+    "order": [
+      "header-brand",
+      "header-navigation",
+      "source-link",
+      "content-scroll-regions",
+      "footer-navigation"
+    ],
+    "onOpen": "No overlay on this route.",
+    "onClose": "No overlay on this route.",
+    "onError": "The route renders a server error boundary; focus stays on the document."
+  },
+  "accessibility": {
+    "landmarks": [
+      "banner",
+      "navigation",
+      "main",
+      "contentinfo"
+    ],
+    "headings": "One h1 for the page, then the ordered headings of the brief itself.",
+    "labels": "Each scrollable table and code block is a named region.",
+    "statusAnnouncements": "None; the route is static."
+  },
+  "evidence": [
+    "UI-REQUIREMENTS-READY",
+    "UI-REQUIREMENTS-AXE",
+    "UI-WEB-VISUAL"
+  ]
+}

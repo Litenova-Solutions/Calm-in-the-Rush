@@ -1,6 +1,5 @@
-import { Link } from '@calm/ui';
-
 import { MarkdownContent } from '../components/MarkdownContent';
+import { ProseLink, ProseText } from '../components/Prose';
 import { PublicPage } from '../components/PublicPage';
 import { readProductBrief } from '../../lib/requirements';
 
@@ -17,12 +16,11 @@ export default async function RequirementsPage() {
       title="Requirements and product brief"
       lead="The public page is rendered from the canonical product brief in the repository. Page and use-case statuses stay planned until their linked tests pass."
     >
-      <Link
-        href="https://github.com/Litenova-Solutions/Calm-in-the-Rush/blob/main/docs/product/brief.md"
-        external
-      >
-        View the source document on GitHub
-      </Link>
+      <ProseText>
+        <ProseLink href="https://github.com/Litenova-Solutions/Calm-in-the-Rush/blob/main/docs/product/brief.md">
+          View the source document on GitHub
+        </ProseLink>
+      </ProseText>
       <MarkdownContent markdown={brief.markdown} />
     </PublicPage>
   );

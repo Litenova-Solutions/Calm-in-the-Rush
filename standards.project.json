@@ -11,11 +11,22 @@
     "frontends": [
       {
         "name": "web",
-        "path": "apps/web"
+        "path": "apps/web",
+        "platform": "react-web",
+        "ui": {
+          "profile": "public-light",
+          "componentsJson": "apps/web/components.json",
+          "vocabulary": "docs/ui/web/vocabulary.json",
+          "sourceLock": "apps/web/ui-source-lock.json",
+          "globalCss": "apps/web/app/globals.css",
+          "primitives": "apps/web/components/ui",
+          "publicExports": ["@/components/ui"]
+        }
       },
       {
         "name": "mobile",
-        "path": "apps/mobile"
+        "path": "apps/mobile",
+        "platform": "react-native"
       }
     ]
   },
@@ -32,10 +43,6 @@
     {
       "ruleId": "FRONTEND.PACKAGES.001",
       "decision": "docs/decisions/shared-ui-package.md"
-    },
-    {
-      "ruleId": "UI.GOVERNANCE.001",
-      "decision": "docs/decisions/frontend-ui-governance.md"
     },
     {
       "ruleId": "DEP.PINS.001",

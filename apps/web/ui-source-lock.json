@@ -1,0 +1,126 @@
+{
+  "$schema": "../../standards/schemas/ui-source-lock.schema.json",
+  "schemaVersion": 1,
+  "generator": "shadcn/ui",
+  "cli": "4.16.2",
+  "preset": {
+    "code": "bIkf1RQ",
+    "fingerprint": "sha256:87311f8e21348d5c467843284cbf4bbb75a34d383c6ed900c0c8e5c2539eadb0",
+    "style": "vega",
+    "base": "base-ui",
+    "cssVariables": true,
+    "baseColor": "neutral",
+    "theme": "neutral",
+    "chartColor": "neutral",
+    "font": "geist",
+    "fontHeading": "inherit",
+    "icons": "lucide",
+    "radius": "default",
+    "menuAccent": "subtle",
+    "menuColor": "default",
+    "componentsStyle": "base-vega"
+  },
+  "registry": {
+    "name": "shadcn",
+    "url": "https://ui.shadcn.com"
+  },
+  "formatter": "pnpm exec prettier --write",
+  "components": [
+    {
+      "name": "alert",
+      "address": "@shadcn/alert",
+      "status": "baseline",
+      "paths": ["components/ui/alert.tsx"],
+      "digest": "sha256:be5de248151876718be836b7ab0e9d8d684b0bfd86aeb161283f061d9deb6ee4",
+      "dependencies": ["class-variance-authority", "react"]
+    },
+    {
+      "name": "badge",
+      "address": "@shadcn/badge",
+      "status": "baseline",
+      "paths": ["components/ui/badge.tsx"],
+      "digest": "sha256:7df155acee4bbfcd64985548b5fb01c0b399b062670a0fdf1606c5d55ee58a55",
+      "dependencies": ["@base-ui/react", "class-variance-authority"]
+    },
+    {
+      "name": "button",
+      "address": "@shadcn/button",
+      "status": "baseline",
+      "paths": ["components/ui/button.tsx"],
+      "digest": "sha256:9ceea712ffea8be2e6e75f561750950a589c064b17467b8718672f2799106337",
+      "dependencies": ["@base-ui/react", "class-variance-authority"]
+    },
+    {
+      "name": "card",
+      "address": "@shadcn/card",
+      "status": "baseline",
+      "paths": ["components/ui/card.tsx"],
+      "digest": "sha256:592969ee2638769f3874ea9e05a7710bf56d44fb11b0eeca59465d35eec6b685",
+      "dependencies": ["react"]
+    },
+    {
+      "name": "dialog",
+      "address": "@shadcn/dialog",
+      "status": "baseline",
+      "paths": ["components/ui/dialog.tsx"],
+      "digest": "sha256:546ecd0f26856c0ca2e03d5869b8e4b72e5303e394cbf4bd8b24c257058c0202",
+      "dependencies": ["@base-ui/react", "lucide-react", "react"]
+    },
+    {
+      "name": "field",
+      "address": "@shadcn/field",
+      "status": "baseline",
+      "paths": ["components/ui/field.tsx"],
+      "digest": "sha256:35f600cf00aa0fa45d36ff4290ee749ef555b3dbaff0c2b1d083a0c4109abae3",
+      "dependencies": ["class-variance-authority", "react"]
+    },
+    {
+      "name": "input",
+      "address": "@shadcn/input",
+      "status": "baseline",
+      "paths": ["components/ui/input.tsx"],
+      "digest": "sha256:04361b491272b0c30d1ca8e12aa1f59983c9af53cad4a6e2a70e2e0a64199011",
+      "dependencies": ["@base-ui/react", "react"]
+    },
+    {
+      "name": "label",
+      "address": "@shadcn/label",
+      "status": "baseline",
+      "paths": ["components/ui/label.tsx"],
+      "digest": "sha256:e4a6fb662c44a44c468d16d79d02b3a3e5bf7b77bd50aef1e586c4d9613df0f6",
+      "dependencies": ["react"]
+    },
+    {
+      "name": "separator",
+      "address": "@shadcn/separator",
+      "status": "baseline",
+      "paths": ["components/ui/separator.tsx"],
+      "digest": "sha256:9b670a02662195a145ac27be3de20c4467c6a625afb022440b3e6a8d60d427ee",
+      "dependencies": ["@base-ui/react"]
+    },
+    {
+      "name": "sheet",
+      "address": "@shadcn/sheet",
+      "status": "baseline",
+      "paths": ["components/ui/sheet.tsx"],
+      "digest": "sha256:569a30a790a0a25bf29e4286521b9221d91ea2ffad465249754c24ae2b5e01d0",
+      "dependencies": ["@base-ui/react", "lucide-react", "react"]
+    },
+    {
+      "name": "skeleton",
+      "address": "@shadcn/skeleton",
+      "status": "baseline",
+      "paths": ["components/ui/skeleton.tsx"],
+      "digest": "sha256:4c342102b2bbf5bd8c04fa151fe5c13c42faee2f9587a3586c27322020ca35d1",
+      "dependencies": []
+    },
+    {
+      "name": "table",
+      "address": "@shadcn/table",
+      "status": "forked",
+      "paths": ["components/ui/table.tsx"],
+      "digest": "sha256:00f8337d1fd0a73f7f0cd476b7fb96f5868bb1da95dbfa42cc8aa98b42b1f3e0",
+      "dependencies": ["react"]
+    }
+  ]
+}

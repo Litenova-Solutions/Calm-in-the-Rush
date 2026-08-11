@@ -1,0 +1,115 @@
+{
+  "$schema": "../../standards/schemas/ui-page.schema.json",
+  "schemaVersion": 1,
+  "page": "web.admin",
+  "profile": "public-light",
+  "shell": "admin-shell/default",
+  "regions": [
+    {
+      "id": "header",
+      "pattern": "page-header/compact",
+      "components": [
+        "button"
+      ],
+      "order": 1,
+      "contentLimits": "One label and two navigation actions.",
+      "overflow": "Actions wrap."
+    },
+    {
+      "id": "catalog",
+      "pattern": "scene-catalog/default",
+      "components": [
+        "badge",
+        "button",
+        "card"
+      ],
+      "order": 2,
+      "contentLimits": "One row per scene with a thumbnail, title, status badge, order, and four row actions.",
+      "overflow": "Titles truncate; row actions never wrap under the thumbnail."
+    },
+    {
+      "id": "form",
+      "pattern": "scene-form/default",
+      "components": [
+        "card",
+        "field",
+        "label",
+        "input",
+        "button",
+        "alert"
+      ],
+      "order": 3,
+      "contentLimits": "One title and one MP4 upload. The cover is derived from the first frame of the video and is not a separate input.",
+      "overflow": "One column. The cover preview sits beside its explanation and wraps below it when narrow."
+    },
+    {
+      "id": "preview",
+      "pattern": "media-stage/default",
+      "components": [
+        "alert",
+        "button"
+      ],
+      "order": 4,
+      "contentLimits": "One embedded stage in compact mode.",
+      "overflow": "The preview is clipped to its card."
+    },
+    {
+      "id": "dialogs",
+      "pattern": "destructive-confirm/default",
+      "components": [
+        "dialog",
+        "button"
+      ],
+      "order": 5,
+      "contentLimits": "One confirmation at a time with a named target.",
+      "overflow": "Not applicable."
+    }
+  ],
+  "states": [
+    "ready",
+    "disabled",
+    "pending",
+    "validation-error",
+    "saving",
+    "saved",
+    "error"
+  ],
+  "initial": {
+    "scroll": "top",
+    "focus": "body"
+  },
+  "responsive": {
+    "compact": "Catalog, form, and preview stack in one column; form fields are one column.",
+    "wide": "Catalog and form sit side by side; the preview spans the full width below them."
+  },
+  "focus": {
+    "order": [
+      "header-navigation",
+      "catalog-actions",
+      "catalog-rows",
+      "form-fields",
+      "save-actions"
+    ],
+    "onOpen": "A confirmation dialog moves focus into itself and traps it.",
+    "onClose": "Focus returns to the row action that opened the dialog.",
+    "onError": "The save result region announces the message; focus stays on the save action."
+  },
+  "accessibility": {
+    "landmarks": [
+      "banner",
+      "navigation",
+      "main"
+    ],
+    "headings": "One h1 for the admin task, then one h2 per card region.",
+    "labels": "Both inputs have a visible label. The derived cover preview has descriptive alternative text.",
+    "statusAnnouncements": "Save and delete results are announced through a polite live region."
+  },
+  "evidence": [
+    "UI-ADMIN-READY",
+    "UI-ADMIN-LABELS",
+    "UI-ADMIN-VALIDATION",
+    "UI-ADMIN-DESTRUCTIVE",
+    "UI-ADMIN-AXE",
+    "UI-WEB-MANUAL"
+  ]
+}

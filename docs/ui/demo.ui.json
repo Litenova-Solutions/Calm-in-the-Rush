@@ -1,0 +1,82 @@
+{
+  "$schema": "../../standards/schemas/ui-page.schema.json",
+  "schemaVersion": 1,
+  "page": "web.demo",
+  "profile": "public-light",
+  "shell": "stage-shell/default",
+  "regions": [
+    {
+      "id": "header",
+      "pattern": "site-header/default",
+      "components": [
+        "button"
+      ],
+      "order": 1,
+      "contentLimits": "One brand link and one exit action, both on the stage color.",
+      "overflow": "Header wraps; the exit action stays reachable."
+    },
+    {
+      "id": "stage",
+      "pattern": "media-stage/default",
+      "components": [
+        "alert",
+        "button"
+      ],
+      "order": 2,
+      "contentLimits": "One scene at a time, one short heading, at most one status alert, two controls.",
+      "overflow": "The frame fills the available height and is capped at the phone container token; media is cropped, never letterboxed."
+    },
+    {
+      "id": "picker",
+      "pattern": "scene-picker/default",
+      "components": [
+        "sheet",
+        "button"
+      ],
+      "order": 3,
+      "contentLimits": "One tile per published scene, two to four columns.",
+      "overflow": "The tile grid scrolls vertically inside the sheet."
+    }
+  ],
+  "states": [
+    "ready",
+    "loading",
+    "empty",
+    "error"
+  ],
+  "initial": {
+    "scroll": "top",
+    "focus": "body"
+  },
+  "responsive": {
+    "compact": "The stage fills the viewport below the header; the picker is a bottom sheet with two tile columns.",
+    "wide": "The stage is centered at the phone width; the picker shows four tile columns."
+  },
+  "focus": {
+    "order": [
+      "header-brand",
+      "exit-action",
+      "stage-controls"
+    ],
+    "onOpen": "The scene picker moves focus into the sheet.",
+    "onClose": "Focus returns to the control that opened the picker.",
+    "onError": "The player status alert is announced; focus does not move."
+  },
+  "accessibility": {
+    "landmarks": [
+      "banner",
+      "main"
+    ],
+    "headings": "One h2 on the stage. The route has no h1 because it is a single immersive surface reached from the landing page.",
+    "labels": "Every control has an explicit label. Scene tiles name the place and their selected state.",
+    "statusAnnouncements": "Player failure is announced through an alert. Share results update the control label."
+  },
+  "evidence": [
+    "UI-DEMO-READY",
+    "UI-DEMO-ERROR",
+    "UI-DEMO-PICKER-FOCUS",
+    "UI-DEMO-PICKER-SELECT",
+    "UI-DEMO-AXE",
+    "UI-WEB-VISUAL"
+  ]
+}

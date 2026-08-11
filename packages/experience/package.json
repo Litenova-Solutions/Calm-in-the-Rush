@@ -10,6 +10,11 @@
       "browser": "./src/share.web.ts",
       "react-native": "./src/share.native.ts",
       "default": "./src/share.web.ts"
+    },
+    "./reduced-motion": {
+      "browser": "./src/reduced-motion.web.ts",
+      "react-native": "./src/reduced-motion.native.ts",
+      "default": "./src/reduced-motion.web.ts"
     }
   },
   "scripts": {
@@ -17,13 +22,12 @@
     "test": "vitest run --passWithNoTests"
   },
   "devDependencies": {
-    "@types/react": "19.2.0",
+    "@types/react": "19.2.18",
     "react-native": "0.86.2",
     "vitest": "4.1.10"
   },
   "dependencies": {
     "@calm/content": "workspace:*",
-    "@calm/ui": "workspace:*",
     "react": "19.2.3"
   }
 }
