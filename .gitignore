@@ -8,7 +8,9 @@ build/
 coverage/
 playwright-report/
 test-results/
-apps/web/public/media/
+# Only the scene media is generated, by scripts/sync-web-media.mjs. Other files
+# under public/media are committed assets and must reach the deployment.
+apps/web/public/media/scenes/
 apps/mobile/assets/*.jpg
 apps/mobile/.expo/
 *.tsbuildinfo
