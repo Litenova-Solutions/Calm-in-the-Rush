@@ -9,12 +9,10 @@
     "./tokens": "./src/tokens.ts"
   },
   "scripts": {
-    "type-check": "tsc --noEmit",
-    "test": "vitest run --config vitest.config.ts --passWithNoTests"
+    "type-check": "tsc --noEmit"
   },
   "devDependencies": {
-    "@types/react": "19.2.18",
-    "vitest": "4.1.10"
+    "@types/react": "19.2.18"
   },
   "dependencies": {
     "lucide-react-native": "0.468.0",

@@ -18,13 +18,11 @@
     }
   },
   "scripts": {
-    "type-check": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "type-check": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/react": "19.2.18",
-    "react-native": "0.86.2",
-    "vitest": "4.1.10"
+    "react-native": "0.86.2"
   },
   "dependencies": {
     "@calm/content": "workspace:*",

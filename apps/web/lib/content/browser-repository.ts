@@ -1,26 +1,28 @@
 import { deleteDB, openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import {
+  calmSentenceSchema,
   calmSceneSchema,
   getLicenseUrl,
   sceneCatalogSchema,
   seedCatalog,
+  seedSentenceBank,
+  sentenceBankSchema,
   sortPublishedScenes,
   type CalmScene,
   type MediaRef,
   type SaveSceneInput,
   type SceneCatalog,
   type SceneRepository,
+  type SentenceBank,
 } from '@calm/content';
 
-const DB_NAME = 'calm-in-the-rush-demo';
+const DB_NAME = 'calm-in-the-rush-local-v2';
 const DB_VERSION = 1;
-const REVISION_KEY = 'calm-in-the-rush-catalog-revision';
-const channelName = 'calm-in-the-rush-catalog';
 
 interface CalmDb extends DBSchema {
   catalog: { key: string; value: SceneCatalog };
   media: { key: string; value: Blob };
-  settings: { key: string; value: string };
+  sentences: { key: string; value: SentenceBank };
 }
 
 export interface LocalMediaFiles {
@@ -35,6 +37,10 @@ export interface StorageReport {
 
 function cloneCatalog(catalog: SceneCatalog): SceneCatalog {
   return JSON.parse(JSON.stringify(catalog)) as SceneCatalog;
+}
+
+function cloneSentenceBank(bank: SentenceBank): SentenceBank {
+  return JSON.parse(JSON.stringify(bank)) as SentenceBank;
 }
 
 function createId(): string {
@@ -54,36 +60,13 @@ async function openCalmDb(): Promise<IDBPDatabase<CalmDb>> {
     upgrade(database) {
       if (!database.objectStoreNames.contains('catalog')) database.createObjectStore('catalog');
       if (!database.objectStoreNames.contains('media')) database.createObjectStore('media');
-      if (!database.objectStoreNames.contains('settings')) database.createObjectStore('settings');
+      if (!database.objectStoreNames.contains('sentences')) database.createObjectStore('sentences');
     },
   });
 }
 
 export class BrowserSceneRepository implements SceneRepository {
-  private listeners = new Set<() => void>();
-  private channel: BroadcastChannel | null = null;
   private objectUrls = new Map<string, string>();
-
-  constructor() {
-    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-      this.channel = new BroadcastChannel(channelName);
-      this.channel.addEventListener('message', () => this.notify());
-    }
-    if (typeof window !== 'undefined') window.addEventListener('storage', this.onStorage);
-  }
-
-  private onStorage = (event: StorageEvent) => {
-    if (event.key === REVISION_KEY) this.notify();
-  };
-
-  private notify() {
-    for (const listener of this.listeners) listener();
-  }
-
-  subscribe(listener: () => void): () => void {
-    this.listeners.add(listener);
-    return () => this.listeners.delete(listener);
-  }
 
   async readCatalog(): Promise<SceneCatalog> {
     if (!dbAvailable()) return cloneCatalog(seedCatalog);
@@ -92,6 +75,42 @@ export class BrowserSceneRepository implements SceneRepository {
       const local = await db.get('catalog', 'current');
       if (!local) return cloneCatalog(seedCatalog);
       return sceneCatalogSchema.parse(local);
+    } finally {
+      db.close();
+    }
+  }
+
+  async readSentenceBank(): Promise<SentenceBank> {
+    if (!dbAvailable()) return cloneSentenceBank(seedSentenceBank);
+    const db = await openCalmDb();
+    try {
+      const local = await db.get('sentences', 'current');
+      if (!local) return cloneSentenceBank(seedSentenceBank);
+      return sentenceBankSchema.parse(local);
+    } finally {
+      db.close();
+    }
+  }
+
+  async addSentence(text: string): Promise<SentenceBank> {
+    if (!dbAvailable()) throw new Error('Browser storage is not available.');
+    const sentence = calmSentenceSchema.parse({
+      schemaVersion: 1,
+      id: createId(),
+      language: 'en',
+      section: 'nature',
+      text,
+    });
+    const db = await openCalmDb();
+    try {
+      const current = (await db.get('sentences', 'current')) ?? cloneSentenceBank(seedSentenceBank);
+      const next = sentenceBankSchema.parse({
+        schemaVersion: 1,
+        language: 'en',
+        sentences: [...current.sentences, sentence],
+      });
+      await db.put('sentences', next, 'current');
+      return next;
     } finally {
       db.close();
     }
@@ -143,7 +162,6 @@ export class BrowserSceneRepository implements SceneRepository {
         if (ref.kind === 'local' && !nextRefIds.has(ref.blobId))
           await db.delete('media', ref.blobId);
       }
-      await this.broadcast();
     } catch (error) {
       for (const blobId of inserted) await db.delete('media', blobId).catch(() => undefined);
       throw error;
@@ -166,7 +184,6 @@ export class BrowserSceneRepository implements SceneRepository {
       await db.put('catalog', next, 'current');
       for (const ref of [target.video, target.poster])
         if (ref.kind === 'local') await db.delete('media', ref.blobId);
-      await this.broadcast();
     } finally {
       db.close();
     }
@@ -187,7 +204,6 @@ export class BrowserSceneRepository implements SceneRepository {
     const db = await openCalmDb();
     try {
       await db.put('catalog', next, 'current');
-      await this.broadcast();
     } finally {
       db.close();
     }
@@ -199,12 +215,6 @@ export class BrowserSceneRepository implements SceneRepository {
     const db = await openCalmDb();
     db.close();
     await deleteDB(DB_NAME);
-    try {
-      window.localStorage.removeItem(REVISION_KEY);
-    } catch {
-      // Private browsing can reject localStorage while IndexedDB still works.
-    }
-    this.notify();
   }
 
   async getObjectUrl(ref: MediaRef): Promise<string | null> {
@@ -246,34 +256,8 @@ export class BrowserSceneRepository implements SceneRepository {
     return { usedBytes, quotaBytes: estimate?.quota ?? null };
   }
 
-  private async broadcast() {
-    const revision = `${Date.now()}`;
-    let db: IDBPDatabase<CalmDb> | undefined;
-    try {
-      db = await openCalmDb();
-      await db.put('settings', revision, 'revision');
-    } catch {
-      // The catalog write already committed. A revision hint is best effort.
-    } finally {
-      db?.close();
-    }
-    try {
-      window.localStorage.setItem(REVISION_KEY, revision);
-    } catch {
-      // Private browsing can reject localStorage while IndexedDB still works.
-    }
-    try {
-      this.channel?.postMessage({ revision });
-    } catch {
-      // BroadcastChannel is an optional cross-tab hint.
-    }
-    this.notify();
-  }
-
   dispose() {
     this.revokeObjectUrls();
-    this.channel?.close();
-    if (typeof window !== 'undefined') window.removeEventListener('storage', this.onStorage);
   }
 }
 

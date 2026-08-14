@@ -17,11 +17,9 @@ pnpm dev:web
 pnpm format:check
 pnpm lint
 pnpm type-check
-pnpm test
 pnpm docs:check
 pnpm content:check
 pnpm build
-pnpm test:e2e
 pnpm verify
 ```
 

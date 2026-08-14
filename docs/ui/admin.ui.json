@@ -43,13 +43,27 @@
       "overflow": "One column. The cover preview sits beside its explanation and wraps below it when narrow."
     },
     {
+      "id": "sentences",
+      "pattern": "sentence-bank/default",
+      "components": [
+        "card",
+        "field",
+        "label",
+        "input",
+        "button"
+      ],
+      "order": 4,
+      "contentLimits": "One list of nature sentences and one text input up to 160 characters.",
+      "overflow": "Sentence rows wrap inside their card."
+    },
+    {
       "id": "preview",
       "pattern": "media-stage/default",
       "components": [
         "alert",
         "button"
       ],
-      "order": 4,
+      "order": 5,
       "contentLimits": "One embedded stage in compact mode.",
       "overflow": "The preview is clipped to its card."
     },
@@ -60,7 +74,7 @@
         "dialog",
         "button"
       ],
-      "order": 5,
+      "order": 6,
       "contentLimits": "One confirmation at a time with a named target.",
       "overflow": "Not applicable."
     }
@@ -88,7 +102,9 @@
       "catalog-actions",
       "catalog-rows",
       "form-fields",
-      "save-actions"
+      "save-actions",
+      "sentence-fields",
+      "sentence-save-action"
     ],
     "onOpen": "A confirmation dialog moves focus into itself and traps it.",
     "onClose": "Focus returns to the row action that opened the dialog.",
@@ -101,7 +117,7 @@
       "main"
     ],
     "headings": "One h1 for the admin task, then one h2 per card region.",
-    "labels": "Both inputs have a visible label. The derived cover preview has descriptive alternative text.",
+    "labels": "The scene and sentence inputs have visible labels. The derived cover preview has descriptive alternative text.",
     "statusAnnouncements": "Save and delete results are announced through a polite live region."
   },
   "evidence": [

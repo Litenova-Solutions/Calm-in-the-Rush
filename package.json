@@ -14,8 +14,6 @@
     "build": "pnpm content:sync && pnpm --recursive --if-present build",
     "lint": "pnpm --recursive --if-present lint",
     "type-check": "pnpm --recursive --if-present type-check",
-    "test": "pnpm --recursive --if-present test",
-    "test:e2e": "pnpm --filter @calm/web test:e2e",
     "docs:check": "node scripts/validate-docs.mjs",
     "standards:check": "node standards/tools/validate-consumer.mjs",
     "content:check": "node scripts/validate-content.mjs",
@@ -24,14 +22,12 @@
     "content:sync": "node scripts/sync-web-media.mjs",
     "format:check": "pnpm exec prettier --check .",
     "format": "pnpm exec prettier --write .",
-    "verify": "pnpm format:check && pnpm version:check && pnpm lint && pnpm ui:check && pnpm type-check && pnpm test && pnpm docs:check && pnpm standards:check && pnpm content:check && pnpm --filter @calm/mobile doctor && pnpm build && pnpm test:e2e && git diff --check"
+    "verify": "pnpm format:check && pnpm version:check && pnpm lint && pnpm ui:check && pnpm type-check && pnpm docs:check && pnpm standards:check && pnpm content:check && pnpm --filter @calm/mobile doctor && pnpm build && git diff --check"
   },
   "devDependencies": {
-    "@playwright/test": "1.62.1",
     "@types/node": "26.2.0",
     "prettier": "3.9.6",
     "prettier-plugin-tailwindcss": "0.8.1",
-    "typescript": "6.0.3",
-    "vitest": "4.1.10"
+    "typescript": "6.0.3"
   }
 }

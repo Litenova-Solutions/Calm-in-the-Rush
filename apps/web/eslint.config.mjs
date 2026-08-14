@@ -8,8 +8,6 @@ export default tseslint.config(
     ignores: [
       '.next/**',
       'public/media/**',
-      'playwright-report/**',
-      'test-results/**',
       // Installed shadcn/ui source is generated baseline source reviewed through
       // the source lock, not hand-authored feature code.
       'components/ui/**',

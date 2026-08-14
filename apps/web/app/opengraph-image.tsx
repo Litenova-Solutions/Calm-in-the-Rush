@@ -8,8 +8,8 @@ export default function OpenGraphImage() {
   return new ImageResponse(
     <div
       style={{
-        background: '#10252B',
-        color: '#FAFBF7',
+        background: '#242424',
+        color: '#F7F7F7',
         display: 'flex',
         flexDirection: 'column',
         fontFamily: 'sans-serif',
@@ -20,18 +20,18 @@ export default function OpenGraphImage() {
         width: '100%',
       }}
     >
-      <div style={{ color: '#B8CBBD', display: 'flex', fontSize: 26, fontWeight: 600 }}>
+      <div style={{ color: '#BDBDBD', display: 'flex', fontSize: 26, fontWeight: 600 }}>
         CALM IN THE RUSH
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', fontSize: 72, fontWeight: 700, letterSpacing: -2 }}>
           A quiet minute
         </div>
-        <div style={{ color: '#DDE5DE', display: 'flex', fontSize: 36 }}>
+        <div style={{ color: '#D8D8D8', display: 'flex', fontSize: 36 }}>
           in the middle of everything.
         </div>
       </div>
-      <div style={{ color: '#B8CBBD', display: 'flex', fontSize: 24 }}>
+      <div style={{ color: '#BDBDBD', display: 'flex', fontSize: 24 }}>
         Real places. Ambient sound. No account.
       </div>
       <svg
@@ -41,18 +41,18 @@ export default function OpenGraphImage() {
         viewBox="0 0 190 190"
         width="190"
       >
-        <circle cx="95" cy="36" fill="#FAFBF7" r="28" />
+        <circle cx="95" cy="36" fill="#F7F7F7" r="28" />
         <path
           d="M24 92c36-52 106-52 142 0"
           fill="none"
-          stroke="#FAFBF7"
+          stroke="#F7F7F7"
           strokeLinecap="round"
           strokeWidth="20"
         />
         <path
           d="M52 144c22-32 64-32 86 0"
           fill="none"
-          stroke="#B8CBBD"
+          stroke="#BDBDBD"
           strokeLinecap="round"
           strokeWidth="14"
         />

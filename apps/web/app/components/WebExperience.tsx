@@ -1,387 +1,452 @@
+// Client boundary: this surface owns browser media playback, local storage, and sharing.
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  type ChangeEvent,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import Image from 'next/image';
-import { Check, List, Share2, X } from 'lucide-react';
-import { seedCatalog, sortPublishedScenes, type CalmScene } from '@calm/content';
+import { ImagePlus, Images, Share2 } from 'lucide-react';
+import {
+  seedCatalog,
+  seedSentenceBank,
+  sortPublishedScenes,
+  type CalmScene,
+  type CalmSentence,
+  type MediaRef,
+  type SentenceBank,
+} from '@calm/content';
 import { resolveBundledMedia } from '@calm/content/media';
-import { useCalmExperience, type PlayerProps } from '@calm/experience';
 import { useReducedMotion } from '@calm/experience/reduced-motion';
 import { shareMoment } from '@calm/experience/share';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
 
 import { BrowserSceneRepository } from '../../lib/content/browser-repository';
 
-const CROSSFADE_MS = 700;
+type ExperienceStep = 'lead' | 'gallery' | 'playing';
 
-/**
- * Two stacked video elements crossfade so a scene change does not cut to black.
- * Volume is driven through element refs rather than style, so no inline visual
- * style is involved.
- */
-function WebPlayer({ video, poster, muted, paused, reducedMotion, onError, onReady }: PlayerProps) {
-  const [element, setElement] = useState<HTMLVideoElement | null>(null);
-  const activeSource = useRef({ video: String(video), poster: String(poster) });
-  const activeElement = useRef<HTMLVideoElement | null>(null);
-  const incomingElement = useRef<HTMLVideoElement | null>(null);
-  const [incoming, setIncoming] = useState<{ video: string; poster: string } | null>(null);
-  const [incomingReady, setIncomingReady] = useState(false);
-  const fadeInterval = useRef<ReturnType<typeof setInterval> | null>(null);
-  const finishTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    const next = String(video);
-    if (reducedMotion || next === activeSource.current.video) return;
-    setIncoming({ video: next, poster: String(poster) });
-    setIncomingReady(false);
-  }, [poster, reducedMotion, video]);
-
-  useEffect(() => {
-    if (!incomingReady || !incoming) return;
-    const current = activeElement.current;
-    const next = incomingElement.current;
-    const started = performance.now();
-    if (current) current.volume = muted ? 0 : 1;
-    if (next) {
-      next.volume = 0;
-      void next.play().catch(() => undefined);
-    }
-    fadeInterval.current = setInterval(() => {
-      const progress = Math.min((performance.now() - started) / CROSSFADE_MS, 1);
-      if (current) current.volume = muted ? 0 : 1 - progress;
-      if (next) next.volume = muted ? 0 : progress;
-      if (progress >= 1 && fadeInterval.current) {
-        clearInterval(fadeInterval.current);
-        fadeInterval.current = null;
-      }
-    }, 40);
-    finishTimer.current = setTimeout(() => {
-      activeSource.current = incoming;
-      setIncoming(null);
-      setIncomingReady(false);
-    }, CROSSFADE_MS);
-    return () => {
-      if (fadeInterval.current) clearInterval(fadeInterval.current);
-      if (finishTimer.current) clearTimeout(finishTimer.current);
-      fadeInterval.current = null;
-      finishTimer.current = null;
-    };
-  }, [incoming, incomingReady, muted]);
-
-  useEffect(() => {
-    if (activeElement.current) activeElement.current.muted = muted;
-    if (incomingElement.current) incomingElement.current.muted = muted;
-  }, [incoming, muted]);
-
-  useEffect(() => {
-    if (!element && !incoming) return;
-    const onVisibility = () => {
-      const current = activeElement.current;
-      const next = incomingElement.current;
-      if (document.hidden) {
-        current?.pause();
-        next?.pause();
-      } else if (!paused) {
-        void current?.play().catch(() => undefined);
-        void next?.play().catch(() => undefined);
-      }
-    };
-    document.addEventListener('visibilitychange', onVisibility);
-    return () => document.removeEventListener('visibilitychange', onVisibility);
-  }, [element, incoming, paused]);
-
-  useEffect(() => {
-    const current = activeElement.current;
-    const next = incomingElement.current;
-    if (paused) {
-      current?.pause();
-      next?.pause();
-    } else {
-      void current?.play().catch(() => undefined);
-      void next?.play().catch(() => undefined);
-    }
-  }, [incoming, paused]);
-
-  useEffect(
-    () => () => {
-      if (fadeInterval.current) clearInterval(fadeInterval.current);
-      if (finishTimer.current) clearTimeout(finishTimer.current);
-    },
-    [],
-  );
-
-  const videoClass = 'absolute inset-0 size-full object-cover transition-opacity duration-700';
-
-  return (
-    <>
-      <video
-        ref={(node) => {
-          activeElement.current = node;
-          setElement(node);
-        }}
-        key={activeSource.current.video}
-        src={activeSource.current.video}
-        poster={activeSource.current.poster}
-        autoPlay={!paused}
-        loop
-        playsInline
-        muted={muted}
-        onLoadedData={onReady}
-        onError={onError}
-        className={cn(videoClass, incomingReady ? 'opacity-0' : 'opacity-100')}
-      />
-      {incoming ? (
-        <video
-          ref={(node) => {
-            incomingElement.current = node;
-          }}
-          src={incoming.video}
-          poster={incoming.poster}
-          autoPlay={!paused}
-          loop
-          playsInline
-          muted={muted}
-          onLoadedData={() => setIncomingReady(true)}
-          onError={() => {
-            setIncoming(null);
-            setIncomingReady(false);
-            onError();
-          }}
-          className={cn(videoClass, incomingReady ? 'opacity-100' : 'opacity-0')}
-        />
-      ) : null}
-    </>
-  );
-}
+type PersonalPhoto = {
+  name: string;
+  url: string;
+};
 
 interface WebExperienceProps {
   repository?: BrowserSceneRepository;
-  initialScenes?: CalmScene[];
-  compact?: boolean;
 }
 
-export function WebExperience({ repository, initialScenes, compact = false }: WebExperienceProps) {
+function sceneLabel(scene: CalmScene): string {
+  return [scene.title, scene.location, scene.attribution.creator].filter(Boolean).join(', ');
+}
+
+function randomNatureSentence(bank: SentenceBank, currentId?: string): CalmSentence | undefined {
+  const allNatureSentences = bank.sentences.filter((sentence) => sentence.section === 'nature');
+  const choices =
+    currentId && allNatureSentences.length > 1
+      ? allNatureSentences.filter((sentence) => sentence.id !== currentId)
+      : allNatureSentences;
+  return choices[Math.floor(Math.random() * choices.length)];
+}
+
+const initialSentence =
+  seedSentenceBank.sentences.find((sentence) => sentence.section === 'nature') ??
+  seedSentenceBank.sentences[0]!;
+
+export function WebExperience({ repository }: WebExperienceProps) {
   const repo = useMemo(() => repository ?? new BrowserSceneRepository(), [repository]);
-  const [scenes, setScenes] = useState<CalmScene[]>(
-    initialScenes ?? sortPublishedScenes(seedCatalog.scenes),
-  );
-  const [localUrls, setLocalUrls] = useState<Record<string, string>>({});
+  const [scenes, setScenes] = useState<CalmScene[]>(() => sortPublishedScenes(seedCatalog.scenes));
+  const [sentenceBank, setSentenceBank] = useState<SentenceBank>(seedSentenceBank);
+  const [sentence, setSentence] = useState<CalmSentence>(initialSentence);
+  const [sentenceRevision, setSentenceRevision] = useState(0);
+  const [localMedia, setLocalMedia] = useState<Record<string, string>>({});
+  const [step, setStep] = useState<ExperienceStep>('lead');
+  const [selectedId, setSelectedId] = useState<string>('');
+  const [personalPhoto, setPersonalPhoto] = useState<PersonalPhoto | null>(null);
+  const [message, setMessage] = useState<string>('');
+  const [controlsVisible, setControlsVisible] = useState(true);
+  const idleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const focusedRef = useRef(false);
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const reducedMotion = useReducedMotion();
+
+  const revealControls = useCallback(() => {
+    setControlsVisible(true);
+    if (idleTimer.current) clearTimeout(idleTimer.current);
+    idleTimer.current = setTimeout(() => {
+      if (!focusedRef.current) setControlsVisible(false);
+    }, 6000);
+  }, []);
+
+  const rotateSentence = useCallback(() => {
+    setSentence((current) => randomNatureSentence(sentenceBank, current.id) ?? current);
+    setSentenceRevision((current) => current + 1);
+  }, [sentenceBank]);
 
   useEffect(() => {
     let active = true;
-    const load = async () => {
-      const catalog = await repo.readCatalog();
-      if (!active) return;
-      const visible = sortPublishedScenes(catalog.scenes);
-      repo.revokeObjectUrls();
-      const urls: Record<string, string> = {};
-      for (const scene of visible) {
-        for (const ref of [scene.video, scene.poster]) {
-          if (ref.kind === 'local') {
+    const loadContent = async () => {
+      try {
+        const [catalog, nextSentenceBank] = await Promise.all([
+          repo.readCatalog(),
+          repo.readSentenceBank(),
+        ]);
+        const published = sortPublishedScenes(catalog.scenes);
+        const nextMedia: Record<string, string> = {};
+        for (const scene of published) {
+          for (const ref of [scene.poster, scene.video]) {
+            if (ref.kind !== 'local') continue;
             const url = await repo.getObjectUrl(ref);
-            if (url) urls[ref.blobId] = url;
+            if (url) nextMedia[ref.blobId] = url;
           }
         }
-      }
-      if (active) {
-        setLocalUrls(urls);
-        setScenes(visible);
+        if (!active) return;
+        setScenes(published);
+        setSentenceBank(nextSentenceBank);
+        setSentence((current) =>
+          nextSentenceBank.sentences.some((candidate) => candidate.id === current.id)
+            ? current
+            : (randomNatureSentence(nextSentenceBank) ?? current),
+        );
+        setLocalMedia(nextMedia);
+      } catch {
+        if (active) setMessage('Your local content could not be read. Showing the bundled places.');
       }
     };
-    void load();
-    const unsubscribe = repo.subscribe(() => void load());
+    void loadContent();
     return () => {
       active = false;
-      unsubscribe();
+      if (idleTimer.current) clearTimeout(idleTimer.current);
       if (!repository) repo.dispose();
     };
   }, [repo, repository]);
 
-  const resolveMedia = (scene: CalmScene) => {
-    const video =
-      scene.video.kind === 'local'
-        ? (localUrls[scene.video.blobId] ?? '')
-        : (resolveBundledMedia(scene.video) ?? '');
-    const poster =
-      scene.poster.kind === 'local'
-        ? (localUrls[scene.poster.blobId] ?? '')
-        : (resolveBundledMedia(scene.poster) ?? '');
-    return { video, poster };
+  useEffect(
+    () => () => {
+      if (personalPhoto) URL.revokeObjectURL(personalPhoto.url);
+    },
+    [personalPhoto],
+  );
+
+  useEffect(() => {
+    revealControls();
+  }, [revealControls, selectedId, step]);
+
+  const visibleScenes = scenes.slice(0, 4);
+  const leadScene = visibleScenes[0];
+  const selectedScene = visibleScenes.find((scene) => scene.id === selectedId) ?? undefined;
+  const hasPersonalPhoto = step === 'playing' && personalPhoto !== null;
+
+  const resolveMedia = (ref: MediaRef): string =>
+    ref.kind === 'local' ? (localMedia[ref.blobId] ?? '') : (resolveBundledMedia(ref) ?? '');
+
+  const selectedVideo = selectedScene ? resolveMedia(selectedScene.video) : '';
+  const selectedPoster = selectedScene ? resolveMedia(selectedScene.poster) : '';
+  const selectedImage = personalPhoto?.url ?? selectedPoster;
+
+  // A layout effect runs as part of the click-driven DOM update. That keeps the
+  // audio request tied to the deliberate picture selection browsers require.
+  useLayoutEffect(() => {
+    if (step !== 'playing' || hasPersonalPhoto || !selectedVideo) return;
+    const player = reducedMotion ? audioRef.current : videoRef.current;
+    if (!player) return;
+    void player.play().catch(() => {
+      setMessage('Sound could not start. Select the picture again.');
+    });
+  }, [hasPersonalPhoto, reducedMotion, selectedVideo, step]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      const player = reducedMotion ? audioRef.current : videoRef.current;
+      if (!player) return;
+      if (document.hidden) {
+        player.pause();
+        return;
+      }
+      if (step === 'playing' && !hasPersonalPhoto && selectedVideo) {
+        void player.play().catch(() => {
+          setMessage('Sound could not restart. Select the picture again.');
+        });
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [hasPersonalPhoto, reducedMotion, selectedVideo, step]);
+
+  const openGallery = () => {
+    setMessage('');
+    setStep('gallery');
+    revealControls();
   };
 
-  const model = useCalmExperience({
-    scenes,
-    resolveMedia,
-    reducedMotion,
-    onShare: (scene) => shareMoment(scene.title, `${window.location.origin}/demo`),
-  });
+  const playScene = (scene: CalmScene) => {
+    videoRef.current?.pause();
+    audioRef.current?.pause();
+    setMessage('');
+    setPersonalPhoto(null);
+    setSelectedId(scene.id);
+    setStep('playing');
+    rotateSentence();
+    revealControls();
+  };
 
-  if (!model.scene || !model.media) {
+  const choosePersonalPhoto = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setMessage('Choose an image file.');
+      return;
+    }
+    videoRef.current?.pause();
+    audioRef.current?.pause();
+    setMessage('');
+    setPersonalPhoto({ name: file.name || 'Your photo', url: URL.createObjectURL(file) });
+    setSelectedId('');
+    setStep('playing');
+    rotateSentence();
+    revealControls();
+  };
+
+  const returnToGallery = () => {
+    videoRef.current?.pause();
+    audioRef.current?.pause();
+    setMessage('');
+    setStep('gallery');
+    revealControls();
+  };
+
+  const share = async () => {
+    const title = personalPhoto ? 'Your quiet moment' : selectedScene?.title;
+    if (!title) return;
+    const result = await shareMoment(title, window.location.href);
+    if (result === 'copied') setMessage('Link copied.');
+    if (result === 'failed') setMessage('Sharing is not available here.');
+  };
+
+  if (!leadScene) {
     return (
-      <div
-        className={cn(
-          'flex flex-1 items-center justify-center bg-stage px-6 text-stage-foreground',
-          compact ? 'h-160 max-h-svh' : 'min-h-0',
-        )}
-      >
-        <p>No published scenes are available.</p>
+      <div className="relative aspect-phone overflow-hidden rounded-phone-screen bg-stage p-6 text-stage-foreground">
+        <p>No local scenes are available.</p>
       </div>
     );
   }
 
-  return (
-    <div
-      className={cn(
-        'flex min-h-0 flex-1 items-center justify-center bg-stage p-4',
-        compact ? 'h-160 max-h-svh' : 'min-h-0',
-      )}
-      onPointerDown={model.revealControls}
-      onFocus={() => {
-        model.setFocused(true);
-        model.revealControls();
-      }}
-      onBlur={() => model.setFocused(false)}
-    >
-      <div
-        data-testid="experience-media-surface"
-        className="relative h-full w-full max-w-phone overflow-hidden rounded-lg bg-stage shadow-lg"
-      >
-        {model.showPoster ? (
-          <Image
-            src={String(model.media.poster)}
-            alt={`${model.scene.title} poster`}
-            fill
-            sizes="(max-width: 480px) 100vw, 430px"
-            unoptimized
-            className="object-cover"
-          />
-        ) : (
-          <WebPlayer
-            video={model.media.video}
-            poster={model.media.poster}
-            muted
-            paused={false}
-            reducedMotion={model.reducedMotion}
-            onError={model.reportPlayerError}
-            onReady={model.reportPlayerReady}
-          />
-        )}
-        <div aria-hidden className="absolute inset-0 bg-scrim" />
+  const leadPoster = resolveMedia(leadScene.poster);
+  const sectionLabel = hasPersonalPhoto ? 'Your photo' : 'Nature';
 
-        {!model.controlsVisible ? (
+  return (
+    <section
+      aria-label="Calm experience"
+      className="relative aspect-phone overflow-hidden rounded-phone-screen bg-stage"
+      onPointerDown={revealControls}
+      onPointerMove={revealControls}
+      onFocusCapture={() => {
+        focusedRef.current = true;
+        revealControls();
+      }}
+      onBlurCapture={() => {
+        focusedRef.current = false;
+      }}
+    >
+      <input
+        ref={photoInputRef}
+        type="file"
+        accept="image/*"
+        tabIndex={-1}
+        aria-label="Choose a photo from your device"
+        className="sr-only"
+        onChange={choosePersonalPhoto}
+      />
+
+      <div
+        aria-hidden
+        className="absolute top-2.5 left-1/2 z-30 h-4 w-16 -translate-x-1/2 rounded-full bg-stage"
+      />
+
+      {step === 'lead' ? (
+        <button
+          type="button"
+          aria-label={`Open five picture choices. ${sceneLabel(leadScene)}`}
+          onClick={openGallery}
+          className="absolute inset-0 cursor-pointer focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+        >
+          {leadPoster ? (
+            <Image
+              src={leadPoster}
+              alt=""
+              fill
+              priority
+              sizes="(max-width: 1024px) 100vw, 18rem"
+              unoptimized
+              className="object-cover"
+            />
+          ) : null}
+          <span aria-hidden className="absolute inset-0 bg-scrim" />
+        </button>
+      ) : null}
+
+      {step === 'gallery' ? (
+        <div className="grid size-full grid-cols-2 gap-px bg-stage">
+          {visibleScenes.map((scene) => {
+            const poster = resolveMedia(scene.poster);
+            return (
+              <button
+                key={scene.id}
+                type="button"
+                aria-label={`Play ${sceneLabel(scene)}`}
+                onClick={() => playScene(scene)}
+                className="relative overflow-hidden bg-stage focus-visible:z-10 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+              >
+                {poster ? (
+                  <Image
+                    src={poster}
+                    alt=""
+                    fill
+                    sizes="(max-width: 1024px) 50vw, 9rem"
+                    unoptimized
+                    className="object-cover"
+                  />
+                ) : null}
+              </button>
+            );
+          })}
           <button
             type="button"
-            data-testid="experience-reveal-controls"
-            aria-label="Show scene controls"
-            onClick={model.revealControls}
-            className="absolute inset-0 z-10 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-          />
-        ) : null}
-
-        {model.controlsVisible ? (
-          <h2 className="absolute inset-x-6 top-8 text-xl font-normal tracking-tight text-stage-foreground">
-            Take a breath.
-          </h2>
-        ) : null}
-
-        {model.statusMessage ? (
-          <Alert className="absolute inset-x-5 bottom-28 z-20 w-auto">
-            <AlertDescription>{model.statusMessage}</AlertDescription>
-          </Alert>
-        ) : null}
-
-        {model.controlsVisible ? (
-          <div className="absolute inset-x-4 bottom-5 z-20 flex items-center justify-center gap-3">
-            <Button
-              variant="secondary"
-              size="icon-lg"
-              aria-label="Choose a scene"
-              onClick={model.openPicker}
+            aria-label={personalPhoto ? 'Replace your photo' : 'Choose a photo from your device'}
+            onClick={() => photoInputRef.current?.click()}
+            className="relative col-span-2 flex min-h-22 items-center justify-center overflow-hidden bg-muted px-4 text-center text-foreground focus-visible:z-10 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+          >
+            {personalPhoto ? (
+              <Image
+                src={personalPhoto.url}
+                alt=""
+                fill
+                sizes="(max-width: 1024px) 100vw, 18rem"
+                unoptimized
+                className="object-cover"
+              />
+            ) : null}
+            {personalPhoto ? <span aria-hidden className="absolute inset-0 bg-scrim" /> : null}
+            <span
+              className={cn(
+                'relative flex items-center gap-2 text-sm font-medium',
+                personalPhoto ? 'text-stage-foreground' : 'text-foreground',
+              )}
             >
-              <List />
-            </Button>
-            <Button
-              variant="secondary"
-              size="icon-lg"
-              aria-label={model.shareLabel}
-              onClick={() => void model.share()}
-            >
-              <Share2 />
-            </Button>
-          </div>
-        ) : null}
-      </div>
+              <ImagePlus className="size-5" aria-hidden />
+              {personalPhoto ? 'Replace your photo' : 'Use your own photo'}
+            </span>
+          </button>
+        </div>
+      ) : null}
 
-      <Sheet
-        open={model.pickerOpen}
-        onOpenChange={(open) => (open ? undefined : model.closePicker())}
-      >
-        <SheetContent side="bottom" showCloseButton={false}>
-          <SheetHeader className="flex-row items-start justify-between gap-4">
-            <div className="flex flex-col gap-1">
-              <SheetTitle>Choose a place</SheetTitle>
-              <SheetDescription>Pick a scene to open in the player.</SheetDescription>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Close scene picker"
-              onClick={model.closePicker}
+      {step === 'playing' && (selectedScene || personalPhoto) ? (
+        <>
+          {selectedImage ? (
+            <Image
+              src={selectedImage}
+              alt={personalPhoto?.name ?? ''}
+              fill
+              sizes="(max-width: 1024px) 100vw, 18rem"
+              unoptimized
+              className="object-cover"
+              onError={() => {
+                if (personalPhoto) setMessage('The photo could not load. Choose another photo.');
+              }}
+            />
+          ) : null}
+          {selectedVideo && !reducedMotion ? (
+            <video
+              ref={videoRef}
+              src={selectedVideo}
+              autoPlay
+              loop
+              muted={false}
+              playsInline
+              preload="auto"
+              aria-hidden
+              onError={() => setMessage('The video could not load. Showing the still picture.')}
+              className="absolute inset-0 size-full object-cover"
             >
-              <X />
-            </Button>
-          </SheetHeader>
-          <div className="mx-auto grid max-h-svh w-full max-w-3xl grid-cols-2 gap-3 overflow-y-auto px-4 pb-4 sm:grid-cols-4">
-            {model.scenes.map((candidate) => {
-              const selected = model.isSelected(candidate);
-              const media = resolveMedia(candidate);
-              return (
-                <button
-                  key={candidate.id}
-                  type="button"
-                  aria-pressed={selected}
-                  aria-label={model.sceneLabel(candidate)}
-                  onClick={() => model.selectScene(candidate)}
-                  className={cn(
-                    'relative aspect-tile overflow-hidden rounded-md border bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none',
-                    selected ? 'border-primary' : 'border-border',
-                  )}
-                >
-                  {media.poster ? (
-                    <Image
-                      src={String(media.poster)}
-                      alt=""
-                      fill
-                      sizes="200px"
-                      unoptimized
-                      className="object-cover"
-                    />
-                  ) : null}
-                  {selected ? (
-                    <span
-                      aria-hidden
-                      className="absolute top-2 right-2 grid size-7 place-content-center rounded-md bg-primary text-primary-foreground"
-                    >
-                      <Check className="size-4" />
-                    </span>
-                  ) : null}
-                </button>
-              );
-            })}
-          </div>
-        </SheetContent>
-      </Sheet>
-    </div>
+              Your browser cannot play this video.
+            </video>
+          ) : null}
+          {selectedVideo && reducedMotion ? (
+            <audio
+              ref={audioRef}
+              src={selectedVideo}
+              autoPlay
+              loop
+              muted={false}
+              preload="auto"
+              onError={() => setMessage('The sound could not load. Showing the still picture.')}
+            />
+          ) : null}
+          <div aria-hidden className="absolute inset-0 bg-scrim" />
+        </>
+      ) : null}
+
+      {step !== 'gallery' ? (
+        <div
+          className={cn(
+            'pointer-events-none absolute inset-x-5 top-11 z-20 flex flex-col gap-2 transition-opacity duration-300',
+            controlsVisible ? 'opacity-100' : 'opacity-0',
+          )}
+        >
+          {step !== 'lead' ? (
+            <p className="text-xs font-medium tracking-wide text-stage-foreground uppercase">
+              {sectionLabel}
+            </p>
+          ) : null}
+          <p
+            key={`${sentence.id}-${sentenceRevision}`}
+            className="max-w-48 text-lg font-normal tracking-tight text-stage-foreground motion-safe:animate-sentence-arrive"
+          >
+            {sentence.text}
+          </p>
+        </div>
+      ) : null}
+
+      {message ? (
+        <Alert className="absolute inset-x-4 bottom-18 z-30 w-auto">
+          <AlertDescription>{message}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      {step === 'playing' ? (
+        <div
+          className={cn(
+            'absolute inset-x-4 bottom-4 z-30 flex items-center justify-center gap-3 transition-opacity duration-300',
+            controlsVisible ? 'opacity-100' : 'opacity-0',
+          )}
+        >
+          <Button
+            variant="secondary"
+            size="icon-lg"
+            aria-label="Open picture gallery"
+            onClick={returnToGallery}
+          >
+            <Images />
+          </Button>
+          <Button
+            variant="secondary"
+            size="icon-lg"
+            aria-label="Share this calm moment"
+            onClick={() => void share()}
+          >
+            <Share2 />
+          </Button>
+        </div>
+      ) : null}
+    </section>
   );
 }

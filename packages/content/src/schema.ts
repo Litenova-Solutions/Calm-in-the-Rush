@@ -3,6 +3,9 @@ import { z } from 'zod';
 export const sceneStatusSchema = z.enum(['draft', 'published']);
 export type SceneStatus = z.infer<typeof sceneStatusSchema>;
 
+export const contentSectionIdSchema = z.enum(['nature', 'stress']);
+export type ContentSectionId = z.infer<typeof contentSectionIdSchema>;
+
 export const licenseIds = [
   'public-domain-us-government',
   'cc0-1.0',
@@ -91,6 +94,22 @@ export const calmSceneSchema = z.object({
 });
 export type CalmScene = z.infer<typeof calmSceneSchema>;
 
+export const calmSentenceSchema = z.object({
+  schemaVersion: z.literal(1),
+  id: z.string().trim().min(1),
+  language: z.literal('en'),
+  section: contentSectionIdSchema,
+  text: z.string().trim().min(1).max(160),
+});
+export type CalmSentence = z.infer<typeof calmSentenceSchema>;
+
+export const sentenceBankSchema = z.object({
+  schemaVersion: z.literal(1),
+  language: z.literal('en'),
+  sentences: z.array(calmSentenceSchema),
+});
+export type SentenceBank = z.infer<typeof sentenceBankSchema>;
+
 export const sceneCatalogSchema = z
   .object({
     schemaVersion: z.literal(1),
@@ -135,7 +154,6 @@ export interface SceneRepository {
   removeScene(id: string): Promise<void>;
   reorderScenes(ids: readonly string[]): Promise<void>;
   reset(): Promise<void>;
-  subscribe(listener: () => void): () => void;
 }
 
 export function sortPublishedScenes(scenes: readonly CalmScene[]): CalmScene[] {

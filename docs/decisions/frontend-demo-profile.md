@@ -16,7 +16,7 @@ are pinned at the root. The web and native applications share packages only wher
 ## Overrides
 
 - `FRONTEND.STRUCTURE.001`: Expo Router is permitted beside Next.js.
-- `DEP.PINS.001`: Expo, React Native Paper, IndexedDB, and cross-platform test packages use the pins in the root manifest.
+- `DEP.PINS.001`: Expo, React Native Paper, and IndexedDB use the pins in the root manifest.
 - `DEP.APPROVAL.001`: These packages are approved for the demo and have no remote service access.
 
 Expo Doctor can report same-version duplicate native peer paths when pnpm installs Expo Router

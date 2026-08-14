@@ -25,7 +25,7 @@ export default function DemoPage() {
           Leave the demo
         </Link>
       </header>
-      <main className="flex flex-1 flex-col">
+      <main className="flex min-h-0 flex-1 flex-col">
         <DemoClient />
       </main>
     </div>

@@ -17,6 +17,9 @@ export function SiteFooter() {
           <Link href="/requirements" className={linkClass}>
             Requirements
           </Link>
+          <Link href="/evidence" className={linkClass}>
+            Evidence
+          </Link>
           <Link href="/privacy" className={linkClass}>
             Privacy
           </Link>

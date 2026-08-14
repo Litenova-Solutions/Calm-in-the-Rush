@@ -89,16 +89,16 @@
     {
       "name": "destructive",
       "type": "color",
-      "light": "oklch(0.577 0.245 27.325)",
-      "dark": "oklch(0.704 0.191 22.216)",
+      "light": "oklch(0.42 0 0)",
+      "dark": "oklch(0.74 0 0)",
       "description": "Destructive action and error presentation."
     },
     {
       "name": "stage",
       "type": "color",
-      "light": "oklch(0.28 0.035 195)",
-      "dark": "oklch(0.21 0.03 195)",
-      "description": "The immersive scene canvas. Stays dark in both color schemes so video reads correctly."
+      "light": "oklch(0.18 0 0)",
+      "dark": "oklch(0.12 0 0)",
+      "description": "The dark, neutral canvas around the photograph."
     },
     {
       "name": "stage-foreground",
@@ -110,9 +110,9 @@
     {
       "name": "scrim",
       "type": "color",
-      "light": "oklch(0.28 0.035 195 / 18%)",
-      "dark": "oklch(0.21 0.03 195 / 26%)",
-      "description": "Overlay that keeps controls legible over moving media."
+      "light": "oklch(0.1 0 0 / 52%)",
+      "dark": "oklch(0.1 0 0 / 58%)",
+      "description": "Neutral overlay that keeps text legible over the photograph."
     },
     {
       "name": "aspect-phone",
@@ -120,6 +120,13 @@
       "light": "9 / 19.5",
       "dark": "9 / 19.5",
       "description": "Portrait phone proportion for the landing poster."
+    },
+    {
+      "name": "aspect-phone-frame",
+      "type": "length",
+      "light": "9 / 19",
+      "dark": "9 / 19",
+      "description": "Outer phone-frame proportion that accounts for its screen inset."
     },
     {
       "name": "aspect-tile",
@@ -134,6 +141,13 @@
       "light": "26.875rem",
       "dark": "26.875rem",
       "description": "Maximum width of the phone-sized media stage."
+    },
+    {
+      "name": "container-demo-phone",
+      "type": "length",
+      "light": "Available viewport width after the demo header and frame spacing.",
+      "dark": "Available viewport width after the demo header and frame spacing.",
+      "description": "Responsive width of the demo phone frame before the maximum phone container is applied."
     },
     {
       "name": "radius-phone",
@@ -155,6 +169,13 @@
       "light": "18rem",
       "dark": "18rem",
       "description": "Width of the landing phone frame. Smaller than the live stage so the still reads as a preview beside the hero copy."
+    },
+    {
+      "name": "animate-sentence-arrive",
+      "type": "motion",
+      "light": "600ms fade and 0.35rem upward movement",
+      "dark": "600ms fade and 0.35rem upward movement",
+      "description": "Selected-scene sentence entrance, suppressed when reduced motion is requested."
     }
   ],
   "states": [
@@ -162,26 +183,27 @@
       "id": "ready",
       "requiredEvidence": [
         "UI-LANDING-READY",
-        "UI-DEMO-READY",
+        "UI-EVIDENCE-READY",
+        "UI-EXPERIENCE-READY",
         "UI-ADMIN-READY"
       ]
     },
     {
       "id": "loading",
       "requiredEvidence": [
-        "UI-DEMO-READY"
+        "UI-EXPERIENCE-READY"
       ]
     },
     {
       "id": "empty",
       "requiredEvidence": [
-        "UI-DEMO-READY"
+        "UI-EXPERIENCE-READY"
       ]
     },
     {
       "id": "error",
       "requiredEvidence": [
-        "UI-DEMO-ERROR"
+        "UI-EXPERIENCE-ERROR"
       ]
     },
     {
@@ -268,8 +290,7 @@
         "ready"
       ],
       "evidence": [
-        "UI-LANDING-READY",
-        "UI-LANDING-KEYBOARD"
+        "UI-LANDING-READY"
       ]
     },
     {
@@ -294,7 +315,7 @@
       ],
       "evidence": [
         "UI-LANDING-READY",
-        "UI-LANDING-INITIAL"
+        "UI-EXPERIENCE-READY"
       ]
     },
     {
@@ -307,7 +328,8 @@
         "ready"
       ],
       "evidence": [
-        "UI-REQUIREMENTS-READY"
+        "UI-REQUIREMENTS-READY",
+        "UI-EVIDENCE-READY"
       ]
     },
     {
@@ -321,7 +343,9 @@
       ],
       "evidence": [
         "UI-REQUIREMENTS-READY",
-        "UI-REQUIREMENTS-AXE"
+        "UI-REQUIREMENTS-AXE",
+        "UI-EVIDENCE-READY",
+        "UI-EVIDENCE-AXE"
       ]
     },
     {
@@ -332,28 +356,12 @@
       ],
       "states": [
         "ready",
-        "loading",
         "empty",
         "error"
       ],
       "evidence": [
-        "UI-DEMO-READY",
-        "UI-DEMO-ERROR",
-        "UI-DEMO-AXE"
-      ]
-    },
-    {
-      "id": "scene-picker/default",
-      "components": [
-        "sheet",
-        "button"
-      ],
-      "states": [
-        "ready"
-      ],
-      "evidence": [
-        "UI-DEMO-PICKER-FOCUS",
-        "UI-DEMO-PICKER-SELECT"
+        "UI-EXPERIENCE-READY",
+        "UI-EXPERIENCE-ERROR"
       ]
     },
     {
@@ -406,6 +414,27 @@
       ]
     },
     {
+      "id": "sentence-bank/default",
+      "components": [
+        "card",
+        "field",
+        "label",
+        "input",
+        "button"
+      ],
+      "states": [
+        "ready",
+        "validation-error",
+        "saving",
+        "saved"
+      ],
+      "evidence": [
+        "UI-ADMIN-LABELS",
+        "UI-ADMIN-VALIDATION",
+        "UI-ADMIN-AXE"
+      ]
+    },
+    {
       "id": "destructive-confirm/default",
       "components": [
         "dialog",
@@ -434,7 +463,7 @@
         "validation-error"
       ],
       "evidence": [
-        "UI-DEMO-ERROR",
+        "UI-EXPERIENCE-ERROR",
         "UI-ADMIN-VALIDATION"
       ]
     },
@@ -472,7 +501,7 @@
       ],
       "evidence": [
         "UI-LANDING-READY",
-        "UI-LANDING-KEYBOARD",
+        "UI-EXPERIENCE-READY",
         "UI-ADMIN-READY"
       ]
     },
@@ -576,8 +605,7 @@
         "ready"
       ],
       "evidence": [
-        "UI-DEMO-PICKER-FOCUS",
-        "UI-DEMO-PICKER-SELECT"
+        "UI-EXPERIENCE-READY"
       ]
     },
     {
@@ -591,7 +619,7 @@
         "loading"
       ],
       "evidence": [
-        "UI-DEMO-READY"
+        "UI-EXPERIENCE-READY"
       ]
     },
     {
@@ -613,7 +641,7 @@
     {
       "component": "table",
       "status": "forked",
-      "reason": "The generated table container is a horizontally scrollable region with no keyboard access and no accessible name. axe reports scrollable-region-focusable as a serious violation on the requirements page, which renders wide Markdown tables. The fork adds tabIndex, role, and a named region, and exposes containerLabel so a caller can name the specific table.",
+      "reason": "The generated table container needs keyboard access and an accessible name on the requirements page, which renders wide Markdown tables. The fork adds tabIndex, role, and a named region, and exposes containerLabel so a caller can name the specific table.",
       "scope": [
         "components/ui/table.tsx"
       ],
@@ -645,138 +673,111 @@
   "evidence": [
     {
       "id": "UI-LANDING-READY",
-      "kind": "browser",
-      "environment": "Playwright 1.62.1, chromium 1440x1000, firefox 390x844, webkit 320x568, Windows 11",
-      "result": "pass",
+      "kind": "manual",
+      "environment": "Early demo; no automated browser suite.",
+      "result": "waived",
       "reviewer": "Product and engineering",
-      "date": "2026-08-11",
-      "notes": "Heading level, primary and secondary actions, no media request, no horizontal overflow."
+      "date": "2026-08-14",
+      "notes": "No acceptance record is maintained while the interface remains in early development."
     },
     {
-      "id": "UI-LANDING-INITIAL",
-      "kind": "browser",
-      "environment": "Playwright 1.62.1, chromium 1440x1000, firefox 390x844, webkit 320x568, Windows 11",
-      "result": "pass",
+      "id": "UI-EXPERIENCE-READY",
+      "kind": "manual",
+      "environment": "Early demo; no automated browser suite.",
+      "result": "waived",
       "reviewer": "Product and engineering",
-      "date": "2026-08-11",
-      "notes": "Direct navigation opens at scroll top with no element focused."
+      "date": "2026-08-14",
+      "notes": "No acceptance record is maintained while the interface remains in early development."
     },
     {
-      "id": "UI-LANDING-KEYBOARD",
-      "kind": "browser",
-      "environment": "Playwright 1.62.1, chromium 1440x1000, firefox 390x844, Windows 11",
-      "result": "pass",
+      "id": "UI-EXPERIENCE-ERROR",
+      "kind": "manual",
+      "environment": "Early demo; no automated browser suite.",
+      "result": "waived",
       "reviewer": "Product and engineering",
-      "date": "2026-08-11",
-      "notes": "Tab order follows document order. Skipped on WebKit, which does not tab to links unless the user enables the Safari preference."
+      "date": "2026-08-14",
+      "notes": "No acceptance record is maintained while the interface remains in early development."
     },
     {
       "id": "UI-REQUIREMENTS-READY",
-      "kind": "browser",
-      "environment": "Playwright 1.62.1, chromium 1440x1000, firefox 390x844, webkit 320x568, Windows 11",
-      "result": "pass",
+      "kind": "manual",
+      "environment": "Early demo; no automated browser suite.",
+      "result": "waived",
       "reviewer": "Product and engineering",
-      "date": "2026-08-11",
-      "notes": "Brief renders from the canonical source document and admin stays out of robots.txt."
+      "date": "2026-08-14",
+      "notes": "No acceptance record is maintained while the interface remains in early development."
     },
     {
       "id": "UI-REQUIREMENTS-AXE",
-      "kind": "accessibility",
-      "environment": "axe-playwright 2.2.2 through Playwright 1.62.1, three engines, Windows 11",
-      "result": "pass",
+      "kind": "manual",
+      "environment": "Early demo; no automated browser suite.",
+      "result": "waived",
       "reviewer": "Product and engineering",
-      "date": "2026-08-11",
-      "notes": "No serious or critical violations. Drove the table fork and the keyboard-accessible pre block."
+      "date": "2026-08-14",
+      "notes": "No acceptance record is maintained while the interface remains in early development."
     },
     {
-      "id": "UI-DEMO-READY",
-      "kind": "browser",
-      "environment": "Playwright 1.62.1, chromium 1440x1000, firefox 390x844, webkit 320x568, Windows 11",
-      "result": "pass",
+      "id": "UI-EVIDENCE-READY",
+      "kind": "manual",
+      "environment": "Early demo; no automated browser suite.",
+      "result": "waived",
       "reviewer": "Product and engineering",
-      "date": "2026-08-11",
-      "notes": "Stage renders, video starts muted, control dock stays inside the viewport at every tested size, no console or page errors."
+      "date": "2026-08-14",
+      "notes": "No acceptance record is maintained while the interface remains in early development."
     },
     {
-      "id": "UI-DEMO-ERROR",
-      "kind": "browser",
-      "environment": "Playwright 1.62.1, chromium 1440x1000, firefox 390x844, webkit 320x568, Windows 11",
-      "result": "pass",
+      "id": "UI-EVIDENCE-AXE",
+      "kind": "manual",
+      "environment": "Early demo; no automated browser suite.",
+      "result": "waived",
       "reviewer": "Product and engineering",
-      "date": "2026-08-11",
-      "notes": "Player failure falls back to the scene poster and announces the status through an alert."
-    },
-    {
-      "id": "UI-DEMO-PICKER-FOCUS",
-      "kind": "browser",
-      "environment": "Playwright 1.62.1, chromium 1440x1000, firefox 390x844, webkit 320x568, Windows 11",
-      "result": "pass",
-      "reviewer": "Product and engineering",
-      "date": "2026-08-11",
-      "notes": "Escape closes the picker and focus returns to the control that opened it."
-    },
-    {
-      "id": "UI-DEMO-PICKER-SELECT",
-      "kind": "browser",
-      "environment": "Playwright 1.62.1, chromium 1440x1000, firefox 390x844, webkit 320x568, Windows 11",
-      "result": "pass",
-      "reviewer": "Product and engineering",
-      "date": "2026-08-11",
-      "notes": "Selecting a scene closes the picker and keeps the media stage visible."
-    },
-    {
-      "id": "UI-DEMO-AXE",
-      "kind": "accessibility",
-      "environment": "axe-playwright 2.2.2 through Playwright 1.62.1, three engines, Windows 11",
-      "result": "pass",
-      "reviewer": "Product and engineering",
-      "date": "2026-08-11",
-      "notes": "No serious or critical violations on the immersive stage."
+      "date": "2026-08-14",
+      "notes": "No acceptance record is maintained while the interface remains in early development."
     },
     {
       "id": "UI-ADMIN-READY",
-      "kind": "browser",
-      "environment": "Playwright 1.62.1, chromium 1440x1000, firefox 390x844, webkit 320x568, Windows 11",
-      "result": "pass",
+      "kind": "manual",
+      "environment": "Early demo; no automated browser suite.",
+      "result": "waived",
       "reviewer": "Product and engineering",
-      "date": "2026-08-11",
-      "notes": "Catalog, form, and preview regions render with one h1 and ordered h2 headings, and no horizontal overflow."
+      "date": "2026-08-14",
+      "notes": "No acceptance record is maintained while the interface remains in early development."
     },
     {
       "id": "UI-ADMIN-LABELS",
-      "kind": "browser",
-      "environment": "Playwright 1.62.1, chromium 1440x1000, firefox 390x844, webkit 320x568, Windows 11",
-      "result": "pass",
+      "kind": "manual",
+      "environment": "Early demo; no automated browser suite.",
+      "result": "waived",
       "reviewer": "Product and engineering",
-      "date": "2026-08-11",
-      "notes": "Every text control resolves by its visible label."
+      "date": "2026-08-14",
+      "notes": "No acceptance record is maintained while the interface remains in early development."
     },
     {
       "id": "UI-ADMIN-VALIDATION",
-      "kind": "browser",
-      "environment": "Playwright 1.62.1, chromium 1440x1000, firefox 390x844, webkit 320x568, Windows 11",
-      "result": "pass",
+      "kind": "manual",
+      "environment": "Early demo; no automated browser suite.",
+      "result": "waived",
       "reviewer": "Product and engineering",
-      "date": "2026-08-11",
-      "notes": "Publishing without a video reports a recoverable error through a live region. A non-MP4, oversized, or out-of-range video is rejected when it is chosen, and a valid video yields a cover taken from its first frame."
+      "date": "2026-08-14",
+      "notes": "No acceptance record is maintained while the interface remains in early development."
     },
     {
       "id": "UI-ADMIN-DESTRUCTIVE",
-      "kind": "browser",
-      "environment": "Playwright 1.62.1, chromium 1440x1000, firefox 390x844, webkit 320x568, Windows 11",
-      "result": "pass",
+      "kind": "manual",
+      "environment": "Early demo; no automated browser suite.",
+      "result": "waived",
       "reviewer": "Product and engineering",
-      "date": "2026-08-11",
-      "notes": "Delete asks for confirmation in a dialog and can be cancelled. Replaced window.confirm."
+      "date": "2026-08-14",
+      "notes": "No acceptance record is maintained while the interface remains in early development."
     },
     {
       "id": "UI-ADMIN-AXE",
-      "kind": "accessibility",
-      "environment": "axe-playwright 2.2.2 through Playwright 1.62.1, three engines, Windows 11",
-      "result": "pass",
+      "kind": "manual",
+      "environment": "Early demo; no automated browser suite.",
+      "result": "waived",
       "reviewer": "Product and engineering",
-      "date": "2026-08-11",
-      "notes": "No serious or critical violations. Drove the explicit checkbox name association."
+      "date": "2026-08-14",
+      "notes": "No acceptance record is maintained while the interface remains in early development."
     },
     {
       "id": "UI-WEB-VISUAL",
@@ -784,8 +785,8 @@
       "environment": "Not established. No visual comparison baseline exists for this frontend yet.",
       "result": "waived",
       "reviewer": "Product and engineering",
-      "date": "2026-08-11",
-      "notes": "Waived for this migration. Reviewed rendered output through the browser suite at three viewports instead. Establish pinned visual baselines before the next preset or token change."
+      "date": "2026-08-14",
+      "notes": "No visual comparison baseline or acceptance record is maintained for this early demo."
     },
     {
       "id": "UI-WEB-MANUAL",
@@ -793,8 +794,8 @@
       "environment": "Not established. No screen reader, zoom, or contrast-mode session recorded.",
       "result": "waived",
       "reviewer": "Product and engineering",
-      "date": "2026-08-11",
-      "notes": "Waived for this migration. Automated accessibility checks are a floor, not conformance. Record a manual session before any release that claims WCAG 2.2 AA."
+      "date": "2026-08-14",
+      "notes": "No manual accessibility session is recorded for this early demo."
     }
   ]
 }

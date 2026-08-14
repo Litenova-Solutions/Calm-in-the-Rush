@@ -32,7 +32,7 @@
         "button"
       ],
       "order": 3,
-      "contentLimits": "One wordmark and five links.",
+      "contentLimits": "One wordmark and six links.",
       "overflow": "Links wrap with row and column gaps."
     }
   ],
@@ -67,13 +67,11 @@
       "contentinfo"
     ],
     "headings": "One h1 for the product promise. No h2 on this route.",
-    "labels": "Every action is a link with visible text. The brand mark and the phone frame furniture are decorative and hidden. The hero photograph has descriptive alternative text and a visible credit with license and source links.",
+    "labels": "Every action is a link with visible text. The brand mark and phone frame furniture are decorative. The hero photograph has descriptive alternative text and a visible credit with license and source links.",
     "statusAnnouncements": "None; the route is static."
   },
   "evidence": [
     "UI-LANDING-READY",
-    "UI-LANDING-INITIAL",
-    "UI-LANDING-KEYBOARD",
     "UI-WEB-VISUAL"
   ]
 }

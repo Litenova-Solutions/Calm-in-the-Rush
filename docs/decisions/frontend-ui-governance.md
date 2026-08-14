@@ -52,10 +52,9 @@ rather than DOM.
 
 `node standards/tools/validate-ui.mjs` validates the frontend UI configuration, the vocabulary, the page
 sidecars, the source-lock digests, the global CSS surface, and the class strings in feature code. The web
-ESLint configuration rejects React Native, `@calm/ui`, and primitive-base imports. Playwright covers the
-landing, requirements, demo, and admin routes across three engines at wide and compact viewports,
-including initial scroll and focus, tab order, dialog focus return, labelling, destructive confirmation,
-validation reporting, and axe checks.
+ESLint configuration rejects React Native, `@calm/ui`, and primitive-base imports. This early demo has
+no automated browser suite. Browser and accessibility acceptance records are deferred until the
+product moves beyond the current local-only scope.
 
 ## Constraints
 

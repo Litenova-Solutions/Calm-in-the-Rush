@@ -34,3 +34,11 @@ export function ProseLink({ href, children }: { href: string; children: ReactNod
 export function ProseList({ children }: { children: ReactNode }) {
   return <ul className="mb-4 flex list-disc flex-col gap-2 pl-6">{children}</ul>;
 }
+
+export function ProseOrderedList({ children }: { children: ReactNode }) {
+  return <ol className="mb-4 flex list-decimal flex-col gap-2 pl-6">{children}</ol>;
+}
+
+export function ProseListItem({ children }: { children: ReactNode }) {
+  return <li className="leading-relaxed">{children}</li>;
+}

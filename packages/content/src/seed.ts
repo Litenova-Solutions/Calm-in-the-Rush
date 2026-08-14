@@ -1,4 +1,10 @@
-import { licenseDefinitions, type CalmScene, type SceneCatalog } from './schema';
+import {
+  licenseDefinitions,
+  type CalmScene,
+  type ContentSectionId,
+  type SceneCatalog,
+  type SentenceBank,
+} from './schema';
 
 const sourceChanges =
   'Trimmed, cropped to portrait, transcoded to H.264 with AAC audio, and used to derive a poster frame.';
@@ -86,3 +92,56 @@ export const seedCatalog: SceneCatalog = {
 };
 
 export const seedScenes = seedCatalog.scenes;
+
+export const seedSentenceBank: SentenceBank = {
+  schemaVersion: 1,
+  language: 'en',
+  sentences: [
+    {
+      schemaVersion: 1,
+      id: 'nature-default',
+      language: 'en',
+      section: 'nature',
+      text: 'Nothing needs an answer here.',
+    },
+    {
+      schemaVersion: 1,
+      id: 'nature-stay',
+      language: 'en',
+      section: 'nature',
+      text: 'You can stay with this view.',
+    },
+    {
+      schemaVersion: 1,
+      id: 'nature-breath',
+      language: 'en',
+      section: 'nature',
+      text: 'Let the next breath arrive on its own.',
+    },
+    {
+      schemaVersion: 1,
+      id: 'nature-room',
+      language: 'en',
+      section: 'nature',
+      text: 'There is room for this moment.',
+    },
+    {
+      schemaVersion: 1,
+      id: 'nature-no-step',
+      language: 'en',
+      section: 'nature',
+      text: 'There is no next step to find.',
+    },
+    {
+      schemaVersion: 1,
+      id: 'stress-default',
+      language: 'en',
+      section: 'stress',
+      text: 'A little space inside a full day.',
+    },
+  ],
+};
+
+export function getSeedSentence(section: ContentSectionId): string {
+  return seedSentenceBank.sentences.find((sentence) => sentence.section === section)?.text ?? '';
+}

@@ -1,20 +1,27 @@
 ---
-{"kind":"page","id":"web.demo","specStatus":"approved","implementationStatus":"planned","owner":"Product and engineering","lastReviewed":"2026-08-07","app":"web","route":"/demo","useCases":["calm.view-scene","calm.choose-scene","calm.control-sound","calm.share-moment"]}
+{"kind":"page","id":"web.demo","specStatus":"approved","implementationStatus":"implemented","owner":"Product and engineering","lastReviewed":"2026-08-14","app":"web","route":"/demo","useCases":["calm.view-scene","calm.choose-scene","calm.control-sound","calm.share-moment"]}
 ---
 
 # Demo page
 
-Use the shared experience component with the browser media and share adapters. Center a 9 by 19.5
-surface on wide screens and let it fill a phone viewport. Keep the dock inside the surface at 320 by
-568 and show a poster when motion is reduced.
+Render the live experience on `/demo` inside a visible phone frame. The frame uses the available
+viewport on a phone and stops at the `container-phone` token on wider screens. The landing route stays
+static and links here. The first poster reveals four bundled scene tiles and one fifth tile for a
+personal image. The personal image remains still and is held only for the open browser session.
+
+Selecting a bundled scene starts its video and embedded ambient sound. Selecting either kind of picture
+chooses a random nature sentence from the browser-local sentence bank. The grid hides the previous
+sentence, then the selected picture's sentence fades in with a small upward movement when reduced
+motion is not requested. The demo has no visitor video upload, generated motion, server upload, or
+remote content service.
 
 ## UI Contract
 
 The machine-readable contract for this route is [`demo.ui.json`](demo.ui.json), validated by
-`standards/schemas/ui-page.schema.json`. It declares the shell `stage-shell/default`, the ordered regions,
-the applicable states, initial scroll and focus, compact and wide composition, accessibility
-expectations, and the evidence IDs.
+`standards/schemas/ui-page.schema.json`. It declares the shell, ordered regions, applicable states,
+initial scroll and focus, compact and wide composition, accessibility expectations, and evidence IDs.
 
 The construction language it draws from is [the web UI vocabulary](web/vocabulary.json).
 
-The demo route is an immersive stage with a definite height, so the control dock stays inside the viewport at every supported size. The scene picker is a bottom sheet.
+The demo route uses the stage shell and has a fixed viewport height. The phone frame makes the route's
+purpose visible without moving the running experience back into the landing page.

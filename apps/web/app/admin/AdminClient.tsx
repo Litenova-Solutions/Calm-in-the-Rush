@@ -10,9 +10,11 @@ import { ArrowDown, ArrowUp, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-reac
 import {
   getLicenseUrl,
   seedCatalog,
+  seedSentenceBank,
   type CalmScene,
   type MediaRef,
   type SceneCatalog,
+  type SentenceBank,
 } from '@calm/content';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -170,6 +172,7 @@ async function readVideo(file: File): Promise<{ duration: number; cover: File }>
 export default function AdminClient() {
   const repo = useMemo(() => new BrowserSceneRepository(), []);
   const [catalog, setCatalog] = useState<SceneCatalog>(seedCatalog);
+  const [sentenceBank, setSentenceBank] = useState<SentenceBank>(seedSentenceBank);
   const [form, setForm] = useState<FormState>(blankForm());
   const [videoFile, setVideoFile] = useState<File | undefined>();
   const [coverPreview, setCoverPreview] = useState<string>('');
@@ -184,10 +187,18 @@ export default function AdminClient() {
   const [posterUrls, setPosterUrls] = useState<Record<string, string>>({});
   const [pendingDelete, setPendingDelete] = useState<CalmScene | null>(null);
   const [resetOpen, setResetOpen] = useState(false);
+  const [sentenceText, setSentenceText] = useState('');
+  const [sentenceBusy, setSentenceBusy] = useState(false);
+  const [sentenceMessage, setSentenceMessage] = useState('');
+  const [sentenceError, setSentenceError] = useState('');
 
   const refresh = async () => {
-    const next = await repo.readCatalog();
+    const [next, nextSentenceBank] = await Promise.all([
+      repo.readCatalog(),
+      repo.readSentenceBank(),
+    ]);
     setCatalog(next);
+    setSentenceBank(nextSentenceBank);
     const nextPosterUrls: Record<string, string> = {};
     for (const scene of next.scenes) {
       if (scene.poster.kind === 'local') {
@@ -204,9 +215,7 @@ export default function AdminClient() {
 
   useEffect(() => {
     void refresh();
-    const unsubscribe = repo.subscribe(() => void refresh());
     return () => {
-      unsubscribe();
       repo.dispose();
     };
   }, [repo]);
@@ -300,7 +309,7 @@ export default function AdminClient() {
       );
       setMessage(
         status === 'published'
-          ? 'Scene published in this browser.'
+          ? "Scene added to this browser's experience."
           : 'Draft saved in this browser.',
       );
       await refresh();
@@ -309,6 +318,25 @@ export default function AdminClient() {
       setError(recoverableMessage(caught, 'The scene could not be saved. Try again.'));
     } finally {
       setBusy(false);
+    }
+  };
+
+  const addSentence = async () => {
+    const text = sentenceText.trim();
+    setSentenceError('');
+    setSentenceMessage('');
+    setSentenceBusy(true);
+    try {
+      if (!text || text.length > 160)
+        throw new Error('Sentence must be between 1 and 160 characters.');
+      await repo.addSentence(text);
+      setSentenceText('');
+      setSentenceMessage('Sentence added to this browser.');
+      await refresh();
+    } catch (caught) {
+      setSentenceError(recoverableMessage(caught, 'The sentence could not be saved. Try again.'));
+    } finally {
+      setSentenceBusy(false);
     }
   };
 
@@ -342,6 +370,8 @@ export default function AdminClient() {
       await repo.reset();
       setForm(blankForm());
       clearUpload();
+      setSentenceMessage('');
+      setSentenceError('');
       setMessage('Local edits were reset.');
       await refresh();
     } catch (caught) {
@@ -382,7 +412,8 @@ export default function AdminClient() {
             Keep the scene shelf close.
           </h1>
           <p className="max-w-2xl text-muted-foreground">
-            Give a scene a title and an MP4. The cover is taken from the first frame of the video.
+            Give a scene a title and an MP4. Add the short lines the demo shows when a picture
+            changes.
           </p>
         </div>
 
@@ -565,7 +596,7 @@ export default function AdminClient() {
                   Save draft
                 </Button>
                 <Button disabled={busy || !ready} onClick={() => void save('published')}>
-                  Publish
+                  Show in experience
                 </Button>
               </div>
 
@@ -588,12 +619,79 @@ export default function AdminClient() {
         <Card className="mt-6">
           <CardHeader>
             <CardTitle>
+              <h2>Sentence bank</h2>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <p className="text-sm text-muted-foreground">
+              The demo chooses one nature sentence at random whenever a video or personal photo is
+              selected.
+            </p>
+            <ul className="flex flex-col gap-2" aria-label="Nature sentence bank">
+              {sentenceBank.sentences
+                .filter((sentence) => sentence.section === 'nature')
+                .map((sentence) => (
+                  <li
+                    key={sentence.id}
+                    className="rounded-md border border-border px-3 py-2 text-sm"
+                  >
+                    {sentence.text}
+                  </li>
+                ))}
+            </ul>
+            <Field>
+              <FieldLabel htmlFor="sentence-text">Add a sentence</FieldLabel>
+              <Input
+                id="sentence-text"
+                value={sentenceText}
+                maxLength={160}
+                onChange={(event) => setSentenceText(event.target.value)}
+              />
+              <FieldDescription>
+                Up to 160 characters. It stays in this browser until local edits are reset.
+              </FieldDescription>
+            </Field>
+            <div>
+              <Button
+                disabled={sentenceBusy || !sentenceText.trim()}
+                onClick={() => void addSentence()}
+              >
+                <Plus data-icon="inline-start" />
+                Add sentence
+              </Button>
+            </div>
+            <div aria-live="polite" className="flex flex-col gap-2 empty:hidden">
+              {sentenceMessage ? (
+                <Alert>
+                  <AlertDescription>{sentenceMessage}</AlertDescription>
+                </Alert>
+              ) : null}
+              {sentenceError ? (
+                <Alert variant="destructive">
+                  <AlertDescription>{sentenceError}</AlertDescription>
+                </Alert>
+              ) : null}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>
               <h2>Phone preview</h2>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-hidden rounded-lg">
-              <WebExperience repository={repo} compact />
+              <WebExperience
+                key={[
+                  catalog.scenes.map((scene) => `${scene.id}:${scene.updatedAt}`).join('|'),
+                  sentenceBank.sentences
+                    .map((sentence) => `${sentence.id}:${sentence.text}`)
+                    .join('|'),
+                ].join('|')}
+                repository={repo}
+              />
             </div>
           </CardContent>
         </Card>
@@ -631,8 +729,8 @@ export default function AdminClient() {
           <DialogHeader>
             <DialogTitle>Reset local edits?</DialogTitle>
             <DialogDescription>
-              Local scenes are removed and the four bundled scenes are restored. This cannot be
-              undone.
+              Local scenes and added sentences are removed. The four bundled scenes and default
+              sentences are restored. This cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

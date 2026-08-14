@@ -62,7 +62,7 @@
   --muted-foreground: oklch(0.556 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
+  --destructive: oklch(0.42 0 0);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
@@ -97,7 +97,7 @@
   --muted-foreground: oklch(0.708 0 0);
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
+  --destructive: oklch(0.74 0 0);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
@@ -108,7 +108,7 @@
   --chart-5: oklch(0.269 0 0);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary: oklch(0.708 0 0);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
@@ -134,21 +134,43 @@
   --color-stage-foreground: var(--stage-foreground);
   --color-scrim: var(--scrim);
   --aspect-phone: 9 / 19.5;
+  --aspect-phone-frame: 9 / 19;
   --aspect-tile: 9 / 13;
   --container-phone: 26.875rem;
+  --container-demo-phone: var(--demo-phone-width);
   --radius-phone: 2.25rem;
   --radius-phone-screen: 1.8rem;
   --container-phone-preview: 18rem;
+  --animate-sentence-arrive: sentence-arrive 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 :root {
-  --stage: oklch(0.28 0.035 195);
+  --stage: oklch(0.18 0 0);
   --stage-foreground: oklch(0.985 0 0);
-  --scrim: oklch(0.28 0.035 195 / 18%);
+  --scrim: oklch(0.1 0 0 / 52%);
+  --demo-phone-width: min(100%, calc((100dvh - 5rem) * 9 / 19));
+}
+
+@media (min-width: 40rem) {
+  :root {
+    --demo-phone-width: min(100%, calc((100dvh - 7rem) * 9 / 19));
+  }
+}
+
+@keyframes sentence-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(0.35rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .dark {
-  --stage: oklch(0.21 0.03 195);
+  --stage: oklch(0.12 0 0);
   --stage-foreground: oklch(0.985 0 0);
-  --scrim: oklch(0.21 0.03 195 / 26%);
+  --scrim: oklch(0.1 0 0 / 58%);
 }

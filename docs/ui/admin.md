@@ -1,11 +1,13 @@
 ---
-{"kind":"page","id":"web.admin","specStatus":"approved","implementationStatus":"planned","owner":"Product and engineering","lastReviewed":"2026-08-07","app":"web","route":"/admin","useCases":["content.manage-local-scenes"]}
+{"kind":"page","id":"web.admin","specStatus":"approved","implementationStatus":"implemented","owner":"Product and engineering","lastReviewed":"2026-08-14","app":"web","route":"/admin","useCases":["content.manage-local-scenes"]}
 ---
 
 # Administration page
 
-Show the local-only banner, catalog rows, order controls, scene form, phone preview, storage estimate,
-reset action, and recoverable messages. Mark the route no-index. Do not add a server write path.
+Show the local-only banner, catalog rows, order controls, scene form, sentence bank, phone preview,
+storage estimate, reset action, and recoverable messages. The sentence bank lists default and locally
+added nature sentences and has one labelled add field. Mark the route no-index. Do not add a server
+write path, cross-tab synchronization, migration, or compatibility layer.
 
 ## UI Contract
 

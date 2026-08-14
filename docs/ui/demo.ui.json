@@ -12,8 +12,8 @@
         "button"
       ],
       "order": 1,
-      "contentLimits": "One brand link and one exit action, both on the stage color.",
-      "overflow": "Header wraps; the exit action stays reachable."
+      "contentLimits": "One brand link and one exit action on the stage color.",
+      "overflow": "Header actions wrap while the exit action stays reachable."
     },
     {
       "id": "stage",
@@ -23,24 +23,12 @@
         "button"
       ],
       "order": 2,
-      "contentLimits": "One scene at a time, one short heading, at most one status alert, two controls.",
-      "overflow": "The frame fills the available height and is capped at the phone container token; media is cropped, never letterboxed."
-    },
-    {
-      "id": "picker",
-      "pattern": "scene-picker/default",
-      "components": [
-        "sheet",
-        "button"
-      ],
-      "order": 3,
-      "contentLimits": "One tile per published scene, two to four columns.",
-      "overflow": "The tile grid scrolls vertically inside the sheet."
+      "contentLimits": "One phone frame with one lead poster, four bundled scene choices, one personal-photo choice, one sentence, one alert, and two controls.",
+      "overflow": "The phone frame uses the available compact viewport and is capped at the phone container token on wide screens. Each picture crops to fill its tile."
     }
   ],
   "states": [
     "ready",
-    "loading",
     "empty",
     "error"
   ],
@@ -49,34 +37,33 @@
     "focus": "body"
   },
   "responsive": {
-    "compact": "The stage fills the viewport below the header; the picker is a bottom sheet with two tile columns.",
-    "wide": "The stage is centered at the phone width; the picker shows four tile columns."
+    "compact": "The frame fills the available viewport below the header and preserves its phone proportions.",
+    "wide": "The frame stays centered at the phone container width."
   },
   "focus": {
     "order": [
       "header-brand",
       "exit-action",
+      "stage-lead",
+      "stage-gallery",
       "stage-controls"
     ],
-    "onOpen": "The scene picker moves focus into the sheet.",
-    "onClose": "Focus returns to the control that opened the picker.",
-    "onError": "The player status alert is announced; focus does not move."
+    "onOpen": "The picture gallery is rendered in the stage and follows normal document focus order.",
+    "onClose": "Returning to the gallery keeps focus on the gallery control until the next picture is chosen.",
+    "onError": "Player, personal-photo, and sharing messages are announced without moving focus."
   },
   "accessibility": {
     "landmarks": [
       "banner",
       "main"
     ],
-    "headings": "One h2 on the stage. The route has no h1 because it is a single immersive surface reached from the landing page.",
-    "labels": "Every control has an explicit label. Scene tiles name the place and their selected state.",
-    "statusAnnouncements": "Player failure is announced through an alert. Share results update the control label."
+    "headings": "The immersive route has no visible page heading. The phone stage has a labelled section and all controls have labels.",
+    "labels": "Bundled scene buttons name the scene. The personal-photo button names its operation. A selected personal photo exposes its file name as alternative text.",
+    "statusAnnouncements": "Player, photo loading, and sharing failures use an alert."
   },
   "evidence": [
-    "UI-DEMO-READY",
-    "UI-DEMO-ERROR",
-    "UI-DEMO-PICKER-FOCUS",
-    "UI-DEMO-PICKER-SELECT",
-    "UI-DEMO-AXE",
+    "UI-EXPERIENCE-READY",
+    "UI-EXPERIENCE-ERROR",
     "UI-WEB-VISUAL"
   ]
 }

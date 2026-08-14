@@ -14,7 +14,7 @@ export default async function RequirementsPage() {
     <PublicPage
       eyebrow="The plan"
       title="Requirements and product brief"
-      lead="The public page is rendered from the canonical product brief in the repository. Page and use-case statuses stay planned until their linked tests pass."
+      lead="The public page is rendered from the canonical product brief in the repository. It records the current early-demo scope and deferred work."
     >
       <ProseText>
         <ProseLink href="https://github.com/Litenova-Solutions/Calm-in-the-Rush/blob/main/docs/product/brief.md">

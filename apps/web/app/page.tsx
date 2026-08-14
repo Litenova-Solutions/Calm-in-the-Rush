@@ -14,7 +14,7 @@ export default function LandingPage() {
         <div className="grid items-center gap-12 lg:grid-cols-2">
           <div className="flex flex-col gap-5">
             <p className="text-sm font-medium tracking-wide text-muted-foreground uppercase">
-              Calm, without a checklist.
+              Quiet, without a checklist.
             </p>
             <h1 className="text-4xl font-normal tracking-tight text-balance sm:text-5xl">
               A quiet minute in the middle of everything.

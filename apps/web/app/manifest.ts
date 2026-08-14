@@ -5,10 +5,10 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'Calm in the Rush',
     short_name: 'Calm in the Rush',
     description: 'A quiet minute in the middle of everything.',
-    start_url: '/demo',
+    start_url: '/',
     display: 'standalone',
-    background_color: '#10252B',
-    theme_color: '#10252B',
+    background_color: '#242424',
+    theme_color: '#242424',
     icons: [{ src: '/icon.svg', sizes: 'any', type: 'image/svg+xml' }],
   };
 }

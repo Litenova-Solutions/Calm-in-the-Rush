@@ -1,20 +1,18 @@
 ---
-{"kind":"use-case","id":"calm.control-sound","specStatus":"approved","implementationStatus":"planned","owner":"Product and engineering","lastReviewed":"2026-08-07","operationType":"command","actors":["person"],"entryPoints":["web-demo","native-app"],"risks":["availability"],"applicableExtensions":[]}
+{"kind":"use-case","id":"calm.control-sound","specStatus":"approved","implementationStatus":"implemented","owner":"Product and engineering","lastReviewed":"2026-08-14","operationType":"command","actors":["person"],"entryPoints":["web-demo"],"risks":["availability"],"applicableExtensions":[]}
 ---
 
-# Control sound
+# Start scene sound
 
 ## Trigger
 
-A person presses the sound control.
+A person selects one of the four bundled scene posters in `/demo`.
 
 ## Rules
 
-- Initial sound is muted.
-- The first press enables embedded audio after a user gesture.
-- The preference remains while the page is open and when the scene changes.
-- The control has a label that reports the current state.
-
-## Evidence
-
-`[AC-SOUND-001]` checks the initial muted state, user activation, state label, and scene-change behavior.
+- The lead poster and picture gallery are silent.
+- The selected bundled scene starts with its embedded ambient sound unmuted.
+- A personal photo remains silent because it has no associated audio or video.
+- There is no in-product mute preference or sound toggle in this early demo.
+- The browser or device volume controls remain available to the person.
+- If sound cannot start, the surface keeps the selected still poster and reports a recovery message.
