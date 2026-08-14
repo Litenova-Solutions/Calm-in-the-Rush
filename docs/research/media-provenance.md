@@ -1,8 +1,7 @@
 # Media provenance
 
-All four clips are retained for the demo. Each adapted clip was trimmed, cropped to portrait,
-transcoded to H.264 with AAC audio, and used to derive a poster frame. The source pages and license
-status below are part of the content review record.
+Four nature videos are retained for the demo. They were derived from the reviewed source media.
+The source pages and license status below are part of the content review record.
 
 ## Lake
 
@@ -30,4 +29,4 @@ status below are part of the content review record.
 - License: CC BY-SA 4.0.
 - Source: [Mountain brook in Himalayas](https://commons.wikimedia.org/wiki/File:Mountain_brook_in_Himalayas.webm).
 
-Binary files have adjacent `.license` records under `packages/content/assets/scenes/`.
+Binary files have adjacent `.license` records under `apps/web/public/media/gallery/nature/`.

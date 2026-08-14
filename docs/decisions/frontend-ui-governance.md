@@ -6,30 +6,17 @@
 
 ## Decision
 
-Each frontend uses the visual system that its platform standard selects, and neither frontend shares a
-runtime component library with the other.
-
-The web frontend uses the Engineering Standards controlled baseline: shadcn/ui with Tailwind CSS v4,
+The web demo uses the Engineering Standards controlled baseline: shadcn/ui with Tailwind CSS v4,
 Base UI primitives, the Vega style, CSS variables, neutral tokens, Geist, and Lucide, at the versions
 `standards.manifest.json` pins. `apps/web` owns its generated source under `components/ui/`, its
 `components.json`, its one global CSS entry, `lib/utils.ts`, and `ui-source-lock.json`. Route and
 feature code composes `@/components/ui` and never imports a primitive base directly.
 
-The native frontend keeps React Native Paper as its platform system, rendered through
-`@calm/ui`. Official shadcn/ui components are DOM-oriented React source and are not a React Native
-component system, so the native platform decision stays separate. `@calm/ui` is native-only: the web
-frontend does not import it, and it no longer carries a `react-native-web` shim for web consumption.
+## Web-local gallery
 
-## Shared behavior, separate rendering
-
-`@calm/experience` is behavior only. It exports `useCalmExperience`, which owns scene selection,
-control visibility, player failure, and share state, plus the player and media types and a
-platform-resolved `useReducedMotion`. It imports no visual system.
-
-Each frontend renders that model with its own vocabulary: `apps/web/app/components/WebExperience.tsx`
-uses shadcn primitives and Tailwind tokens, and `apps/mobile/components/CalmExperience.tsx` uses Paper.
-This is the behavior-companion boundary the standards prescribe: one visual authority per frontend, with
-shared state underneath.
+`apps/web/app/components/WebExperience.tsx` owns local gallery selection and device file selection.
+`apps/web/lib/content` owns its IndexedDB repository and gallery schema. Both use shadcn primitives and
+Tailwind tokens. The demo has no cross-platform gallery state or presentation layer.
 
 ## Web UI contract
 
@@ -52,9 +39,9 @@ rather than DOM.
 
 `node standards/tools/validate-ui.mjs` validates the frontend UI configuration, the vocabulary, the page
 sidecars, the source-lock digests, the global CSS surface, and the class strings in feature code. The web
-ESLint configuration rejects React Native, `@calm/ui`, and primitive-base imports. This early demo has
-no automated browser suite. Browser and accessibility acceptance records are deferred until the
-product moves beyond the current local-only scope.
+ESLint configuration rejects primitive-base imports. This early demo has no automated browser suite.
+Browser and accessibility acceptance records are deferred until the product moves beyond the current
+local-only scope.
 
 ## Constraints
 

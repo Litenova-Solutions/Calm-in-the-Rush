@@ -32,7 +32,7 @@ The design consequence is specific and not obvious. Choosing a blue interface be
 
 **Dark mode is not calmer.** Evidence from 2024 to 2026 is mixed and context-bound. Dark mode reduces the contrast between screen and surroundings in a dim room, and can raise strain in a bright one because dilated pupils make low-contrast text harder to resolve. A 2025 study in Ergonomics found dark themes outperformed light themes on accuracy for medium and hard tasks and matched them on easy tasks. Readers with astigmatism report a halo effect that makes light text on dark backgrounds blur. Preference surveys favour dark mode, one reporting 68.4 percent, which is a preference finding and not a comfort finding.
 
-No mode is correct for everyone, so the product should not choose one on the person's behalf.
+No mode is correct for everyone. This demo uses a fixed light theme by product direction, so it does not switch with the person's system setting.
 
 ## Motion is the highest-risk element on the screen
 
@@ -56,7 +56,7 @@ CITR already uses a scrim under its hero wording. The rule that needs writing do
 
 1. The photograph is the interface. Nothing else on the screen competes with it for saturation, contrast, or motion.
 2. Keep the interface palette desaturated and let the photograph carry the color. Do not choose interface hues for their supposed emotional meaning.
-3. Do not hard-code light or dark. Follow the system setting and let the person override it.
+3. Use the light token set. Do not switch the demo with the system setting.
 4. Scrim any text that sits over a photograph, and measure contrast at the worst point on the image, 4.5:1 for normal text and 3:1 for large.
 5. Pace any deliberate motion at breathing rate, near six cycles per minute, so a drift period sits close to ten seconds and stays steady.
 6. Attach no motion to scrolling beyond the scroll itself. No parallax, no scroll-driven reveal.
@@ -65,7 +65,7 @@ CITR already uses a scrim under its hero wording. The rule that needs writing do
 9. Where a section wants sound, prefer water for calm and birdsong where alertness is wanted, following the split in the Buxton meta-analysis.
 10. Open on one picture. The first 500 milliseconds are decided by visual complexity and colorfulness, not by explanation.
 11. Write nothing the picture already says. Words are for what a picture cannot carry.
-12. Keep every control at least 44 by 44 CSS pixels or native points.
+12. Keep every control at least 44 by 44 CSS pixels.
 
 ## Claim boundary
 

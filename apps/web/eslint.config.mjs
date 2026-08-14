@@ -18,22 +18,6 @@ export default tseslint.config(
       'no-restricted-imports': [
         'error',
         {
-          paths: [
-            {
-              name: 'react-native',
-              message:
-                'The web frontend is a shadcn/ui surface. React Native belongs to apps/mobile.',
-            },
-            {
-              name: 'react-native-web',
-              message:
-                'The web frontend is a shadcn/ui surface. React Native belongs to apps/mobile.',
-            },
-            {
-              name: '@calm/ui',
-              message: '@calm/ui is the native design system. Use @/components/ui on the web.',
-            },
-          ],
           patterns: [
             {
               group: ['@base-ui/react', '@base-ui/react/*'],

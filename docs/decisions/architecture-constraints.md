@@ -6,26 +6,25 @@
 
 These constraints used to sit in [the product brief](../product/brief.md). They moved here so the brief stays readable by everyone who needs to agree to it, and so changing a package boundary does not mean editing a product document.
 
-- Use pnpm workspaces with deployables in `apps/` and shared packages in `packages/`.
-- Use Next.js for the web origin and Expo Router for native routes.
-- Use React Native Paper components with the governed theme and project-owned wrappers in `@calm/ui`.
-- Keep the bank schema and seed media in `@calm/content`.
-- Keep state and presentation in `@calm/experience`.
-- Resolve media through public package exports. Application code must not import package-internal paths.
+- Use pnpm workspaces with the web demo in `apps/web` and shared repository configuration in `packages/`.
+- Use Next.js for the sole web origin.
+- Use the governed shadcn/ui and Tailwind CSS baseline for the web interface.
+- Keep gallery configuration, storage logic, and bundled gallery definitions in `apps/web/lib/content`.
+- Store bundled media directly under `apps/web/public/media`.
 - Pin the toolchain listed in the repository root package manifest.
 
 ## Storage
 
-This early demo has one storage boundary: the browser. IndexedDB holds local scene metadata, locally
-curated media, and added sentences under [the local content storage decision](local-content-storage.md).
-The bundled seed catalog and default sentence bank remain the fallback when no local records exist.
+This early web demo has one storage boundary: the browser. IndexedDB holds local gallery configuration,
+visitor uploads, and locally curated tile images under [the local content storage decision](local-content-storage.md).
+The bundled three-page gallery remains the fallback when no local records exist.
 
 Do not add an API route, server action, server database, remote content service, browser-to-browser
 sync, migration, or compatibility layer. A hosted bank is deferred until the product owner asks for
 it.
 
-A photograph chosen in the demo never reaches a server or a third party. It stays still in browser
-memory for the open session and is not written to the local catalog.
+A photograph chosen in the demo never reaches a server or a third party. It stays in the current
+browser's gallery until the associated tile, page, or local database is removed.
 
 ## Administration stays local
 

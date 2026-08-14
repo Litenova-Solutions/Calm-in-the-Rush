@@ -1,6 +1,6 @@
 # Domain documentation
 
-The demo uses two small domains. `calm` describes the moment a person spends with a scene. `content`
-describes the browser-local catalog that supplies those scenes.
+The web demo has two small domains. `calm` describes selecting gallery image or video media. `content`
+describes the browser-local gallery pages and tiles.
 
 Read [the glossary](glossary.md) before changing names in code or specifications.

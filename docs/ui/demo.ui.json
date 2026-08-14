@@ -6,14 +6,14 @@
   "shell": "stage-shell/default",
   "regions": [
     {
-      "id": "header",
-      "pattern": "site-header/default",
+      "id": "admin-link",
+      "pattern": "stage-admin-link/default",
       "components": [
         "button"
       ],
       "order": 1,
-      "contentLimits": "One brand link and one exit action on the stage color.",
-      "overflow": "Header actions wrap while the exit action stays reachable."
+      "contentLimits": "One small elevated administration link outside the phone frame.",
+      "overflow": "The translucent elevated link remains outside the frame at every viewport width."
     },
     {
       "id": "stage",
@@ -23,8 +23,8 @@
         "button"
       ],
       "order": 2,
-      "contentLimits": "One phone frame with one lead poster, four bundled scene choices, one personal-photo choice, one sentence, one alert, and two controls.",
-      "overflow": "The phone frame uses the available compact viewport and is capped at the phone container token on wide screens. Each picture crops to fill its tile."
+      "contentLimits": "One dark-graphite phone frame with selected image or video media, gallery and share controls, and three seeded local gallery pages. The first two seeded pages contain 12 ordered tiles and the third contains 6; local administration can set any tile count. A brief decorative supplied-logo splash appears inside the phone screen.",
+      "overflow": "Visible tiles fill the full gallery surface behind compact translucent close, title, count, and page-navigation controls. The matching glass header and page-navigation surfaces use the same subtle edge and stronger translucent surface. The empty personal page uses a muted background beneath its floating controls. The header omits the page description, and page actions show their destination title with a directional icon. When another upload tile is revealed, the grid adds a row and every tile reduces in size to remain visible. More than 12 visible tiles scroll within the gallery surface. Media crops to fill its tile."
     }
   ],
   "states": [
@@ -37,29 +37,28 @@
     "focus": "body"
   },
   "responsive": {
-    "compact": "The frame fills the available viewport below the header and preserves its phone proportions.",
-    "wide": "The frame stays centered at the phone container width."
+    "compact": "The phone frame fills the available viewport with the Admin link outside its upper edge.",
+    "wide": "The phone frame stays centered at the phone container width while the Admin link remains outside it."
   },
   "focus": {
     "order": [
-      "header-brand",
-      "exit-action",
-      "stage-lead",
+      "admin-link",
       "stage-gallery",
-      "stage-controls"
+      "gallery-close",
+      "gallery-tiles",
+      "gallery-page-navigation"
     ],
-    "onOpen": "The picture gallery is rendered in the stage and follows normal document focus order.",
-    "onClose": "Returning to the gallery keeps focus on the gallery control until the next picture is chosen.",
-    "onError": "Player, personal-photo, and sharing messages are announced without moving focus."
+    "onOpen": "Opening the gallery follows normal document focus order inside the phone frame.",
+    "onClose": "Closing the gallery returns focus to the gallery icon.",
+    "onError": "Local gallery and file failures are announced without moving focus."
   },
   "accessibility": {
     "landmarks": [
-      "banner",
       "main"
     ],
-    "headings": "The immersive route has no visible page heading. The phone stage has a labelled section and all controls have labels.",
-    "labels": "Bundled scene buttons name the scene. The personal-photo button names its operation. A selected personal photo exposes its file name as alternative text.",
-    "statusAnnouncements": "Player, photo loading, and sharing failures use an alert."
+    "headings": "The immersive route has no root page heading. An open gallery exposes its current page title as a level-two heading, and every control has a programmatic label.",
+    "labels": "Media controls name the image, video, or upload operation. Uploaded media uses its file name as alternative text.",
+    "statusAnnouncements": "Gallery, file, playback, and sharing failures use an alert. Page position announces as the person moves between gallery pages."
   },
   "evidence": [
     "UI-EXPERIENCE-READY",

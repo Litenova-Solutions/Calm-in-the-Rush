@@ -8,7 +8,7 @@ import Image from 'next/image';
 export function PhonePreview() {
   return (
     <div className="mx-auto w-full max-w-phone-preview">
-      <div className="rounded-phone bg-stage p-2.5 shadow-xl ring-1 ring-border">
+      <div className="rounded-phone bg-device-shell p-2.5 shadow-xl ring-1 ring-foreground/20">
         <div className="relative aspect-phone overflow-hidden rounded-phone-screen bg-stage">
           <Image
             src="/media/landing/hero.jpg"
@@ -21,7 +21,7 @@ export function PhonePreview() {
           <div aria-hidden className="absolute inset-0 bg-scrim" />
           <div
             aria-hidden
-            className="absolute top-2.5 left-1/2 h-4 w-16 -translate-x-1/2 rounded-full bg-stage"
+            className="absolute top-2.5 left-1/2 h-4 w-16 -translate-x-1/2 rounded-full bg-device-shell"
           />
           <p className="absolute inset-x-5 top-11 text-lg font-normal tracking-tight text-stage-foreground">
             Take a breath.

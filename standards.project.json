@@ -22,28 +22,11 @@
           "primitives": "apps/web/components/ui",
           "publicExports": ["@/components/ui"]
         }
-      },
-      {
-        "name": "mobile",
-        "path": "apps/mobile",
-        "platform": "react-native"
       }
     ]
   },
   "selectedExtensions": [],
   "overrides": [
-    {
-      "ruleId": "FRONTEND.STRUCTURE.001",
-      "decision": "docs/decisions/frontend-demo-profile.md"
-    },
-    {
-      "ruleId": "REPO.PACKAGES.001",
-      "decision": "docs/decisions/shared-ui-package.md"
-    },
-    {
-      "ruleId": "FRONTEND.PACKAGES.001",
-      "decision": "docs/decisions/shared-ui-package.md"
-    },
     {
       "ruleId": "DEP.PINS.001",
       "decision": "docs/decisions/frontend-demo-profile.md"

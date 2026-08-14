@@ -88,10 +88,9 @@ export default function EvidencePage() {
         moves people.
       </ProseText>
       <ProseText>
-        Dark mode gets the same treatment. The 2024 to 2026 evidence is mixed and depends on the
-        room you are in, and readers with astigmatism report light text on dark backgrounds
-        blurring. There is no calmer mode, so the app follows your system setting instead of
-        choosing for you.
+        Dark-mode evidence from 2024 to 2026 is mixed and depends on the room. Readers with
+        astigmatism also report light text on dark backgrounds blurring. This demo uses the light
+        token set and does not switch with the system setting.
       </ProseText>
 
       <ProseHeading>Motion is the part that can hurt someone</ProseHeading>
@@ -216,8 +215,7 @@ export default function EvidencePage() {
           saturation and brightness are the dimensions that actually move people.
         </ProseListItem>
         <ProseListItem>
-          Light or dark follows your system setting. Neither one is calmer, so neither is chosen for
-          you.
+          The demo uses the light token set and does not switch with the system setting.
         </ProseListItem>
         <ProseListItem>
           Any text over a photograph sits on a scrim, and the contrast is measured at the worst

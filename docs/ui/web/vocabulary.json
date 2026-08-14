@@ -26,100 +26,114 @@
     {
       "name": "background",
       "type": "color",
-      "light": "oklch(1 0 0)",
-      "dark": "oklch(0.145 0 0)",
-      "description": "Page background."
+      "light": "oklch(0.965 0.028 95)",
+      "dark": "oklch(0.965 0.028 95)",
+      "description": "Warm, low-saturation page background."
     },
     {
       "name": "foreground",
       "type": "color",
-      "light": "oklch(0.145 0 0)",
-      "dark": "oklch(0.985 0 0)",
+      "light": "oklch(0.29 0.035 150)",
+      "dark": "oklch(0.29 0.035 150)",
       "description": "Primary readable content."
     },
     {
       "name": "muted",
       "type": "color",
-      "light": "oklch(0.97 0 0)",
-      "dark": "oklch(0.269 0 0)",
-      "description": "Recessed surface for code, thumbnails, and inset rows."
+      "light": "oklch(0.93 0.032 130)",
+      "dark": "oklch(0.93 0.032 130)",
+      "description": "Soft sage recessed surface for thumbnails and inset rows."
     },
     {
       "name": "muted-foreground",
       "type": "color",
-      "light": "oklch(0.556 0 0)",
-      "dark": "oklch(0.708 0 0)",
+      "light": "oklch(0.4 0.04 150)",
+      "dark": "oklch(0.4 0.04 150)",
       "description": "Supporting copy, eyebrows, and footer links."
     },
     {
       "name": "primary",
       "type": "color",
-      "light": "oklch(0.205 0 0)",
-      "dark": "oklch(0.922 0 0)",
+      "light": "oklch(0.42 0.08 150)",
+      "dark": "oklch(0.42 0.08 150)",
       "description": "Primary action and selected state."
     },
     {
       "name": "secondary",
       "type": "color",
-      "light": "oklch(0.97 0 0)",
-      "dark": "oklch(0.269 0 0)",
-      "description": "Secondary action, including the controls over the media stage."
+      "light": "oklch(0.91 0.045 100)",
+      "dark": "oklch(0.91 0.045 100)",
+      "description": "Warm secondary action, including the control outside the media stage."
     },
     {
       "name": "card",
       "type": "color",
-      "light": "oklch(1 0 0)",
-      "dark": "oklch(0.205 0 0)",
+      "light": "oklch(0.98 0.02 95)",
+      "dark": "oklch(0.98 0.02 95)",
       "description": "Content card and alert surface."
     },
     {
       "name": "border",
       "type": "color",
-      "light": "oklch(0.922 0 0)",
-      "dark": "oklch(1 0 0 / 10%)",
+      "light": "oklch(0.8 0.04 120)",
+      "dark": "oklch(0.8 0.04 120)",
       "description": "Region separation for header, footer, cards, and rows."
     },
     {
       "name": "ring",
       "type": "color",
-      "light": "oklch(0.708 0 0)",
-      "dark": "oklch(0.556 0 0)",
+      "light": "oklch(0.54 0.09 150)",
+      "dark": "oklch(0.54 0.09 150)",
       "description": "Visible focus indicator."
     },
     {
       "name": "destructive",
       "type": "color",
-      "light": "oklch(0.42 0 0)",
-      "dark": "oklch(0.74 0 0)",
+      "light": "oklch(0.49 0.18 28)",
+      "dark": "oklch(0.49 0.18 28)",
       "description": "Destructive action and error presentation."
     },
     {
       "name": "stage",
       "type": "color",
-      "light": "oklch(0.18 0 0)",
-      "dark": "oklch(0.12 0 0)",
-      "description": "The dark, neutral canvas around the photograph."
+      "light": "oklch(0.37 0.055 155)",
+      "dark": "oklch(0.37 0.055 155)",
+      "description": "Deep sage media stage and fallback screen surface inside the phone casing."
     },
     {
       "name": "stage-foreground",
       "type": "color",
-      "light": "oklch(0.985 0 0)",
-      "dark": "oklch(0.985 0 0)",
+      "light": "oklch(0.985 0.018 95)",
+      "dark": "oklch(0.985 0.018 95)",
       "description": "Text and marks placed on the scene canvas."
     },
     {
       "name": "scrim",
       "type": "color",
-      "light": "oklch(0.1 0 0 / 52%)",
-      "dark": "oklch(0.1 0 0 / 58%)",
-      "description": "Neutral overlay that keeps text legible over the photograph."
+      "light": "oklch(0.2 0.045 155 / 56%)",
+      "dark": "oklch(0.2 0.045 155 / 56%)",
+      "description": "Deep sage overlay that keeps text legible over the photograph."
+    },
+    {
+      "name": "demo-canvas",
+      "type": "color",
+      "light": "oklch(0.91 0.045 120)",
+      "dark": "oklch(0.91 0.045 120)",
+      "description": "Low-saturation warm yellow and sage surround for the phone-framed demo."
+    },
+    {
+      "name": "device-shell",
+      "type": "color",
+      "light": "oklch(0.21 0.014 260)",
+      "dark": "oklch(0.21 0.014 260)",
+      "description": "Dark graphite finish for the visible physical phone casing and display cutout."
     },
     {
       "name": "aspect-phone",
       "type": "length",
       "light": "9 / 19.5",
       "dark": "9 / 19.5",
-      "description": "Portrait phone proportion for the landing poster."
+      "description": "Portrait screen proportion for the live phone gallery."
     },
     {
       "name": "aspect-phone-frame",
@@ -147,14 +161,14 @@
       "type": "length",
       "light": "Available viewport width after the demo header and frame spacing.",
       "dark": "Available viewport width after the demo header and frame spacing.",
-      "description": "Responsive width of the demo phone frame before the maximum phone container is applied."
+      "description": "Responsive width of the root phone frame before the maximum phone container is applied."
     },
     {
       "name": "radius-phone",
       "type": "length",
       "light": "2.25rem",
       "dark": "2.25rem",
-      "description": "Outer corner radius of the phone frame on the landing page."
+      "description": "Outer corner radius of the phone frame."
     },
     {
       "name": "radius-phone-screen",
@@ -173,9 +187,51 @@
     {
       "name": "animate-sentence-arrive",
       "type": "motion",
-      "light": "600ms fade and 0.35rem upward movement",
-      "dark": "600ms fade and 0.35rem upward movement",
+      "light": "420ms fade and 0.2rem upward movement",
+      "dark": "420ms fade and 0.2rem upward movement",
       "description": "Selected-scene sentence entrance, suppressed when reduced motion is requested."
+    },
+    {
+      "name": "animate-media-arrive",
+      "type": "motion",
+      "light": "360ms fade and 1.5% scale settle",
+      "dark": "360ms fade and 1.5% scale settle",
+      "description": "Selected image or video entrance, suppressed when reduced motion is requested."
+    },
+    {
+      "name": "animate-gallery-page-forward",
+      "type": "motion",
+      "light": "260ms fade and 0.5rem movement from the right",
+      "dark": "260ms fade and 0.5rem movement from the right",
+      "description": "Forward gallery-page entrance, suppressed when reduced motion is requested."
+    },
+    {
+      "name": "animate-gallery-page-backward",
+      "type": "motion",
+      "light": "260ms fade and 0.5rem movement from the left",
+      "dark": "260ms fade and 0.5rem movement from the left",
+      "description": "Backward gallery-page entrance, suppressed when reduced motion is requested."
+    },
+    {
+      "name": "animate-splash-logo-arrive",
+      "type": "motion",
+      "light": "520ms fade, 0.4rem upward movement, and 5% scale settle",
+      "dark": "520ms fade, 0.4rem upward movement, and 5% scale settle",
+      "description": "Supplied-logo splash entrance, suppressed when reduced motion is requested."
+    },
+    {
+      "name": "animate-splash-curtain-exit",
+      "type": "motion",
+      "light": "220ms fade after 1050ms",
+      "dark": "220ms fade after 1050ms",
+      "description": "Visual splash exit before the live demo, suppressed when reduced motion is requested."
+    },
+    {
+      "name": "animate-splash-reduced-exit",
+      "type": "motion",
+      "light": "1ms fade after 180ms",
+      "dark": "1ms fade after 180ms",
+      "description": "Non-motion splash exit used when reduced motion is requested."
     }
   ],
   "states": [
@@ -259,7 +315,7 @@
     {
       "id": "stage-shell/default",
       "regions": [
-        "header",
+        "admin-link",
         "stage"
       ],
       "responsiveModes": [
@@ -365,6 +421,18 @@
       ]
     },
     {
+      "id": "stage-admin-link/default",
+      "components": [
+        "button"
+      ],
+      "states": [
+        "ready"
+      ],
+      "evidence": [
+        "UI-EXPERIENCE-READY"
+      ]
+    },
+    {
       "id": "page-header/compact",
       "components": [
         "button"
@@ -374,6 +442,162 @@
       ],
       "evidence": [
         "UI-ADMIN-READY"
+      ]
+    },
+    {
+      "id": "admin-sections/default",
+      "components": [
+        "button"
+      ],
+      "states": [
+        "ready"
+      ],
+      "evidence": [
+        "UI-ADMIN-READY",
+        "UI-ADMIN-LABELS"
+      ]
+    },
+    {
+      "id": "gallery-tree/default",
+      "components": [
+        "badge",
+        "button",
+        "card",
+        "dialog",
+        "field",
+        "input",
+        "label"
+      ],
+      "states": [
+        "ready",
+        "disabled",
+        "saving",
+        "saved",
+        "error"
+      ],
+      "evidence": [
+        "UI-ADMIN-READY",
+        "UI-ADMIN-LABELS",
+        "UI-ADMIN-VALIDATION",
+        "UI-ADMIN-DESTRUCTIVE"
+      ]
+    },
+    {
+      "id": "gallery-pages/default",
+      "components": [
+        "button",
+        "card",
+        "field",
+        "input",
+        "label"
+      ],
+      "states": [
+        "ready",
+        "disabled",
+        "saving",
+        "saved",
+        "error"
+      ],
+      "evidence": [
+        "UI-ADMIN-READY",
+        "UI-ADMIN-LABELS",
+        "UI-ADMIN-VALIDATION"
+      ]
+    },
+    {
+      "id": "gallery-editor/default",
+      "components": [
+        "button",
+        "card",
+        "field",
+        "input",
+        "label"
+      ],
+      "states": [
+        "ready",
+        "disabled",
+        "saving",
+        "saved",
+        "validation-error"
+      ],
+      "evidence": [
+        "UI-ADMIN-READY",
+        "UI-ADMIN-LABELS",
+        "UI-ADMIN-VALIDATION"
+      ]
+    },
+    {
+      "id": "gallery-tile-list/default",
+      "components": [
+        "badge",
+        "button",
+        "card"
+      ],
+      "states": [
+        "ready",
+        "disabled",
+        "saving",
+        "saved"
+      ],
+      "evidence": [
+        "UI-ADMIN-READY",
+        "UI-ADMIN-DESTRUCTIVE"
+      ]
+    },
+    {
+      "id": "gallery-upload/default",
+      "components": [
+        "button",
+        "card"
+      ],
+      "states": [
+        "ready",
+        "disabled",
+        "saving",
+        "saved"
+      ],
+      "evidence": [
+        "UI-ADMIN-READY",
+        "UI-ADMIN-VALIDATION"
+      ]
+    },
+    {
+      "id": "gallery-prefilled-form/default",
+      "components": [
+        "button",
+        "card",
+        "field",
+        "input",
+        "label"
+      ],
+      "states": [
+        "ready",
+        "disabled",
+        "saving",
+        "saved",
+        "validation-error",
+        "error"
+      ],
+      "evidence": [
+        "UI-ADMIN-LABELS",
+        "UI-ADMIN-VALIDATION",
+        "UI-ADMIN-AXE"
+      ]
+    },
+    {
+      "id": "storage-panel/default",
+      "components": [
+        "button",
+        "card"
+      ],
+      "states": [
+        "ready",
+        "disabled",
+        "error"
+      ],
+      "evidence": [
+        "UI-ADMIN-READY",
+        "UI-ADMIN-DESTRUCTIVE"
       ]
     },
     {

@@ -3,75 +3,66 @@
   "schemaVersion": 1,
   "page": "web.landing",
   "profile": "public-light",
-  "shell": "public-shell/default",
+  "shell": "stage-shell/default",
   "regions": [
     {
-      "id": "header",
-      "pattern": "site-header/default",
+      "id": "admin-link",
+      "pattern": "stage-admin-link/default",
       "components": [
         "button"
       ],
       "order": 1,
-      "contentLimits": "One brand link and three navigation targets.",
-      "overflow": "Navigation wraps to a second line on narrow viewports and stays right aligned."
+      "contentLimits": "One small elevated administration link outside the phone frame.",
+      "overflow": "The translucent elevated link remains outside the frame at every viewport width."
     },
     {
-      "id": "hero",
-      "pattern": "hero/default",
+      "id": "stage",
+      "pattern": "media-stage/default",
       "components": [
+        "alert",
         "button"
       ],
       "order": 2,
-      "contentLimits": "One eyebrow, one h1 under 60 characters, one lead under 160 characters, three actions, and one phone-framed still of the demo with its photograph credit.",
-      "overflow": "Actions wrap. The phone frame shrinks to the column width and never exceeds the phone container token; the credit line wraps beneath it."
-    },
-    {
-      "id": "footer",
-      "pattern": "site-footer/default",
-      "components": [
-        "button"
-      ],
-      "order": 3,
-      "contentLimits": "One wordmark and six links.",
-      "overflow": "Links wrap with row and column gaps."
+      "contentLimits": "One dark-graphite phone frame with selected image or video media, gallery and share controls, three local gallery pages, and progressive upload spaces. A brief decorative supplied-logo splash appears inside the phone screen.",
+      "overflow": "Visible tiles fill the full gallery surface behind compact translucent close, title, count, and page-navigation controls. The matching glass header and page-navigation surfaces use the same subtle edge and stronger translucent surface. The empty personal page uses a muted background beneath its floating controls. The header omits the page description, and page actions show their destination title with a directional icon. When another upload tile is revealed, the grid adds a row and every tile reduces in size to remain visible. More than 12 visible tiles scroll within the gallery surface."
     }
   ],
   "states": [
     "ready",
-    "not-found"
+    "empty",
+    "error"
   ],
   "initial": {
     "scroll": "top",
     "focus": "body"
   },
   "responsive": {
-    "compact": "Hero stacks to one column with the poster below the copy, and navigation wraps.",
-    "wide": "Hero is a two-column grid with the poster beside the copy."
+    "compact": "The phone frame fills the available viewport with the Admin link outside its upper edge.",
+    "wide": "The phone frame stays centered at the phone container width while the Admin link remains outside it."
   },
   "focus": {
     "order": [
-      "header-brand",
-      "header-navigation",
-      "hero-actions",
-      "footer-navigation"
+      "admin-link",
+      "stage-gallery",
+      "gallery-close",
+      "gallery-tiles",
+      "gallery-page-navigation"
     ],
-    "onOpen": "No overlay on this route.",
-    "onClose": "No overlay on this route.",
-    "onError": "Not applicable; the route has no form."
+    "onOpen": "Opening the gallery follows normal document focus order inside the phone frame.",
+    "onClose": "Closing the gallery returns focus to the gallery icon.",
+    "onError": "Local gallery and file failures are announced without moving focus."
   },
   "accessibility": {
     "landmarks": [
-      "banner",
-      "navigation",
-      "main",
-      "contentinfo"
+      "main"
     ],
-    "headings": "One h1 for the product promise. No h2 on this route.",
-    "labels": "Every action is a link with visible text. The brand mark and phone frame furniture are decorative. The hero photograph has descriptive alternative text and a visible credit with license and source links.",
-    "statusAnnouncements": "None; the route is static."
+    "headings": "The immersive route has no root page heading. An open gallery exposes its current page title as a level-two heading, and every control has a programmatic label.",
+    "labels": "Media controls name the image, video, or upload operation. Uploaded media uses its file name as alternative text.",
+    "statusAnnouncements": "Gallery, file, playback, and sharing failures use an alert. Page position announces as the person moves between gallery pages."
   },
   "evidence": [
-    "UI-LANDING-READY",
+    "UI-EXPERIENCE-READY",
+    "UI-EXPERIENCE-ERROR",
     "UI-WEB-VISUAL"
   ]
 }

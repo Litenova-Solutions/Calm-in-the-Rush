@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'A quiet minute in the middle of everything.',
     start_url: '/',
     display: 'standalone',
-    background_color: '#242424',
-    theme_color: '#242424',
+    background_color: '#e6edc9',
+    theme_color: '#e6edc9',
     icons: [{ src: '/icon.svg', sizes: 'any', type: 'image/svg+xml' }],
   };
 }

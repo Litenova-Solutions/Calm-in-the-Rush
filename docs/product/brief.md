@@ -6,177 +6,133 @@
 
 ## Purpose
 
-Calm in the Rush gives a person a short, unguided pause. It pairs real nature scenes with the ambient
-sound captured in those places. It does not ask for an account, a goal, a timer, or a streak.
-
-The pictures carry the product. A short sentence appears where a picture cannot carry itself, never
-as an instruction or lesson. English is the only language in this demo.
+Calm in the Rush is a phone-framed web picture gallery for a short, unguided pause. The root route
+opens the working demo at once. It has no account, goal, timer, streak, server, or remote content
+service.
 
 ## Primary flow: find-a-calm-moment
 
-1. A person opens `/` and sees the product landing page with a static phone preview.
-2. They select `Open the demo` and reach `/demo`.
-3. The demo presents the live experience inside a phone frame. Selecting its lead poster reveals
-   four bundled nature videos and a fifth option to choose a personal photo.
-4. Selecting a bundled scene starts its video and embedded ambient sound. Selecting a personal photo
-   keeps it still and starts no video or sound.
-5. Each selected video or photo replaces the displayed sentence with a random nature sentence from
-   the current browser's sentence bank.
-6. A person can return to the picture choices, share the demo URL, or leave without an account.
-
-This is an early browser-local demo. It has no automated test suite, migration path, compatibility
-layer, backend, or cross-tab coordination.
+1. A person opens `/`, briefly sees the supplied logo splash inside the phone screen, then sees the
+   phone-framed demo with a small Admin link outside the frame.
+2. They select the gallery icon inside the phone.
+3. They move through the three gallery pages and select a bundled or browser-local image or video.
+4. An upload tile accepts an image or video file, then becomes that media and exposes the next
+   upload tile.
+5. The chosen media fills the phone screen until the person opens the gallery again.
 
 ## Use cases
 
-| ID             | Use case            | Status      | Specification                                                   |
-| :------------- | :------------------ | :---------- | :-------------------------------------------------------------- |
-| UC-CALM-001    | View a scene        | implemented | [view a scene](../domain/modules/calm/view-scene.md)           |
-| UC-CALM-002    | Choose a scene      | implemented | [choose a scene](../domain/modules/calm/choose-scene.md)       |
-| UC-CALM-003    | Start scene sound   | implemented | [control sound](../domain/modules/calm/control-sound.md)       |
-| UC-CALM-004    | Share a moment      | implemented | [share a moment](../domain/modules/calm/share-moment.md)       |
-| UC-CONTENT-001 | Manage local scenes | implemented | [manage local scenes](../domain/modules/content/manage-local-scenes.md) |
-
-The web use cases describe `/demo`. Native parity remains planned.
+| ID | Use case | Status | Specification |
+| :-- | :-- | :-- | :-- |
+| UC-CALM-001 | View gallery | implemented | [view a scene](../domain/modules/calm/view-scene.md) |
+| UC-CALM-002 | Choose gallery tile | implemented | [choose a scene](../domain/modules/calm/choose-scene.md) |
+| UC-CONTENT-001 | Manage local gallery | implemented | [manage local scenes](../domain/modules/content/manage-local-scenes.md) |
 
 ## Page requirements
 
-| Page            | Purpose                                                    | Status      | Specification                           |
-| :-------------- | :--------------------------------------------------------- | :---------- | :-------------------------------------- |
-| `/`             | Explain the product and link to the demo                   | implemented | [landing](../ui/landing.md)             |
-| `/demo`         | Run the browser experience in a visible phone frame        | implemented | [demo](../ui/demo.md)                   |
-| `/requirements` | Publish this plan in a readable form                       | implemented | [requirements](../ui/requirements.md)   |
-| `/evidence`     | Publish the interface and photo evidence                   | implemented | [evidence](../ui/evidence.md)           |
-| `/admin`        | Curate local scenes and sentences in the current browser   | implemented | [admin](../ui/admin.md)                 |
-| Native app      | Run the same flow in Expo                                  | planned     | [native experience](../ui/native-experience.md) |
+| Page | Purpose | Status | Specification |
+| :-- | :-- | :-- | :-- |
+| `/` | Run the phone-framed web demo | implemented | [root demo](../ui/landing.md) |
+| `/demo` | Render the same web demo at its existing direct URL | implemented | [demo](../ui/demo.md) |
+| `/admin` | Edit the local gallery in the current browser | implemented | [admin](../ui/admin.md) |
 
-`/requirements` and `/evidence` exist for the people building the demo. They are not part of the
-visitor's path through the product.
+## Demo gallery
 
-## Landing requirements
+- The root route has no public header, wordmark, hero copy, footer, or visitor action group. A brief
+  supplied-logo splash appears inside the phone screen before the live demo, and a small Admin link
+  remains outside the phone frame.
+- The application and surrounding demo canvas use a low-saturation warm yellow and sage palette rather than a neutral white interface.
+- The phone frame uses a dark graphite device casing, while its internal media stage remains deep sage.
+  It fills the available compact viewport. On wider screens it stops at the `container-phone` width
+  token so it remains visibly a phone-framed web demo.
+- The gallery icon opens the current page without navigating away from the phone frame. Its compact,
+  translucent close, page-title, count, and page-navigation controls float over the tile grid so the
+  tiles retain the full phone surface. The header does not show the page description. The matching
+  glass header and page-navigation surfaces use the same subtle edge and stronger translucent surface.
+  The empty your-people page uses a muted surface behind those bars. Each bottom action presents its
+  destination page title and a directional icon.
+- The first page starts with four bundled nature videos and one night-sky image. It has seven
+  ordered upload spaces. Only the first empty upload space is visible; each completed upload reveals
+  the next one.
+- The second page starts with five bundled images of calm human activity: guitar, reading, tea,
+  stretching, and gardening. It uses the same seven upload-space progression.
+- The third page starts as one centered `Add a nice photo or video of yourself and/or people you
+  love` control. It has six ordered upload spaces. After the first upload, the media becomes a tile
+  and the next upload space appears.
+- The visible tiles fill the full gallery surface behind the floating controls. When another upload
+  is revealed, the grid adds a row and reduces the tile size to keep every visible tile on screen.
+  Pages with more than 12 visible tiles scroll inside the gallery surface rather than producing
+  unusably small tiles. An empty configured page shows a clear empty state. Moving between pages uses
+  short directional motion unless reduced motion is requested.
+- A selected image or video fills the phone screen. Nature videos loop with motion; selecting one
+  requests sound as part of the person's action. A share control uses the browser share sheet or
+  copies the demo link when sharing is unavailable.
+- A light-weight sentence appears over active media and changes when another tile is selected. Its
+  difference blend adapts from light to dark against the media, with a text shadow fallback.
+- The translucent gallery and share controls fade after 3.5 seconds without interaction on active
+  media. A pointer press inside the phone restores them, while keyboard focus keeps them visible.
+- Uploaded files must be images or videos. File errors produce a recoverable message and do not
+  change the current media.
 
-- Use the heading `A quiet minute in the middle of everything.`.
-- Keep the existing header, hero copy, static phone preview, and compact footer.
-- Link the primary action and header action to `/demo` with the label `Open the demo`.
-- Do not request demo media on the landing route.
-- Keep the interface palette neutral and desaturated so the photograph carries saturation and color.
+## Local gallery content
 
-## Demo requirements
+The browser owns one gallery configuration and its local media blobs.
 
-- Center the live experience in a visible phone frame on `/demo`. On a phone, it uses the available
-  viewport below the demo header. On wider screens, it stops at the `container-phone` width token.
-- Start with the first bundled poster and make no video request until a person selects a bundled
-  scene.
-- Reveal four bundled nature posters and a fifth `Use your own photo` option.
-- The fifth option accepts an image file only. It never accepts a visitor video, creates no generated
-  video, and sends no file to a server.
-- Keep the chosen photo in memory for the open demo session. Replacing it or leaving the page releases
-  the browser object URL.
-- Select a random nature sentence from the current sentence bank whenever a bundled video or personal
-  photo is selected. When more than one nature sentence exists, do not repeat the immediately previous
-  sentence. Hide the sentence while the picture grid is open, then fade and lift the new sentence into
-  view after selection when reduced motion is not requested.
-- Selecting a bundled poster starts the existing video and its embedded ambient sound unmuted. There
-  is no in-product mute control. The selection is the deliberate action that permits sound.
-- When reduced motion is active, show the selected scene's still poster while its embedded ambient
-  sound remains available.
-- Fade the sentence and controls after six idle seconds. Pointer activity and keyboard focus make
-  them visible again.
-- Pause selected scene media while the page is hidden. Show the still poster and a quiet message if
-  video or sound fails to load.
-- Let a person share `/demo` through the device share surface or a copied link fallback.
-
-## Content bank requirements
-
-The browser owns one local scene catalog and one local English sentence bank.
-
-- The scene catalog starts with the four existing bundled nature videos and posters.
-- The sentence bank starts with five nature sentences: `Nothing needs an answer here.`, `You can stay
-  with this view.`, `Let the next breath arrive on its own.`, `There is room for this moment.`, and
-  `There is no next step to find.`.
-- `/admin` can add a nature sentence of up to 160 characters. Added sentences appear in the random
-  selection pool after the demo is opened again or the admin preview is remounted.
-- IndexedDB database `calm-in-the-rush-local-v2` holds catalog metadata, locally curated video and
-  poster blobs, and the sentence bank. The `localStorage` API is not used.
-- A personal photo selected in `/demo` is not a catalog record and is not written to IndexedDB.
-- There is no API route, server action, remote database, cloud bucket, browser-to-browser publication,
-  cross-tab message channel, or revision synchronization.
-- Local records have no migration or backward compatibility promise. The `v2` database intentionally
-  starts fresh rather than reading the former browser-local database.
-- Draft scenes stay out of the demo. `Show in experience` changes only the current browser's catalog.
-
-## Interface evidence and product claims
-
-The interface evidence review records why the surrounding UI stays neutral and low saturation rather
-than assigning a calming effect to a hue. The review also records the limits of a short screen break:
-the product offers a quiet minute and makes no medical, treatment, attention, or productivity claim.
-
-The photo evidence review supports a still, personally meaningful photograph. It does not support
-generated facial motion. The demo therefore keeps a personal photo still and calls no artificial video
-service.
-
-The canonical sources are [the interface evidence review](../research/calm-interface-evidence.md) and
-[the photo presence evidence review](../research/photo-presence-evidence.md). The `/evidence` page
-publishes their claims and limits in plain language.
+- IndexedDB database `calm-in-the-rush-local-v3` has `gallery`, `galleryUploads`, and `media` stores. The `localStorage` API is not used.
+- The gallery configuration contains ordered pages and ordered tiles. A tile is either `prefilled`,
+  with a bundled or locally curated image or video, or `upload`, with a label and an ordered place
+  for visitor media.
+- The gallery configuration also contains one to 24 local sentences for the active-media overlay.
+- The browser falls back to the three bundled gallery pages when no local configuration exists.
+- A visitor upload is stored only in the current browser. It never reaches a server, another browser, or a remote content service.
+- Removing a page or tile removes its unreferenced local media blobs. Reset removes the v3 database
+  and restores the bundled three-page gallery.
+- The former v2 database is not read. This early demo intentionally has no migration or compatibility layer.
 
 ## Administration requirements
 
-Administration manages only the current browser's content. It retains the existing title and MP4
-scene workflow, including a poster derived from the first video frame, draft and shown-in-experience
-states, ordering, storage estimate, preview, recovery text, and confirmation before deletion or reset.
+Administration manages only the current browser's gallery.
 
-It also lists the active nature sentence bank and provides a labelled field to add a sentence. Reset
-removes local scenes and added sentences, then restores the bundled scenes and default sentences.
-
-The route has no sign-in because it has no remote capability. There is no backend, audit log,
-cross-tab synchronization, migration, or compatibility work in this demo.
+- The page separates gallery, sentences, and local data through an in-page section switcher.
+- The gallery section is one page-and-tile editor. It shows pages with their tiles nested beneath them,
+  lets an admin add or remove a page, and changes page order in context.
+- The page lists the active-media sentences and lets an admin add or remove a sentence while at least
+  one remains.
+- In the tree, the admin edits a page name, adds a visitor-upload or pre-filled image or video tile,
+  edits a tile, removes a tile, and changes tile order. Tiles support drag movement across pages, a
+  named Move action with destination choices, and directional order controls. Moving an upload tile
+  preserves its local media.
+- A gallery has at least one page. Each page can hold zero or more tiles, and the admin-defined tile
+  count determines the visitor-visible capacity.
+- Pre-filled tile input accepts image and video files. Its title and alternative text are required so
+  the phone gallery can name the media; either the metadata or file can later be updated.
+- The local-data section shows current local-media storage, an estimated browser quota, reset,
+  recoverable errors, and confirmation before removal or reset. It does not contain a phone preview.
+- The route has no sign-in because it has no remote capability. There is no backend, audit log, cross-tab synchronization, migration, or compatibility work in this demo.
 
 ## Privacy and accessibility
 
-Calm in the Rush has no accounts for visitors, cookies, analytics, advertising, location, camera,
-microphone, or tracking. The demo sends no scene catalog, locally curated media, added sentence, or
-personal photo to a server.
+Calm in the Rush has no accounts, cookies, analytics, advertising, location, camera, microphone, or tracking. The web demo sends no page configuration, tile, image, or video to a server.
 
-Private browsing, storage eviction, cleared site data, and a local format reset can erase browser
-content. A personal photo lasts only for the open demo session.
-
-Every part of the product uses visible focus outlines, keyboard operation, screen-reader labels, and a
-minimum 44 by 44 target size. The selected personal photo has its file name as alternative text.
+Private browsing, storage eviction, cleared site data, and reset can erase browser-local gallery data. Every interaction has a keyboard path, visible focus indicator, and programmatic label. Uploaded media uses the selected file name as alternative text until an admin replaces it with a pre-filled media description.
 
 ## Content and attribution
 
-The four bundled nature scenes retain their current provenance metadata. New license research, source
-review, and a separate music bank are out of scope for this early demo. The stress section has no
-media and does not appear in the demo.
+The four bundled nature videos retain their provenance metadata. The fifth nature tile is the bundled
+night-sky image. The five activity images are local generated demo assets. The supplied splash logo
+retains its source URL beside the local asset. New license research and source review are outside the
+current web demo scope.
 
-## How it is built
+## Constraints
 
-The technical constraints live in [the architecture constraints](../decisions/architecture-constraints.md).
-The short version: the early web demo reads bundled media and browser-local records only. It has no
-server or remote storage.
-
-## Explicit non-goals
-
-Calm in the Rush does not include visitor accounts, payments, notifications, analytics, medical
-claims, a backend, migration, automated tests, cross-tab synchronization, a compatibility layer, or
-visitor video upload. It calls no artificial video service and generates no face.
+The web demo reads bundled assets and browser-local records only. Do not add authentication, an API route, server action, server database, remote storage, browser-to-browser publication, or a remote content service.
 
 ## Acceptance criteria
 
-| ID               | Criterion                                                                  | Current state |
-| :--------------- | :------------------------------------------------------------------------- | :------------ |
-| [AC-LAND-001]    | The landing route remains static and links to `/demo`                     | Implemented   |
-| [AC-DEMO-001]    | `/demo` renders the live experience in a visible phone frame              | Implemented   |
-| [AC-BANK-001]    | The demo shows four bundled video choices and one personal photo choice   | Implemented   |
-| [AC-SENTENCE-001] | Each selected video or photo chooses a different random nature sentence | Implemented   |
-| [AC-ADMIN-001]   | Admin adds local sentences and retains the existing local scene workflow  | Implemented   |
-| [AC-SOUND-001]   | A selected bundled video starts unmuted embedded ambient sound             | Implemented   |
-| [AC-NATIVE-001]  | The Expo experience follows the current web interaction model             | Deferred      |
-
-## Future work
-
-The next product decisions are not scheduled: a stress scene set, native parity, a hosted content
-bank, and any persistence or deletion model for personal photos. Start backend work only when the
-product owner asks for it.
-
-Source: [Calm in the Rush repository](https://github.com/Litenova-Solutions/Calm-in-the-Rush)
+| ID | Criterion | Current state |
+| :-- | :-- | :-- |
+| [AC-ROOT-001] | `/` briefly renders the supplied-logo splash inside the phone screen, then the phone-framed demo and small Admin link | Implemented |
+| [AC-DEMO-001] | The live gallery remains inside a visible phone frame with a desktop width cap | Implemented |
+| [AC-GALLERY-001] | The first two pages start with five bundled media tiles and progress through seven upload spaces to 12 tiles | Implemented |
+| [AC-GALLERY-002] | The third page starts with one centered upload control and progresses through six upload spaces | Implemented |
+| [AC-ADMIN-001] | Admin edits locally ordered pages and pre-filled or upload tiles | Implemented |

@@ -9,15 +9,7 @@ const semver =
 
 if (!semver.test(version)) throw new Error(`VERSION is not valid Semantic Versioning: ${version}`);
 
-const manifests = [
-  'package.json',
-  'apps/mobile/package.json',
-  'apps/web/package.json',
-  'packages/config/package.json',
-  'packages/content/package.json',
-  'packages/experience/package.json',
-  'packages/ui/package.json',
-];
+const manifests = ['package.json', 'apps/web/package.json', 'packages/config/package.json'];
 
 for (const relativePath of manifests) {
   const manifest = JSON.parse(await readFile(resolve(root, relativePath), 'utf8'));

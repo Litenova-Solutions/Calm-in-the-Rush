@@ -2,21 +2,26 @@
 {"kind":"use-case","id":"calm.view-scene","specStatus":"approved","implementationStatus":"implemented","owner":"Product and engineering","lastReviewed":"2026-08-14","operationType":"query","actors":["person"],"entryPoints":["web-demo"],"risks":["availability"],"applicableExtensions":[]}
 ---
 
-# View a scene
+# View gallery
 
 ## Trigger
 
-A person opens `/demo`.
+A person opens `/` or `/demo`.
 
 ## Rules
 
-- Show the first published local or bundled scene as a still lead poster inside the phone frame.
-- Do not request video for the lead poster or the picture gallery.
-- Selecting the lead poster reveals four published scene posters and one personal-photo option.
-- Selecting a bundled poster loops its video with embedded ambient sound. The selection is required
-  before sound starts.
-- Selecting a personal photo keeps that image still and does not request, generate, or upload video.
-- Use the selected scene poster if video loading fails. When reduced motion is active, keep the
-  poster still and play selected ambient sound without video motion.
-- Pause selected media while the page is hidden, then resume it when the page becomes visible.
-- Keep controls labelled for keyboard and screen-reader use.
+- Show the selected bundled or browser-local image or video inside a visible phone frame.
+- The supplied logo splash appears only inside the phone screen, then the selected media appears. The
+  root route renders no public header, wordmark, hero, footer, or visitor actions. The only control
+  outside the frame is the Admin link.
+- Use the low-saturation warm yellow and sage interface palette inside and outside the visible phone
+  frame. The phone casing uses a dark graphite finish distinct from the sage media stage.
+- The frame fills the compact viewport and stops at the desktop phone-width cap.
+- A selected video loops with motion. A selection action may request sound playback; if the browser
+  refuses it, report a recoverable message.
+- The translucent gallery and share controls fade after 3.5 seconds without interaction when media is
+  active. A pointer press inside the phone shows them again, and keyboard focus keeps them visible.
+- Keep the gallery icon, share control, and selected media keyboard-accessible and labelled for
+  assistive technology. The active-media sentence uses difference blending to remain legible over
+  light and dark media, with a text shadow fallback.
+- If local media cannot load, keep the phone usable and report a recoverable message.

@@ -18,7 +18,6 @@ pnpm format:check
 pnpm lint
 pnpm type-check
 pnpm docs:check
-pnpm content:check
 pnpm build
 pnpm verify
 ```

@@ -1,27 +1,24 @@
 ---
-{"kind":"end-to-end-flow","id":"find-a-calm-moment","specStatus":"approved","implementationStatus":"implemented","owner":"Product and engineering","lastReviewed":"2026-08-14","releaseRole":"primary","useCases":["calm.view-scene","calm.choose-scene","calm.control-sound","calm.share-moment","content.manage-local-scenes"],"applicableExtensions":[]}
+{"kind":"end-to-end-flow","id":"find-a-calm-moment","specStatus":"approved","implementationStatus":"implemented","owner":"Product and engineering","lastReviewed":"2026-08-14","releaseRole":"primary","useCases":["calm.view-scene","calm.choose-scene","content.manage-local-scenes"],"applicableExtensions":[]}
 ---
 
 # Find a calm moment
 
 ## Goal
 
-Give a person a quiet scene through the dedicated phone-framed demo.
+Let a person choose an image or video from a phone-framed local gallery.
 
 ## Steps
 
-1. Open `/` and select `Open the demo`.
-2. On `/demo`, select the lead nature poster.
-3. Select one of four bundled nature posters, or select `Use your own photo` and choose an image.
-4. A bundled poster plays its video with embedded ambient sound. A personal photo stays still.
-5. The selected picture changes the displayed sentence to a random nature sentence from the local
-   sentence bank.
-6. Choose another picture, share the demo URL, or leave the page.
+1. Open `/`, briefly see the supplied logo splash inside the phone screen, then see the selected image
+   or video inside the phone frame.
+2. Select the gallery icon.
+3. Browse the nature, quiet-moments, and your-people pages.
+4. Select an existing tile or select the visible upload space and choose an image or video file.
+5. See the selected media in the phone frame. A completed upload reveals the next upload space.
 
 ## Failure paths
 
-- A missing or unreadable video keeps the poster visible and shows an inline status.
-- Reduced motion keeps the poster visible while selected ambient sound remains available.
-- An unreadable personal photo shows a recoverable message and does not upload the file.
-- A failed share reports a recoverable message and keeps the picture open.
-- Draft local scenes stay out of the frame.
+- An invalid or unreadable file reports a recoverable message and does not fill an upload space.
+- Missing local media reports a recoverable message while the gallery control remains available.
+- Browser private mode, storage eviction, and cleared site data can remove local page setup and uploaded media.

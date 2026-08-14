@@ -12,60 +12,59 @@
         "button"
       ],
       "order": 1,
-      "contentLimits": "One label and two navigation actions.",
-      "overflow": "Actions wrap."
+      "contentLimits": "One administration label and one demo navigation link.",
+      "overflow": "The navigation link stays reachable on narrow viewports."
     },
     {
-      "id": "catalog",
-      "pattern": "scene-catalog/default",
+      "id": "sections",
+      "pattern": "admin-sections/default",
+      "components": [
+        "button"
+      ],
+      "order": 2,
+      "contentLimits": "Three section controls: gallery, sentences, and local data.",
+      "overflow": "Controls wrap while preserving their visible labels on compact viewports."
+    },
+    {
+      "id": "gallery-editor",
+      "pattern": "gallery-tree/default",
       "components": [
         "badge",
         "button",
-        "card"
-      ],
-      "order": 2,
-      "contentLimits": "One row per scene with a thumbnail, title, status badge, order, and four row actions.",
-      "overflow": "Titles truncate; row actions never wrap under the thumbnail."
-    },
-    {
-      "id": "form",
-      "pattern": "scene-form/default",
-      "components": [
         "card",
+        "dialog",
         "field",
-        "label",
         "input",
-        "button",
-        "alert"
+        "label"
       ],
       "order": 3,
-      "contentLimits": "One title and one MP4 upload. The cover is derived from the first frame of the video and is not a separate input.",
-      "overflow": "One column. The cover preview sits beside its explanation and wraps below it when narrow."
+      "contentLimits": "One in-context editor of ordered pages and their ordered pre-filled or visitor-upload tiles. Each page has an inline name editor, tile actions, an Add tile action, and no fixed tile count.",
+      "overflow": "Page and tile names truncate in their rows. Tile actions wrap on compact viewports. The page-and-tile editor follows normal document scrolling."
     },
     {
       "id": "sentences",
       "pattern": "sentence-bank/default",
       "components": [
+        "button",
         "card",
         "field",
-        "label",
         "input",
-        "button"
+        "label"
       ],
       "order": 4,
-      "contentLimits": "One list of nature sentences and one text input up to 160 characters.",
-      "overflow": "Sentence rows wrap inside their card."
+      "contentLimits": "One to 24 active-media sentences and one new-sentence input.",
+      "overflow": "Sentences wrap inside their rows and removal controls remain visible."
     },
     {
-      "id": "preview",
-      "pattern": "media-stage/default",
+      "id": "storage",
+      "pattern": "storage-panel/default",
       "components": [
-        "alert",
-        "button"
+        "button",
+        "card"
       ],
       "order": 5,
-      "contentLimits": "One embedded stage in compact mode.",
-      "overflow": "The preview is clipped to its card."
+      "contentLimits": "One browser-storage estimate and one reset action.",
+      "overflow": "The estimate wraps inside its card."
     },
     {
       "id": "dialogs",
@@ -75,8 +74,8 @@
         "button"
       ],
       "order": 6,
-      "contentLimits": "One confirmation at a time with a named target.",
-      "overflow": "Not applicable."
+      "contentLimits": "One add-tile, edit-tile, move-tile, or destructive confirmation dialog at a time.",
+      "overflow": "Dialog content scrolls when a compact viewport cannot contain it."
     }
   ],
   "states": [
@@ -93,22 +92,21 @@
     "focus": "body"
   },
   "responsive": {
-    "compact": "Catalog, form, and preview stack in one column; form fields are one column.",
-    "wide": "Catalog and form sit side by side; the preview spans the full width below them."
+    "compact": "Section controls wrap. The gallery editor keeps every page and tile in one column, and tile actions wrap without hiding names or primary actions.",
+    "wide": "The gallery editor stays a single wide working surface. Sentences and local data use their own narrow, focused cards."
   },
   "focus": {
     "order": [
       "header-navigation",
-      "catalog-actions",
-      "catalog-rows",
-      "form-fields",
-      "save-actions",
-      "sentence-fields",
-      "sentence-save-action"
+      "section-switcher",
+      "gallery-editor",
+      "gallery-dialogs",
+      "sentence-editor",
+      "storage-reset"
     ],
-    "onOpen": "A confirmation dialog moves focus into itself and traps it.",
-    "onClose": "Focus returns to the row action that opened the dialog.",
-    "onError": "The save result region announces the message; focus stays on the save action."
+    "onOpen": "An add, edit, move, or confirmation dialog moves focus into itself and traps it.",
+    "onClose": "Focus returns to the action that opened the dialog.",
+    "onError": "The save-result region announces the message while focus stays on the active control."
   },
   "accessibility": {
     "landmarks": [
@@ -116,9 +114,9 @@
       "navigation",
       "main"
     ],
-    "headings": "One h1 for the admin task, then one h2 per card region.",
-    "labels": "The scene and sentence inputs have visible labels. The derived cover preview has descriptive alternative text.",
-    "statusAnnouncements": "Save and delete results are announced through a polite live region."
+    "headings": "One h1 for the administration task, then one h2 per active section and one h3 per gallery page.",
+    "labels": "Every text and file input has a visible label. Reorder, move, edit, and remove controls name their page or tile. The named Move action exposes destination-page choices only when requested.",
+    "statusAnnouncements": "Save, validation, delete, and reset results use a polite live region."
   },
   "evidence": [
     "UI-ADMIN-READY",

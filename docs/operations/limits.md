@@ -1,9 +1,7 @@
 # Operating limits
 
 - Browser local catalog uses IndexedDB and has no sync path.
-- Video uploads are MP4 only, at most 50 MB, and must report a duration from 5 to 120 seconds.
-- Posters are JPEG, PNG, or WebP, at most 5 MB. SVG is rejected.
-- A catalog must keep one published scene.
-- The demo loads the selected video and one transition target only.
+- Uploads and locally curated pre-filled tiles accept image and video files.
+- The gallery has at least one page. An administrator sets each page's tile count; browser storage and usable tile size are the practical limits.
+- The demo displays one selected image or video at a time.
 - Browser storage may be evicted. Users can reset local data from `/admin`.
-- The native preview ships bundled media only. It has no remote update or store submission setup.

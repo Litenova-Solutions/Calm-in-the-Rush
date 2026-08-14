@@ -14,7 +14,6 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   devIndicators: false,
-  transpilePackages: ['@calm/content', '@calm/experience'],
   experimental: {
     externalDir: true,
   },

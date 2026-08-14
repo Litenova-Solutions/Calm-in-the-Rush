@@ -1,8 +1,8 @@
 # Contributing
 
 Read `AGENTS.md`, `standards/AGENTS.md`, the product brief, and the relevant domain or page
-specification before editing. Keep changes within the web, mobile, shared packages, or documented
-repository files that the task names.
+specification before editing. Keep changes within the web demo or documented repository files that
+the task names.
 
 ## Local checks
 
@@ -12,7 +12,6 @@ pnpm format:check
 pnpm lint
 pnpm type-check
 pnpm docs:check
-pnpm content:check
 pnpm build
 ```
 

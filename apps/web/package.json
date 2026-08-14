@@ -5,16 +5,14 @@
   "license": "PolyForm-Noncommercial-1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "pnpm --dir ../.. content:sync && next dev --webpack --hostname 127.0.0.1 --port 3200",
-    "build": "pnpm --dir ../.. content:sync && next build --webpack",
+    "dev": "next dev --webpack --hostname 127.0.0.1 --port 3200",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint .",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",
-    "@calm/content": "workspace:*",
-    "@calm/experience": "workspace:*",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "idb": "8.0.3",

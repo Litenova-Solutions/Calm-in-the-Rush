@@ -9,7 +9,6 @@ Describe the user-facing result and the linked specification or issue.
 - [ ] `pnpm type-check`
 - [ ] `pnpm test`
 - [ ] `pnpm docs:check`
-- [ ] `pnpm content:check`
 - [ ] `pnpm build`
 - [ ] `pnpm test:e2e`
 - [ ] Accessibility checks cover changed controls.
