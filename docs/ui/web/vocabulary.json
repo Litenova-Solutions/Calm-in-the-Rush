@@ -105,7 +105,7 @@
       "type": "color",
       "light": "oklch(0.985 0.018 95)",
       "dark": "oklch(0.985 0.018 95)",
-      "description": "Text and marks placed on the scene canvas."
+      "description": "Text and marks placed over the opening cover."
     },
     {
       "name": "scrim",
@@ -129,11 +129,46 @@
       "description": "Dark graphite finish for the visible physical phone casing and display cutout."
     },
     {
+      "name": "breathing-sky-start",
+      "type": "color",
+      "light": "oklch(0.98 0.012 240)",
+      "dark": "oklch(0.98 0.012 240)",
+      "description": "White end of the breathing visual background."
+    },
+    {
+      "name": "breathing-sky-end",
+      "type": "color",
+      "light": "oklch(0.84 0.065 235)",
+      "dark": "oklch(0.84 0.065 235)",
+      "description": "Blue end of the breathing visual background."
+    },
+    {
+      "name": "breathing-wave",
+      "type": "color",
+      "light": "oklch(0.57 0.1 235)",
+      "dark": "oklch(0.57 0.1 235)",
+      "description": "Blue sine wave in the breathing visual."
+    },
+    {
+      "name": "breathing-orb-start",
+      "type": "color",
+      "light": "oklch(0.91 0.15 92)",
+      "dark": "oklch(0.91 0.15 92)",
+      "description": "Yellow edge of the breathing orb."
+    },
+    {
+      "name": "breathing-orb-end",
+      "type": "color",
+      "light": "oklch(0.7 0.16 52)",
+      "dark": "oklch(0.7 0.16 52)",
+      "description": "Orange edge of the breathing orb."
+    },
+    {
       "name": "aspect-phone",
       "type": "length",
       "light": "9 / 19.5",
       "dark": "9 / 19.5",
-      "description": "Portrait screen proportion for the live phone gallery."
+      "description": "Portrait screen proportion for the live phone experience."
     },
     {
       "name": "aspect-phone-frame",
@@ -141,13 +176,6 @@
       "light": "9 / 19",
       "dark": "9 / 19",
       "description": "Outer phone-frame proportion that accounts for its screen inset."
-    },
-    {
-      "name": "aspect-tile",
-      "type": "length",
-      "light": "9 / 13",
-      "dark": "9 / 13",
-      "description": "Scene picker thumbnail proportion."
     },
     {
       "name": "container-phone",
@@ -182,56 +210,21 @@
       "type": "length",
       "light": "18rem",
       "dark": "18rem",
-      "description": "Width of the landing phone frame. Smaller than the live stage so the still reads as a preview beside the hero copy."
+      "description": "Width of a phone preview when a public route needs one."
     },
     {
-      "name": "animate-sentence-arrive",
+      "name": "animate-sentence-drift",
       "type": "motion",
-      "light": "420ms fade and 0.2rem upward movement",
-      "dark": "420ms fade and 0.2rem upward movement",
-      "description": "Selected-scene sentence entrance, suppressed when reduced motion is requested."
+      "light": "10 second low-amplitude vertical drift loop",
+      "dark": "10 second low-amplitude vertical drift loop",
+      "description": "Subtle movement for the opening sentence, stopped by the reduced-motion preference."
     },
     {
-      "name": "animate-media-arrive",
+      "name": "breathing-wave-motion",
       "type": "motion",
-      "light": "360ms fade and 1.5% scale settle",
-      "dark": "360ms fade and 1.5% scale settle",
-      "description": "Selected image or video entrance, suppressed when reduced motion is requested."
-    },
-    {
-      "name": "animate-gallery-page-forward",
-      "type": "motion",
-      "light": "260ms fade and 0.5rem movement from the right",
-      "dark": "260ms fade and 0.5rem movement from the right",
-      "description": "Forward gallery-page entrance, suppressed when reduced motion is requested."
-    },
-    {
-      "name": "animate-gallery-page-backward",
-      "type": "motion",
-      "light": "260ms fade and 0.5rem movement from the left",
-      "dark": "260ms fade and 0.5rem movement from the left",
-      "description": "Backward gallery-page entrance, suppressed when reduced motion is requested."
-    },
-    {
-      "name": "animate-splash-logo-arrive",
-      "type": "motion",
-      "light": "520ms fade, 0.4rem upward movement, and 5% scale settle",
-      "dark": "520ms fade, 0.4rem upward movement, and 5% scale settle",
-      "description": "Supplied-logo splash entrance, suppressed when reduced motion is requested."
-    },
-    {
-      "name": "animate-splash-curtain-exit",
-      "type": "motion",
-      "light": "220ms fade after 1050ms",
-      "dark": "220ms fade after 1050ms",
-      "description": "Visual splash exit before the live demo, suppressed when reduced motion is requested."
-    },
-    {
-      "name": "animate-splash-reduced-exit",
-      "type": "motion",
-      "light": "1ms fade after 180ms",
-      "dark": "1ms fade after 180ms",
-      "description": "Non-motion splash exit used when reduced motion is requested."
+      "light": "12 second left-to-right sine-wave orbit",
+      "dark": "12 second left-to-right sine-wave orbit",
+      "description": "The SVG breathing orb movement, stopped by the reduced-motion preference."
     }
   ],
   "states": [
@@ -638,7 +631,7 @@
       ]
     },
     {
-      "id": "sentence-bank/default",
+      "id": "one-liner-settings/default",
       "components": [
         "card",
         "field",
@@ -788,6 +781,22 @@
       ],
       "evidence": [
         "UI-ADMIN-LABELS"
+      ]
+    },
+    {
+      "id": "textarea",
+      "source": "components/ui/textarea.tsx",
+      "status": "baseline",
+      "variants": [
+        "default"
+      ],
+      "states": [
+        "ready",
+        "disabled",
+        "validation-error"
+      ],
+      "evidence": [
+        "UI-EXPERIENCE-READY"
       ]
     },
     {

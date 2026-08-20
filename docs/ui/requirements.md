@@ -1,5 +1,5 @@
 ---
-{"kind":"page","id":"web.requirements","specStatus":"approved","implementationStatus":"implemented","owner":"Product and engineering","lastReviewed":"2026-08-14","app":"web","route":"/requirements","useCases":["calm.view-scene"]}
+{"kind":"page","id":"web.requirements","specStatus":"approved","implementationStatus":"implemented","owner":"Product and engineering","lastReviewed":"2026-08-18","app":"web","route":"/requirements","useCases":["calm.view-experience"]}
 ---
 
 # Requirements page

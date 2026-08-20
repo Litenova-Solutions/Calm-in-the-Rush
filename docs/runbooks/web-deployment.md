@@ -4,9 +4,9 @@
 2. Install from the repository root with `pnpm install --frozen-lockfile`.
 3. Set the build command to `pnpm --filter @calm/web build`.
 4. Set `NEXT_PUBLIC_SITE_URL` to `https://calmintherush.org`.
-5. Confirm `/` and `/demo` render the phone gallery and `/admin` is excluded from indexing.
+5. Confirm `/` and `/demo` render the phone experience and `/admin` is excluded from indexing.
 6. Confirm bundled media uses cache headers without immutable file names.
 7. Run `pnpm verify` before accepting a deployment.
 
 The administration route shares the web origin so the demo phone frame can read the same
-browser-local IndexedDB gallery configuration and image blobs.
+browser-local IndexedDB experience configuration, image blobs, and visitor one-liners.

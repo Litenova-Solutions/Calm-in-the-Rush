@@ -1,24 +1,23 @@
 ---
-{"kind":"end-to-end-flow","id":"find-a-calm-moment","specStatus":"approved","implementationStatus":"implemented","owner":"Product and engineering","lastReviewed":"2026-08-14","releaseRole":"primary","useCases":["calm.view-scene","calm.choose-scene","content.manage-local-scenes"],"applicableExtensions":[]}
+{"kind":"end-to-end-flow","id":"find-a-calm-moment","specStatus":"approved","implementationStatus":"implemented","owner":"Product and engineering","lastReviewed":"2026-08-18","releaseRole":"primary","useCases":["calm.view-experience","calm.add-photo","calm.save-one-liner","content.manage-local-experience"],"applicableExtensions":[]}
 ---
 
 # Find a calm moment
 
 ## Goal
 
-Let a person choose an image or video from a phone-framed local gallery.
+Let a person move through a quiet local reflection flow, add personal photographs, and keep an optional short note in the current browser.
 
 ## Steps
 
-1. Open `/`, briefly see the supplied logo splash inside the phone screen, then see the selected image
-   or video inside the phone frame.
-2. Select the gallery icon.
-3. Browse the nature, quiet-moments, and your-people pages.
-4. Select an existing tile or select the visible upload space and choose an image or video file.
-5. See the selected media in the phone frame. A completed upload reveals the next upload space.
+1. Open `/` or `/demo` and see the configured Nature cover.
+2. Select `See More`, review the four-tile Nature grid, and continue to Quiet Moments.
+3. Review Quiet Moments, then continue to Friendly Faces and add either or both independent photographs if desired.
+4. View the repeating breathing cue, then continue to the RUST gateway.
+5. Use the final-page one-liner prompt to save, edit, or clear a short answer locally.
 
 ## Failure paths
 
-- An invalid or unreadable file reports a recoverable message and does not fill an upload space.
-- Missing local media reports a recoverable message while the gallery control remains available.
-- Browser private mode, storage eviction, and cleared site data can remove local page setup and uploaded media.
+- An invalid, unreadable, or unsupported image reports a recoverable message and does not replace the upload tile.
+- Missing browser-local media reports a recoverable message while the screen navigation and uploads remain available.
+- Browser private mode, storage eviction, cleared site data, and reset can remove local configuration, photographs, and the one-liner.

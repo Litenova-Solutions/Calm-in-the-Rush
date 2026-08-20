@@ -1,5 +1,5 @@
 # Content domain
 
-The content domain owns gallery page and tile editing behavior in the current browser.
+The content domain owns browser-local screen, tile, breathing, gateway, and one-liner configuration.
 
-- [Manage local gallery](manage-local-scenes.md)
+- [Manage local experience content](manage-local-experience.md)

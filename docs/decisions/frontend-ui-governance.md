@@ -14,9 +14,7 @@ feature code composes `@/components/ui` and never imports a primitive base direc
 
 ## Web-local gallery
 
-`apps/web/app/components/WebExperience.tsx` owns local gallery selection and device file selection.
-`apps/web/lib/content` owns its IndexedDB repository and gallery schema. Both use shadcn primitives and
-Tailwind tokens. The demo has no cross-platform gallery state or presentation layer.
+`apps/web/app/components/WebExperience.tsx` owns visitor page navigation, local image selection, breathing cues, and the final-page one-liner input. `apps/web/lib/content` owns its IndexedDB repository and experience schema. Both use shadcn primitives and Tailwind tokens. The demo has no cross-platform experience state or presentation layer.
 
 ## Web UI contract
 
@@ -40,12 +38,8 @@ rather than DOM.
 `node standards/tools/validate-ui.mjs` validates the frontend UI configuration, the vocabulary, the page
 sidecars, the source-lock digests, the global CSS surface, and the class strings in feature code. The web
 ESLint configuration rejects primitive-base imports. This early demo has no automated browser suite.
-Browser and accessibility acceptance records are deferred until the product moves beyond the current
-local-only scope.
+No dedicated unit, integration, or QA suite is added for this implementation. Formatting, lint, type, documentation, build, and direct browser checks provide the verification record for the current local-only scope.
 
 ## Constraints
 
-Visual comparison baselines and a manual screen-reader, zoom, and contrast session are not established.
-Both are recorded as waived evidence in the vocabulary with the condition for lifting the waiver. The
-library does not replace semantic route composition, browser storage, media playback, or Next.js
-navigation; those stay in the owning application and compose the approved UI exports.
+Visual comparison baselines and a manual screen-reader, zoom, and contrast session are not established. Both remain recorded as waived evidence in the vocabulary. The library does not replace semantic route composition, browser storage, breathing cues, or Next.js navigation; those stay in the owning application and compose the approved UI exports.

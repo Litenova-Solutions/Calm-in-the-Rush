@@ -25,3 +25,12 @@ pnpm verify
 Do not add authentication, a server database, analytics, cookies, uploads to a server, or a remote
 content service. Browser administration uses private IndexedDB storage. Preserve the untracked
 `.fuse/` directory.
+
+## Visitor visual hierarchy
+
+- Active-image screens make the image primary. Do not show a page title, progress label, persistent utility, or more than one low-prominence action over an active image.
+- An assigned sentence on active media stays calm, non-bold, and edge-aligned. A slow low-amplitude motion cue is permitted when it respects reduced-motion preferences. Do not turn the sentence into a headline.
+- Gallery screens use borderless, gap-free two-column image grids. Do not add card chrome, captions, metadata, or surrounding copy unless an explicit product requirement needs it.
+- An empty upload tile is an explicit exception to the gallery text rule. Show its configured prompt so people know which photo to add.
+- Put personal reflection controls at an intentional endpoint, never as a persistent control over active media.
+- A calming motion screen shows only its necessary title, short description, and visual cue. Do not add playback controls, phase labels, timers, or external links without an explicit product decision.

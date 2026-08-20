@@ -8,61 +8,35 @@
     {
       "id": "admin-link",
       "pattern": "stage-admin-link/default",
-      "components": [
-        "button"
-      ],
+      "components": ["button"],
       "order": 1,
-      "contentLimits": "One small elevated administration link outside the phone frame.",
-      "overflow": "The translucent elevated link remains outside the frame at every viewport width."
+      "contentLimits": "One small administration link outside the phone frame.",
+      "overflow": "The link stays outside the frame at every viewport width."
     },
     {
       "id": "stage",
       "pattern": "media-stage/default",
-      "components": [
-        "alert",
-        "button"
-      ],
+      "components": ["alert", "button", "field", "label", "separator", "textarea"],
       "order": 2,
-      "contentLimits": "One dark-graphite phone frame with selected image or video media, gallery and share controls, three local gallery pages, and progressive upload spaces. A brief decorative supplied-logo splash appears inside the phone screen.",
-      "overflow": "Visible tiles fill the full gallery surface behind compact translucent close, title, count, and page-navigation controls. The matching glass header and page-navigation surfaces use the same subtle edge and stronger translucent surface. The empty personal page uses a muted background beneath its floating controls. The header omits the page description, and page actions show their destination title with a directional icon. When another upload tile is revealed, the grid adds a row and every tile reduces in size to remain visible. More than 12 visible tiles scroll within the gallery surface."
+      "contentLimits": "One dark-graphite phone frame with a picture-first Nature cover, screen-filling gap-free two-column galleries, two Friendly Faces upload slots, a breathing cue, RUST gateway links, and a final-page multi-line one-liner input.",
+      "overflow": "The active screen scrolls within the phone. Gallery tiles stay in two columns without captions or gaps, except for empty upload guidance."
     }
   ],
-  "states": [
-    "ready",
-    "empty",
-    "error"
-  ],
-  "initial": {
-    "scroll": "top",
-    "focus": "body"
-  },
+  "states": ["ready", "empty", "error"],
+  "initial": { "scroll": "top", "focus": "body" },
   "responsive": {
     "compact": "The phone frame fills the available viewport with the Admin link outside its upper edge.",
     "wide": "The phone frame stays centered at the phone container width while the Admin link remains outside it."
   },
   "focus": {
-    "order": [
-      "admin-link",
-      "stage-gallery",
-      "gallery-close",
-      "gallery-tiles",
-      "gallery-page-navigation"
-    ],
-    "onOpen": "Opening the gallery follows normal document focus order inside the phone frame.",
-    "onClose": "Closing the gallery returns focus to the gallery icon.",
-    "onError": "Local gallery and file failures are announced without moving focus."
+    "order": ["admin-link", "current-screen", "screen-actions", "experience-navigation", "one-liner"],
+    "onError": "Local image and storage failures are announced without moving focus."
   },
   "accessibility": {
-    "landmarks": [
-      "main"
-    ],
-    "headings": "The immersive route has no root page heading. An open gallery exposes its current page title as a level-two heading, and every control has a programmatic label.",
-    "labels": "Media controls name the image, video, or upload operation. Uploaded media uses its file name as alternative text.",
-    "statusAnnouncements": "Gallery, file, playback, and sharing failures use an alert. Page position announces as the person moves between gallery pages."
+    "landmarks": ["main"],
+    "headings": "The phone exposes one level-one heading for the current screen. Navigation moves focus to that heading.",
+    "labels": "Every image upload, cover action, navigation action, gateway link, and final-page one-liner action has a programmatic label. Uploaded image file names supply temporary alternative text.",
+    "statusAnnouncements": "File and local-storage failures use an alert. The one-liner save result uses a polite status message."
   },
-  "evidence": [
-    "UI-EXPERIENCE-READY",
-    "UI-EXPERIENCE-ERROR",
-    "UI-WEB-VISUAL"
-  ]
+  "evidence": ["UI-EXPERIENCE-READY", "UI-EXPERIENCE-ERROR", "UI-WEB-VISUAL"]
 }

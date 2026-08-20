@@ -1,119 +1,58 @@
-// Client boundary: this surface owns the local gallery, device media selection, and IndexedDB reads.
+// Client boundary: this surface owns browser-local content, visitor uploads, and the one-liner.
 'use client';
 
 import {
   type ChangeEvent,
+  type RefObject,
   useCallback,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
 import Image from 'next/image';
-import { ChevronLeft, ChevronRight, ImagePlus, Images, Share2, X } from 'lucide-react';
+import { Camera, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Field, FieldLabel } from '@/components/ui/field';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
 import {
   galleryUploadKey,
-  seedGallery,
-  type GalleryConfig,
-  type GalleryMedia,
-  type GalleryPage,
-  type GalleryUpload,
-} from '@/lib/content/gallery';
-import { BrowserGalleryRepository } from '@/lib/content/browser-repository';
+  imageFileAccept,
+  isGalleryScreen,
+  seedExperience,
+  type ExperienceConfig,
+  type ExperienceMedia,
+  type ExperienceScreen,
+  type ExperienceTile,
+  type GalleryScreen,
+  type VisitorUpload,
+} from '@/lib/content/experience';
+import { BrowserExperienceRepository } from '@/lib/content/browser-repository';
 
-type SelectedMedia = {
-  pageId: string;
-  tileId: string;
-  title: string;
-  media: GalleryMedia;
-  alt: string;
-};
-
-type VisibleTile =
-  | {
-      type: 'media';
-      id: string;
-      title: string;
-      media: GalleryMedia;
-      alt: string;
-    }
-  | {
-      type: 'upload';
-      id: string;
-      label: string;
-    };
-
-type UploadTarget = {
-  pageId: string;
-  tileId: string;
-};
-
-type PageDirection = 'forward' | 'backward';
-
-const playbackControlsIdleMs = 3500;
-const activeControlClass =
-  'border border-stage-foreground/30 bg-scrim/70 text-stage-foreground shadow-sm backdrop-blur-md hover:bg-scrim/85';
-const galleryGlassSurfaceClass =
-  'rounded-xl border border-foreground/15 bg-background/80 shadow-md backdrop-blur-md';
+type UploadTarget = { screenId: string; tileId: string };
 
 interface WebExperienceProps {
-  repository?: BrowserGalleryRepository;
+  repository?: BrowserExperienceRepository;
 }
 
-function uploadMap(uploads: readonly GalleryUpload[]): Map<string, GalleryUpload> {
-  return new Map(uploads.map((upload) => [galleryUploadKey(upload.pageId, upload.tileId), upload]));
-}
-
-function visibleTiles(page: GalleryPage, uploads: Map<string, GalleryUpload>): VisibleTile[] {
-  let nextUploadShown = false;
-  return page.tiles.flatMap((tile): VisibleTile[] => {
-    if (tile.type === 'prefilled') {
-      return [{ type: 'media', id: tile.id, title: tile.title, media: tile.media, alt: tile.alt }];
-    }
-    const upload = uploads.get(galleryUploadKey(page.id, tile.id));
-    if (upload) {
-      return [
-        {
-          type: 'media',
-          id: tile.id,
-          title: upload.media.fileName,
-          media: upload.media,
-          alt: upload.media.fileName,
-        },
-      ];
-    }
-    if (nextUploadShown) return [];
-    nextUploadShown = true;
-    return [{ type: 'upload', id: tile.id, label: tile.label }];
-  });
-}
-
-function availableMedia(
-  config: GalleryConfig,
-  uploads: Map<string, GalleryUpload>,
-): SelectedMedia[] {
-  return config.pages.flatMap((page) =>
-    visibleTiles(page, uploads).flatMap((tile): SelectedMedia[] => {
-      if (tile.type !== 'media') return [];
-      return [
-        { pageId: page.id, tileId: tile.id, title: tile.title, media: tile.media, alt: tile.alt },
-      ];
-    }),
+function uploadMap(uploads: readonly VisitorUpload[]): Map<string, VisitorUpload> {
+  return new Map(
+    uploads.map((upload) => [galleryUploadKey(upload.screenId, upload.tileId), upload]),
   );
 }
 
-function mediaSource(media: GalleryMedia, localUrls: Record<string, string>): string {
+function mediaSource(media: ExperienceMedia, localUrls: Record<string, string>): string {
   return media.kind === 'bundled' ? media.src : (localUrls[media.blobId] ?? '');
 }
 
-function mediaPoster(media: GalleryMedia): string | undefined {
-  return media.kind === 'bundled' && media.mediaType === 'video' ? media.poster : undefined;
+function coverTile(screen: GalleryScreen): Extract<ExperienceTile, { type: 'prefilled' }> | null {
+  const tile = screen.tiles[0];
+  return tile?.type === 'prefilled' ? tile : null;
 }
 
 function useReducedMotionPreference(): boolean {
@@ -131,139 +70,161 @@ function useReducedMotionPreference(): boolean {
   return reducedMotion;
 }
 
-function GalleryTileMedia({
+function ExperienceImage({
   media,
   source,
   alt,
-  reducedMotion,
+  preload = false,
+  sizes,
 }: {
-  media: GalleryMedia;
+  media: ExperienceMedia;
   source: string;
   alt: string;
-  reducedMotion: boolean;
+  preload?: boolean;
+  sizes: string;
 }) {
-  if (!source) return null;
-  if (media.mediaType === 'video') {
-    const poster = mediaPoster(media);
-    if (reducedMotion && poster) {
-      return (
-        <Image
-          src={poster}
-          alt={alt}
-          fill
-          sizes="(max-width: 1024px) 33vw, 9rem"
-          unoptimized
-          className="object-cover"
-        />
-      );
-    }
+  if (!source) return <div className="absolute inset-0 bg-muted" aria-hidden />;
+  if (media.kind === 'local') {
     return (
-      <video
+      <img
         src={source}
-        poster={poster}
-        autoPlay={!reducedMotion}
-        loop
-        muted
-        playsInline
-        preload="metadata"
-        aria-hidden
+        alt={alt}
+        loading={preload ? 'eager' : 'lazy'}
         className="absolute inset-0 size-full object-cover"
       />
     );
   }
   return (
-    <Image
-      src={source}
-      alt={alt}
-      fill
-      sizes="(max-width: 1024px) 33vw, 9rem"
-      unoptimized
-      className="object-cover"
-    />
+    <Image src={source} alt={alt} fill preload={preload} sizes={sizes} className="object-cover" />
+  );
+}
+
+function BreathingPanel({
+  screen,
+  headingRef,
+}: {
+  screen: Extract<ExperienceScreen, { type: 'breathing' }>;
+  headingRef: RefObject<HTMLHeadingElement | null>;
+}) {
+  const reducedMotion = useReducedMotionPreference();
+  const breathingWavePath =
+    'M 16 132 C 42 132, 48 48, 80 48 S 118 132, 160 132 S 198 48, 240 48 S 278 132, 304 132';
+
+  return (
+    <div className="flex min-h-full flex-col items-center px-5 pb-24 pt-14 text-center">
+      <div className="flex max-w-72 flex-col gap-2">
+        <h1
+          ref={headingRef}
+          tabIndex={-1}
+          className="text-2xl font-normal tracking-tight outline-none"
+        >
+          {screen.title}
+        </h1>
+        <p className="text-sm leading-relaxed text-muted-foreground">{screen.description}</p>
+      </div>
+      <div
+        className="mt-9 w-full max-w-80 overflow-hidden rounded-3xl border border-primary/15 shadow-inner"
+        aria-hidden
+      >
+        <svg viewBox="0 0 320 180" className="block h-auto w-full">
+          <defs>
+            <linearGradient id="breathing-sky" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stopColor="var(--breathing-sky-start)" />
+              <stop offset="100%" stopColor="var(--breathing-sky-end)" />
+            </linearGradient>
+            <linearGradient id="breathing-orb" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stopColor="var(--breathing-orb-start)" />
+              <stop offset="100%" stopColor="var(--breathing-orb-end)" />
+            </linearGradient>
+            <filter id="breathing-glow" x="-100%" y="-100%" width="300%" height="300%">
+              <feGaussianBlur stdDeviation="5" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+          <rect width="320" height="180" rx="24" fill="url(#breathing-sky)" />
+          <path
+            d={breathingWavePath}
+            fill="none"
+            stroke="var(--breathing-wave)"
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
+          {reducedMotion ? (
+            <circle
+              cx="16"
+              cy="132"
+              r="13"
+              fill="url(#breathing-orb)"
+              filter="url(#breathing-glow)"
+            />
+          ) : (
+            <circle r="13" fill="url(#breathing-orb)" filter="url(#breathing-glow)">
+              <animateMotion dur="12s" repeatCount="indefinite" path={breathingWavePath} />
+            </circle>
+          )}
+        </svg>
+      </div>
+    </div>
   );
 }
 
 export function WebExperience({ repository }: WebExperienceProps) {
-  const repo = useMemo(() => repository ?? new BrowserGalleryRepository(), [repository]);
-  const [gallery, setGallery] = useState<GalleryConfig>(seedGallery);
-  const [uploads, setUploads] = useState<GalleryUpload[]>([]);
+  const repo = useMemo(() => repository ?? new BrowserExperienceRepository(), [repository]);
+  const [experience, setExperience] = useState<ExperienceConfig>(seedExperience);
+  const [uploads, setUploads] = useState<VisitorUpload[]>([]);
   const [localUrls, setLocalUrls] = useState<Record<string, string>>({});
-  const [selected, setSelected] = useState<SelectedMedia | null>(null);
-  const [galleryOpen, setGalleryOpen] = useState(false);
-  const [pageIndex, setPageIndex] = useState(0);
-  const [message, setMessage] = useState('');
+  const [oneLiner, setOneLiner] = useState('');
+  const [oneLinerDraft, setOneLinerDraft] = useState('');
+  const [screenIndex, setScreenIndex] = useState(0);
+  const [showCover, setShowCover] = useState(true);
   const [uploadTarget, setUploadTarget] = useState<UploadTarget | null>(null);
-  const [sentenceIndex, setSentenceIndex] = useState(0);
-  const [sentenceRevision, setSentenceRevision] = useState(0);
-  const [soundRequested, setSoundRequested] = useState(false);
-  const [playbackRevision, setPlaybackRevision] = useState(0);
-  const [controlsVisible, setControlsVisible] = useState(true);
-  const [pageDirection, setPageDirection] = useState<PageDirection>('forward');
-  const photoInputRef = useRef<HTMLInputElement | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const galleryControlRef = useRef<HTMLButtonElement | null>(null);
-  const stageRef = useRef<HTMLElement | null>(null);
-  const controlTimerRef = useRef<number | undefined>(undefined);
-  const reducedMotion = useReducedMotionPreference();
-
-  const clearControlTimer = useCallback(() => {
-    if (controlTimerRef.current === undefined) return;
-    window.clearTimeout(controlTimerRef.current);
-    controlTimerRef.current = undefined;
-  }, []);
-
-  const schedulePlaybackControlsHide = useCallback(() => {
-    clearControlTimer();
-    controlTimerRef.current = window.setTimeout(() => {
-      if (stageRef.current?.contains(document.activeElement)) return;
-      setControlsVisible(false);
-    }, playbackControlsIdleMs);
-  }, [clearControlTimer]);
-
-  const revealPlaybackControls = useCallback(() => {
-    if (galleryOpen || !selected) return;
-    setControlsVisible(true);
-    schedulePlaybackControlsHide();
-  }, [galleryOpen, schedulePlaybackControlsHide, selected]);
+  const [message, setMessage] = useState('');
+  const [savingOneLiner, setSavingOneLiner] = useState(false);
+  const [ready, setReady] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const headingRef = useRef<HTMLHeadingElement | null>(null);
 
   const refresh = useCallback(async () => {
     try {
-      const [nextGallery, nextUploads] = await Promise.all([
-        repo.readGallery(),
-        repo.readGalleryUploads(),
+      const [nextExperience, nextUploads, nextOneLiner] = await Promise.all([
+        repo.readExperience(),
+        repo.readVisitorUploads(),
+        repo.readOneLiner(),
       ]);
-      const nextLocalUrls: Record<string, string> = {};
       const localMedia = [
-        ...nextGallery.pages.flatMap((page) =>
-          page.tiles.flatMap((tile) =>
-            tile.type === 'prefilled' && tile.media.kind === 'local' ? [tile.media] : [],
-          ),
+        ...nextExperience.screens.flatMap((screen) =>
+          isGalleryScreen(screen)
+            ? screen.tiles.flatMap((tile) =>
+                tile.type === 'prefilled' && tile.media.kind === 'local' ? [tile.media] : [],
+              )
+            : [],
         ),
         ...nextUploads.map((upload) => upload.media),
       ];
+      const urls: Record<string, string> = {};
       for (const media of localMedia) {
         const url = await repo.getObjectUrl(media);
-        if (url) nextLocalUrls[media.blobId] = url;
+        if (url) urls[media.blobId] = url;
       }
-      const nextUploadMap = uploadMap(nextUploads);
-      const nextAvailableMedia = availableMedia(nextGallery, nextUploadMap);
-      setGallery(nextGallery);
+      setExperience(nextExperience);
       setUploads(nextUploads);
-      setLocalUrls(nextLocalUrls);
-      setPageIndex((current) => Math.min(current, nextGallery.pages.length - 1));
-      setSelected(
-        (current) =>
-          nextAvailableMedia.find(
-            (candidate) =>
-              candidate.pageId === current?.pageId && candidate.tileId === current?.tileId,
-          ) ??
-          nextAvailableMedia[0] ??
-          null,
+      setLocalUrls(urls);
+      setOneLiner(nextOneLiner);
+      setOneLinerDraft(nextOneLiner);
+      setScreenIndex((current) =>
+        Math.min(current, Math.max(0, nextExperience.screens.length - 1)),
       );
-    } catch {
-      setMessage('Your local gallery could not be read. Showing the bundled gallery.');
-      setGallery(seedGallery);
+    } catch (error) {
+      setExperience(seedExperience);
       setUploads([]);
+      setMessage(
+        error instanceof Error ? error.message : 'Your local experience could not be read.',
+      );
+    } finally {
+      setReady(true);
     }
   }, [repo]);
 
@@ -275,95 +236,40 @@ export function WebExperience({ repository }: WebExperienceProps) {
   }, [refresh, repo, repository]);
 
   useEffect(() => {
-    if (galleryOpen || !selected) {
-      clearControlTimer();
-      setControlsVisible(true);
+    if (!ready) return;
+    headingRef.current?.focus();
+  }, [ready, screenIndex, showCover]);
+
+  const currentScreen = experience.screens[screenIndex];
+  const currentUploads = useMemo(() => uploadMap(uploads), [uploads]);
+  const currentCover =
+    currentScreen && isGalleryScreen(currentScreen) ? coverTile(currentScreen) : null;
+  const coverVisible = Boolean(
+    screenIndex === 0 &&
+    currentScreen &&
+    isGalleryScreen(currentScreen) &&
+    currentScreen.useFirstTileAsCover &&
+    currentCover &&
+    showCover,
+  );
+  const hasPrevious =
+    screenIndex > 0 || (screenIndex === 0 && !coverVisible && Boolean(currentCover));
+  const hasNext = screenIndex < experience.screens.length - 1;
+
+  const navigate = (direction: 'back' | 'next') => {
+    if (direction === 'back' && screenIndex === 0 && !coverVisible && currentCover) {
+      setShowCover(true);
       return;
     }
-    setControlsVisible(true);
-    schedulePlaybackControlsHide();
-    return clearControlTimer;
-  }, [
-    clearControlTimer,
-    galleryOpen,
-    schedulePlaybackControlsHide,
-    selected?.pageId,
-    selected?.tileId,
-  ]);
-
-  const currentPage = gallery.pages[pageIndex] ?? gallery.pages[0];
-  const currentUploads = useMemo(() => uploadMap(uploads), [uploads]);
-  const tiles = currentPage ? visibleTiles(currentPage, currentUploads) : [];
-  const sentences = gallery.sentences;
-  const selectedSource = selected ? mediaSource(selected.media, localUrls) : '';
-  const selectedIsVideo = selected?.media.mediaType === 'video';
-  const selectedPoster = selected ? mediaPoster(selected.media) : undefined;
-  const isEmptyPage = tiles.length === 0;
-  const isEmptyUploadPage =
-    tiles.length === 1 &&
-    tiles[0]?.type === 'upload' &&
-    !tiles.some((tile) => tile.type === 'media');
-  const tileRows = Math.max(1, Math.ceil(tiles.length / 3));
-  const tileGridScrolls = tileRows > 4;
-  const tileGridStyle = tileGridScrolls
-    ? { gridAutoRows: 'minmax(7rem, 1fr)' }
-    : { gridTemplateRows: `repeat(${tileRows}, minmax(0, 1fr))` };
-  const previousPage = pageIndex > 0 ? gallery.pages[pageIndex - 1] : undefined;
-  const nextPage = pageIndex < gallery.pages.length - 1 ? gallery.pages[pageIndex + 1] : undefined;
-
-  const rotateSentence = () => {
-    setSentenceIndex((current) => (current + 1) % sentences.length);
-    setSentenceRevision((current) => current + 1);
+    const target = direction === 'next' ? screenIndex + 1 : screenIndex - 1;
+    if (target < 0 || target >= experience.screens.length) return;
+    setScreenIndex(target);
+    setShowCover(false);
   };
 
-  useLayoutEffect(() => {
-    if (!selectedIsVideo || !selectedSource || reducedMotion) return;
-    const player = videoRef.current;
-    if (!player) return;
-    player.muted = !soundRequested;
-    void player.play().catch(() => {
-      if (soundRequested)
-        setMessage('Sound could not start. Choose the video again to try once more.');
-    });
-  }, [playbackRevision, reducedMotion, selectedIsVideo, selectedSource, soundRequested]);
-
-  const selectMedia = (tile: Extract<VisibleTile, { type: 'media' }>) => {
-    if (!currentPage) return;
-    setSelected({
-      pageId: currentPage.id,
-      tileId: tile.id,
-      title: tile.title,
-      media: tile.media,
-      alt: tile.alt,
-    });
-    setSoundRequested(!reducedMotion && tile.media.mediaType === 'video');
-    setPlaybackRevision((current) => current + 1);
-    setGalleryOpen(false);
-    setMessage('');
-    rotateSentence();
-  };
-
-  const openGallery = () => {
-    videoRef.current?.pause();
-    setGalleryOpen(true);
-    setMessage('');
-  };
-
-  const closeGallery = () => {
-    setGalleryOpen(false);
-    window.setTimeout(() => galleryControlRef.current?.focus(), 0);
-    if (selectedIsVideo && !reducedMotion) void videoRef.current?.play().catch(() => undefined);
-  };
-
-  const navigateGalleryPage = (nextPageIndex: number) => {
-    setPageDirection(nextPageIndex > pageIndex ? 'forward' : 'backward');
-    setPageIndex(nextPageIndex);
-  };
-
-  const chooseUpload = (tileId: string) => {
-    if (!currentPage) return;
-    setUploadTarget({ pageId: currentPage.id, tileId });
-    photoInputRef.current?.click();
+  const chooseUpload = (screenId: string, tileId: string) => {
+    setUploadTarget({ screenId, tileId });
+    fileInputRef.current?.click();
   };
 
   const saveUpload = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -373,330 +279,309 @@ export function WebExperience({ repository }: WebExperienceProps) {
     setUploadTarget(null);
     if (!file || !target) return;
     try {
-      const upload = await repo.saveGalleryUpload(target.pageId, target.tileId, file);
+      await repo.saveVisitorUpload(target.screenId, target.tileId, file);
       await refresh();
-      setSelected({
-        pageId: target.pageId,
-        tileId: target.tileId,
-        title: upload.media.fileName,
-        media: upload.media,
-        alt: upload.media.fileName,
-      });
-      setSoundRequested(!reducedMotion && upload.media.mediaType === 'video');
-      setPlaybackRevision((current) => current + 1);
-      setGalleryOpen(false);
-      setMessage('');
-      rotateSentence();
-    } catch (caught) {
-      setMessage(caught instanceof Error ? caught.message : 'The media could not be added.');
+      setMessage('Your photo is saved in this browser.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Your photo could not be saved.');
     }
   };
 
-  const share = async () => {
-    if (!selected) return;
+  const saveOneLiner = async (value = oneLinerDraft) => {
+    setSavingOneLiner(true);
     try {
-      if (navigator.share) {
-        await navigator.share({
-          title: selected.title,
-          text: 'A quiet minute in the middle of everything.',
-          url: window.location.href,
-        });
-        setMessage('Shared.');
-        return;
-      }
-      if (navigator.clipboard) {
-        await navigator.clipboard.writeText(window.location.href);
-        setMessage('Link copied.');
-        return;
-      }
-      const field = document.createElement('textarea');
-      field.value = window.location.href;
-      field.setAttribute('readonly', '');
-      field.style.position = 'fixed';
-      field.style.opacity = '0';
-      document.body.appendChild(field);
-      field.select();
-      const copied = document.execCommand('copy');
-      field.remove();
-      setMessage(copied ? 'Link copied.' : 'Sharing is not available here.');
-    } catch {
-      setMessage('Sharing is not available here.');
+      const saved = await repo.saveOneLiner(value);
+      setOneLiner(saved);
+      setOneLinerDraft(saved);
+      setMessage(
+        saved ? 'Your one-liner is saved in this browser.' : 'Your one-liner was cleared.',
+      );
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Your one-liner could not be saved.');
+    } finally {
+      setSavingOneLiner(false);
     }
   };
+
+  const renderGallery = (screen: GalleryScreen) => {
+    const tiles = screen.tiles.filter(
+      (_, index) =>
+        !(
+          screenIndex === 0 &&
+          screen.useFirstTileAsCover &&
+          !screen.repeatCoverInGallery &&
+          index === 0
+        ),
+    );
+    return (
+      <div className="h-full">
+        <h1 ref={headingRef} tabIndex={-1} className="sr-only outline-none">
+          {screen.title}
+        </h1>
+        {tiles.length ? (
+          <div className="grid h-full grid-cols-2 gap-0" aria-label={`${screen.title} photos`}>
+            {tiles.map((tile) => {
+              const upload =
+                tile.type === 'upload'
+                  ? currentUploads.get(galleryUploadKey(screen.id, tile.id))
+                  : undefined;
+              const media = tile.type === 'prefilled' ? tile.media : upload?.media;
+              const source = media ? mediaSource(media, localUrls) : '';
+              const alt = tile.type === 'prefilled' ? tile.alt : (upload?.media.fileName ?? '');
+              if (media) {
+                const image = (
+                  <div className="relative size-full overflow-hidden bg-muted">
+                    <ExperienceImage
+                      media={media}
+                      source={source}
+                      alt={alt}
+                      sizes="(max-width: 480px) 50vw, 13rem"
+                    />
+                  </div>
+                );
+                return tile.type === 'upload' ? (
+                  <button
+                    key={tile.id}
+                    type="button"
+                    className="block w-full text-left focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                    aria-label={`Replace ${tile.label}`}
+                    onClick={() => chooseUpload(screen.id, tile.id)}
+                  >
+                    {image}
+                  </button>
+                ) : (
+                  <div key={tile.id}>{image}</div>
+                );
+              }
+              if (tile.type !== 'upload') return null;
+              return (
+                <Button
+                  key={tile.id}
+                  type="button"
+                  variant="ghost"
+                  className="h-full w-full whitespace-normal rounded-none bg-muted/70 p-0 hover:bg-muted"
+                  aria-label={tile.label}
+                  onClick={() => chooseUpload(screen.id, tile.id)}
+                >
+                  <span className="flex max-w-44 flex-col items-center gap-2 px-4 text-center whitespace-normal">
+                    <Camera className="size-5 text-muted-foreground" aria-hidden />
+                    <span className="text-sm leading-snug text-foreground">{tile.label}</span>
+                    {tile.sentence ? (
+                      <span className="text-xs leading-snug text-muted-foreground">
+                        {tile.sentence}
+                      </span>
+                    ) : null}
+                  </span>
+                </Button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="grid min-h-full place-items-center p-6 text-center text-sm text-muted-foreground">
+            No photos are configured for this page yet.
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderGateway = (screen: Extract<ExperienceScreen, { type: 'gateway' }>) => (
+    <div className="flex flex-1 flex-col items-center justify-center px-5 pb-24 pt-18 text-center">
+      <Image
+        src="/brand/rir-logo-large.svg"
+        alt="RUST in de Reuring"
+        width={256}
+        height={257}
+        sizes="10rem"
+        className="h-auto w-36"
+      />
+      <h1
+        ref={headingRef}
+        tabIndex={-1}
+        className="mt-5 text-2xl font-normal tracking-tight outline-none"
+      >
+        {screen.title}
+      </h1>
+      <p className="mt-2 max-w-72 text-sm leading-relaxed text-muted-foreground">
+        {screen.description}
+      </p>
+      <div className="mt-7 flex w-full max-w-72 flex-col gap-2">
+        {screen.links.map((link) => (
+          <a
+            key={link.id}
+            href={link.url}
+            target="_blank"
+            rel="noreferrer noopener"
+            className={cn(buttonVariants({ variant: 'outline' }), 'w-full')}
+          >
+            {link.label}
+            <ExternalLink className="size-4" aria-hidden />
+          </a>
+        ))}
+      </div>
+      {experience.oneLiner.enabled && screenIndex === experience.screens.length - 1 ? (
+        <>
+          <Separator className="mt-8 w-full max-w-72" />
+          <form
+            className="mt-7 w-full max-w-72 text-left"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void saveOneLiner();
+            }}
+          >
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {experience.oneLiner.prompt}
+            </p>
+            <Field className="mt-4">
+              <FieldLabel htmlFor="visitor-one-liner" className="sr-only">
+                Your reflection
+              </FieldLabel>
+              <Textarea
+                id="visitor-one-liner"
+                value={oneLinerDraft}
+                rows={5}
+                maxLength={160}
+                placeholder={experience.oneLiner.placeholder}
+                className="min-h-32 resize-y bg-background/40 text-base leading-relaxed"
+                onChange={(event) => setOneLinerDraft(event.target.value)}
+              />
+            </Field>
+            <div className="mt-3 flex items-center justify-between">
+              {oneLiner ? (
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  className="h-auto px-0"
+                  disabled={savingOneLiner}
+                  onClick={() => {
+                    setOneLinerDraft('');
+                    void saveOneLiner('');
+                  }}
+                >
+                  Clear
+                </Button>
+              ) : (
+                <span />
+              )}
+              <Button type="submit" size="sm" disabled={savingOneLiner || !oneLinerDraft.trim()}>
+                Save
+              </Button>
+            </div>
+          </form>
+        </>
+      ) : null}
+    </div>
+  );
 
   return (
     <section
-      ref={stageRef}
-      aria-label="Calm gallery"
-      className="relative size-full overflow-hidden rounded-phone-screen bg-stage"
-      onPointerDown={revealPlaybackControls}
-      onFocusCapture={revealPlaybackControls}
-      onBlurCapture={schedulePlaybackControlsHide}
+      aria-label="Calm in the Rush experience"
+      className="relative size-full overflow-hidden rounded-phone-screen bg-background"
     >
       <input
-        ref={photoInputRef}
+        ref={fileInputRef}
         type="file"
-        accept="image/*,video/*"
+        accept={imageFileAccept}
         tabIndex={-1}
-        aria-label="Choose a photo or video from your device"
+        aria-label="Choose a photo from your device"
         className="sr-only"
         onChange={(event) => void saveUpload(event)}
       />
-
       <div
         aria-hidden
         className="absolute top-2.5 left-1/2 z-30 h-4 w-16 -translate-x-1/2 rounded-full bg-device-shell"
       />
-
-      {selectedSource ? (
-        <div
-          key={`${selected?.pageId ?? ''}-${selected?.tileId ?? ''}-${selectedSource}`}
-          className="absolute inset-0 motion-safe:animate-media-arrive"
-        >
-          {selectedIsVideo && !reducedMotion ? (
-            <video
-              ref={videoRef}
-              src={selectedSource}
-              poster={selectedPoster}
-              autoPlay
-              loop
-              muted={!soundRequested}
-              playsInline
-              preload="auto"
-              aria-label={selected?.alt ?? 'Selected video'}
-              className="absolute inset-0 size-full object-cover"
-              onError={() => setMessage('The video could not load.')}
-            >
-              Your browser cannot play this video.
-            </video>
-          ) : selectedIsVideo && selected ? (
-            selectedPoster ? (
-              <Image
-                src={selectedPoster}
-                alt={selected.alt}
-                fill
-                priority
-                sizes="(max-width: 1024px) 100vw, 27rem"
-                unoptimized
-                className="object-cover"
-                onError={() => setMessage('The selected media could not load.')}
-              />
-            ) : (
-              <video
-                src={selectedSource}
-                muted
-                playsInline
-                preload="metadata"
-                aria-label={selected.alt}
-                className="absolute inset-0 size-full object-cover"
-              />
-            )
-          ) : (
-            <Image
-              src={selectedSource}
-              alt={selected?.alt ?? ''}
-              fill
-              priority
-              sizes="(max-width: 1024px) 100vw, 27rem"
-              unoptimized
-              className="object-cover"
-              onError={() => setMessage('The selected image could not load.')}
+      <div className="absolute inset-0 overflow-y-auto">
+        {!ready ? (
+          <div className="grid size-full place-items-center p-6 text-center text-sm text-muted-foreground">
+            Preparing your calm moment...
+          </div>
+        ) : coverVisible && currentScreen && isGalleryScreen(currentScreen) && currentCover ? (
+          <div className="relative size-full overflow-hidden bg-stage">
+            <ExperienceImage
+              media={currentCover.media}
+              source={mediaSource(currentCover.media, localUrls)}
+              alt={currentCover.alt}
+              preload
+              sizes="(max-width: 480px) 100vw, 27rem"
             />
-          )}
-        </div>
-      ) : (
-        <div className="flex size-full items-center justify-center p-8 text-center text-stage-foreground">
-          <p>Open the gallery to add your first photo or video.</p>
-        </div>
-      )}
-
-      {!galleryOpen && selected ? (
-        <div className="pointer-events-none absolute inset-x-5 top-11 z-20">
-          <p
-            key={`${sentenceIndex}-${sentenceRevision}`}
-            className="max-w-56 text-base leading-relaxed font-light tracking-normal text-stage-foreground mix-blend-difference drop-shadow-sm motion-safe:animate-sentence-arrive"
-          >
-            {sentences[sentenceIndex % sentences.length]}
-          </p>
-        </div>
-      ) : null}
-
-      {message && !galleryOpen ? (
-        <Alert className="absolute inset-x-4 bottom-18 z-30 w-auto">
-          <AlertDescription>{message}</AlertDescription>
-        </Alert>
-      ) : null}
-
-      {!galleryOpen ? (
-        <div
-          className={cn(
-            'absolute inset-x-4 bottom-4 z-30 flex justify-center gap-3 transition-opacity duration-300 ease-out motion-reduce:transition-none',
-            controlsVisible ? 'opacity-100' : 'pointer-events-none opacity-0',
-          )}
+            <div
+              className="absolute inset-0 bg-linear-to-t from-scrim/70 via-transparent to-scrim/40"
+              aria-hidden
+            />
+            <h1 ref={headingRef} tabIndex={-1} className="sr-only outline-none">
+              {currentScreen.title}
+            </h1>
+            {currentCover.sentence ? (
+              <p className="absolute top-12 left-5 z-10 max-w-64 animate-sentence-drift text-lg font-normal leading-relaxed text-stage-foreground/85 motion-reduce:animate-none">
+                {currentCover.sentence}
+              </p>
+            ) : null}
+          </div>
+        ) : currentScreen?.type === 'gallery' ? (
+          renderGallery(currentScreen)
+        ) : currentScreen?.type === 'breathing' ? (
+          <BreathingPanel screen={currentScreen} headingRef={headingRef} />
+        ) : currentScreen?.type === 'gateway' ? (
+          renderGateway(currentScreen)
+        ) : (
+          <div className="grid size-full place-items-center p-6 text-center">
+            <div className="max-w-64">
+              <h1 ref={headingRef} tabIndex={-1} className="text-xl font-normal outline-none">
+                No screens yet
+              </h1>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                Local administration can add the first screen for this experience.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+      {coverVisible ? (
+        <nav
+          aria-label="Experience navigation"
+          className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-end border-t border-border/25 bg-background/40 px-4 py-3 backdrop-blur-sm"
+        >
+          <Button type="button" variant="ghost" size="sm" onClick={() => setShowCover(false)}>
+            See More
+            <ChevronRight className="size-4" aria-hidden />
+          </Button>
+        </nav>
+      ) : currentScreen ? (
+        <nav
+          aria-label="Experience navigation"
+          className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-between border-t border-border/25 bg-background/40 px-4 py-3 backdrop-blur-sm"
         >
           <Button
-            ref={galleryControlRef}
+            type="button"
             variant="ghost"
-            size="icon-lg"
-            className={activeControlClass}
-            aria-label="Open picture and video gallery"
-            onClick={openGallery}
+            size="sm"
+            disabled={!hasPrevious}
+            onClick={() => navigate('back')}
           >
-            <Images />
+            <ChevronLeft className="size-4" aria-hidden />
+            Back
           </Button>
-          {selected ? (
-            <Button
-              variant="ghost"
-              size="icon-lg"
-              className={activeControlClass}
-              aria-label="Share this calm moment"
-              onClick={() => void share()}
-            >
-              <Share2 />
-            </Button>
-          ) : null}
-        </div>
+          <p aria-live="polite" className="text-xs text-muted-foreground">
+            Page {screenIndex + 1} of {experience.screens.length}
+          </p>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={!hasNext}
+            onClick={() => navigate('next')}
+          >
+            Next
+            <ChevronRight className="size-4" aria-hidden />
+          </Button>
+        </nav>
       ) : null}
-
-      {galleryOpen && currentPage ? (
-        <div
-          className={cn(
-            'absolute inset-0 z-40 text-foreground',
-            isEmptyUploadPage ? 'bg-muted' : 'bg-background',
-          )}
-        >
-          <header
-            className={cn(
-              'absolute inset-x-3 top-3 z-50 flex items-center gap-1.5 p-1',
-              galleryGlassSurfaceClass,
-            )}
-          >
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-foreground/90 hover:bg-background/55"
-              aria-label="Close picture and video gallery"
-              onClick={closeGallery}
-            >
-              <X />
-            </Button>
-            <div className="min-w-0 flex-1">
-              <h2 className="truncate text-sm leading-none font-medium">{currentPage.title}</h2>
-            </div>
-            <p aria-live="polite" className="mr-1 shrink-0 text-xs text-foreground/70">
-              Page {pageIndex + 1} of {gallery.pages.length}
-            </p>
-          </header>
-
-          <div
-            key={currentPage.id}
-            className={cn(
-              'absolute inset-0',
-              pageDirection === 'forward'
-                ? 'motion-safe:animate-gallery-page-forward'
-                : 'motion-safe:animate-gallery-page-backward',
-            )}
-          >
-            {isEmptyPage ? (
-              <div className="flex size-full items-center justify-center p-8 text-center">
-                <p className="max-w-48 text-sm text-muted-foreground">
-                  No tiles have been added to this page yet.
-                </p>
-              </div>
-            ) : isEmptyUploadPage ? (
-              <div className="flex size-full items-center justify-center p-8">
-                {tiles[0]?.type === 'upload' ? (
-                  <button
-                    type="button"
-                    onClick={() => chooseUpload(tiles[0].id)}
-                    className="flex aspect-square w-2/3 max-w-48 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-foreground/25 bg-background/75 p-5 text-center text-sm font-medium shadow-sm backdrop-blur-md focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-                  >
-                    <ImagePlus className="size-8" aria-hidden />
-                    {tiles[0].label}
-                  </button>
-                ) : null}
-              </div>
-            ) : (
-              <div
-                className={cn(
-                  'grid size-full grid-cols-3 gap-px bg-border p-px',
-                  tileGridScrolls ? 'content-start overflow-y-auto' : 'overflow-hidden',
-                )}
-                style={tileGridStyle}
-              >
-                {tiles.map((tile) =>
-                  tile.type === 'media' ? (
-                    <button
-                      key={tile.id}
-                      type="button"
-                      aria-label={`Choose ${tile.title}`}
-                      onClick={() => selectMedia(tile)}
-                      className={cn(
-                        'relative min-h-0 overflow-hidden bg-muted focus-visible:z-10 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none',
-                        selected?.pageId === currentPage.id && selected.tileId === tile.id
-                          ? 'ring-2 ring-primary ring-inset'
-                          : '',
-                      )}
-                    >
-                      <GalleryTileMedia
-                        media={tile.media}
-                        source={mediaSource(tile.media, localUrls)}
-                        alt={tile.alt}
-                        reducedMotion={reducedMotion}
-                      />
-                    </button>
-                  ) : (
-                    <button
-                      key={tile.id}
-                      type="button"
-                      aria-label={tile.label}
-                      onClick={() => chooseUpload(tile.id)}
-                      className="flex min-h-0 flex-col items-center justify-center gap-2 bg-muted p-2 text-center text-xs font-medium focus-visible:z-10 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-                    >
-                      <ImagePlus className="size-5" aria-hidden />
-                      {tile.label}
-                    </button>
-                  ),
-                )}
-              </div>
-            )}
-          </div>
-
-          {message ? (
-            <Alert className="absolute inset-x-3 bottom-24 z-50 w-auto">
-              <AlertDescription>{message}</AlertDescription>
-            </Alert>
-          ) : null}
-
-          <nav aria-label="Gallery pages" className="absolute inset-x-3 bottom-3 z-50">
-            <div className={cn('flex gap-1.5 p-1', galleryGlassSurfaceClass)}>
-              {previousPage ? (
-                <Button
-                  variant="ghost"
-                  className="h-10 min-w-0 flex-1 justify-start bg-background/35 px-2 text-foreground hover:bg-background/55"
-                  aria-label={`Previous page: ${previousPage.title}`}
-                  onClick={() => navigateGalleryPage(Math.max(0, pageIndex - 1))}
-                >
-                  <ChevronLeft data-icon="inline-start" />
-                  <span className="min-w-0 flex-1 truncate">{previousPage.title}</span>
-                </Button>
-              ) : null}
-              {nextPage ? (
-                <Button
-                  variant="ghost"
-                  className="h-10 min-w-0 flex-1 justify-start bg-foreground/10 px-2 text-foreground hover:bg-foreground/20"
-                  aria-label={`Next page: ${nextPage.title}`}
-                  onClick={() =>
-                    navigateGalleryPage(Math.min(gallery.pages.length - 1, pageIndex + 1))
-                  }
-                >
-                  <span className="min-w-0 flex-1 truncate">{nextPage.title}</span>
-                  <ChevronRight data-icon="inline-end" />
-                </Button>
-              ) : null}
-            </div>
-          </nav>
-        </div>
+      {message ? (
+        <Alert className="absolute right-4 bottom-18 left-4 z-30 shadow-sm" aria-live="polite">
+          <AlertDescription>{message}</AlertDescription>
+        </Alert>
       ) : null}
     </section>
   );

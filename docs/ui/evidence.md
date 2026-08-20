@@ -1,5 +1,5 @@
 ---
-{"kind":"page","id":"web.evidence","specStatus":"approved","implementationStatus":"implemented","owner":"Product and engineering","lastReviewed":"2026-08-13","app":"web","route":"/evidence","useCases":["calm.view-scene"]}
+{"kind":"page","id":"web.evidence","specStatus":"approved","implementationStatus":"implemented","owner":"Product and engineering","lastReviewed":"2026-08-18","app":"web","route":"/evidence","useCases":["calm.view-experience"]}
 ---
 
 # Evidence page

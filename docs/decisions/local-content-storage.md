@@ -1,19 +1,17 @@
 ---
-{"kind":"decision","id":"local-content-storage","specStatus":"approved","owner":"Product and engineering","lastReviewed":"2026-08-14"}
+{"kind":"decision","id":"local-content-storage","specStatus":"approved","owner":"Product and engineering","lastReviewed":"2026-08-18"}
 ---
 
-# Keep gallery content in the browser
+# Keep experience content in the browser
 
 ## Decision
 
-Use IndexedDB database `calm-in-the-rush-local-v3` with `gallery`, `galleryUploads`, and `media` stores. The gallery store holds ordered pages, tile definitions, and active-media sentences. The upload store maps an upload tile to its selected local media. The media store holds browser-local image and video blobs.
+Use IndexedDB database `calm-in-the-rush-local-v4` with `experience`, `visitorUploads`, `oneLiner`, and `media` stores. The experience store holds ordered screens, tile definitions, breathing title and description, gateway links, and one-liner settings. The visitor upload store maps an upload tile to its selected local image. The one-liner store holds the optional visitor answer. The media store holds browser-local curated image blobs.
 
-The browser falls back to the three bundled gallery pages when it has no v3 configuration. The former v2 database is not read. This early demo starts a new local format instead of adding a migration or compatibility layer.
+The browser falls back to the five bundled screens when it has no v4 configuration. The former v3 database is not read. Reset deletes both known databases and returns to the current bundled configuration.
 
-A visitor image or video selected for an upload tile becomes a browser-local gallery record. It never reaches a server and is removed with the containing tile, page, or reset action.
-
-This is a same-browser demo boundary, not a publishing system. No blob, image, video, or metadata is sent to a server. The demo has no cross-tab synchronization, revision state, migration, or compatibility layer. Reset removes the v3 database.
+A visitor image or one-liner never reaches a server and is removed with its containing tile, screen, or reset action when unreferenced. This is a same-browser demo boundary, not a publishing system. It has no cross-tab synchronization, revision state, migration, or compatibility layer.
 
 ## Constraint
 
-Storage eviction, private mode, cleared site data, and a future local format reset can remove local pages and media. The administration page displays used media storage, estimated quota, and a reset action.
+Storage eviction, private mode, cleared site data, and reset can remove local screens, media, and the one-liner. The administration page displays local media storage, an estimated quota, and reset controls.

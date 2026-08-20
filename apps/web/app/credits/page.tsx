@@ -8,29 +8,19 @@ export default function CreditsPage() {
     <PublicPage
       eyebrow="Credits"
       title="Scene provenance"
-      lead="The landing photograph and the four bundled scenes retain their source licenses and review notes."
+      lead="The bundled photographs have recorded sources, output hashes, and license basis in the repository."
     >
-      <ProseHeading>Landing photograph</ProseHeading>
+      <ProseHeading>Bundled photographs</ProseHeading>
       <ProseText>
-        The Milky Way over Oeschinensee by{' '}
-        <ProseLink href="https://commons.wikimedia.org/wiki/File:036_Milky_Way_during_Perseids_seen_from_Oeschinensee_with_water_reflections_Photo_by_Giles_Laurent.jpg">
-          Giles Laurent
-        </ProseLink>
-        , <ProseLink href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</ProseLink>
-        , downscaled from the Wikimedia Commons original and cropped to the phone frame.
+        The Nature cover and three Nature tiles are stakeholder-supplied Unsplash photographs by T
+        Y, Hardial Aujla, Matteo Confetti, and Dominik Mattern. The three Quiet Moments tiles were
+        generated with OpenAI image generation from recorded prompts and depict fictional,
+        non-identifiable adults.
       </ProseText>
-      <ProseHeading>Scenes</ProseHeading>
+      <ProseHeading>License basis</ProseHeading>
       <ProseText>
-        Lake: National Park Service and Jacob W. Frank through GlacierNPS, United States government
-        public-domain basis.
-      </ProseText>
-      <ProseText>Forest: Fredrik Johansson and Sounds of Changes, CC BY 3.0.</ProseText>
-      <ProseText>
-        Wheat field: Coup 53, CC BY 3.0, with a license-review-needed flag on the Commons page.
-      </ProseText>
-      <ProseText>Brook: Poojilsharma07, CC BY-SA 4.0.</ProseText>
-      <ProseText>
-        Read{' '}
+        The Nature photographs are used under the Unsplash License. OpenAI&apos;s Terms of Use
+        assign its rights in generated output to the user, subject to applicable law. Read{' '}
         <ProseLink href="https://github.com/Litenova-Solutions/Calm-in-the-Rush/blob/main/docs/research/media-provenance.md">
           the full provenance record
         </ProseLink>
