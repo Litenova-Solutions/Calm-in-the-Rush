@@ -640,7 +640,11 @@ export default function AdminClient() {
                                     <div className="flex flex-wrap items-center gap-2">
                                       <p className="text-sm font-medium">{tileLabel(tile)}</p>
                                       <Badge variant="secondary">
-                                        {tile.type === 'prefilled' ? 'Photo' : 'Visitor upload'}
+                                        {tile.type === 'prefilled'
+                                          ? tile.media.kind === 'bundled-video'
+                                            ? 'Video'
+                                            : 'Photo'
+                                          : 'Visitor upload'}
                                       </Badge>
                                       {screen.useFirstTileAsCover && tileIndex === 0 ? (
                                         <Badge>Cover</Badge>
@@ -1083,7 +1087,10 @@ export default function AdminClient() {
                         ? `Selected: ${tileFile.name}`
                         : tileDraft.mode === 'new'
                           ? 'Choose a JPEG, PNG, WebP, or AVIF image.'
-                          : 'Leave empty to keep the current photo.'}
+                          : editedTile?.type === 'prefilled' &&
+                              editedTile.media.kind === 'bundled-video'
+                            ? 'Bundled video with a license credit. Leave empty to keep the video; choosing a photo replaces the video and clears its credit.'
+                            : 'Leave empty to keep the current photo.'}
                     </FieldDescription>
                   </Field>
                 </>

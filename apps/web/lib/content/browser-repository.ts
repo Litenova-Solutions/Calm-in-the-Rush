@@ -247,6 +247,7 @@ export class BrowserExperienceRepository {
                       alt,
                       sentence,
                       media: replacement ?? candidateTile.media,
+                      attribution: replacement ? undefined : candidateTile.attribution,
                     }
                   : candidateTile,
               ),
@@ -325,7 +326,7 @@ export class BrowserExperienceRepository {
   }
 
   async getObjectUrl(media: ExperienceMedia): Promise<string | null> {
-    if (media.kind === 'bundled') return media.src;
+    if (media.kind === 'bundled' || media.kind === 'bundled-video') return media.src;
     const existing = this.objectUrls.get(media.blobId);
     if (existing) return existing;
     const db = await openCalmDb();

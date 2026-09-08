@@ -9,6 +9,13 @@ const bundledMediaSchema = z.object({
   src: z.string().startsWith('/'),
 });
 
+const bundledVideoMediaSchema = z.object({
+  kind: z.literal('bundled-video'),
+  src: z.string().startsWith('/'),
+  poster: z.string().startsWith('/'),
+  audio: z.string().startsWith('/').optional(),
+});
+
 const localMediaSchema = z.object({
   kind: z.literal('local'),
   blobId: z.string().trim().min(1),
@@ -17,8 +24,21 @@ const localMediaSchema = z.object({
   size: z.number().int().positive(),
 });
 
-export const experienceMediaSchema = z.union([bundledMediaSchema, localMediaSchema]);
+export const experienceMediaSchema = z.union([
+  bundledMediaSchema,
+  bundledVideoMediaSchema,
+  localMediaSchema,
+]);
 export type ExperienceMedia = z.infer<typeof experienceMediaSchema>;
+
+const attributionSchema = z.object({
+  author: z.string().trim().min(1).max(120),
+  licenseName: z.string().trim().min(1).max(60),
+  licenseUrl: z.string().url().startsWith('https://').optional(),
+  sourceUrl: z.string().url().startsWith('https://'),
+  changes: z.string().trim().min(1).max(160),
+});
+export type MediaAttribution = z.infer<typeof attributionSchema>;
 
 const assignedSentenceSchema = z.string().trim().max(160);
 
@@ -29,6 +49,7 @@ const prefilledTileSchema = z.object({
   alt: z.string().trim().min(1).max(160),
   sentence: assignedSentenceSchema,
   media: experienceMediaSchema,
+  attribution: attributionSchema.optional(),
 });
 
 const uploadTileSchema = z.object({
@@ -167,6 +188,27 @@ function prefilledTile(
   return { id, type: 'prefilled', title, alt, sentence, media: bundledImage(src) };
 }
 
+function prefilledVideoTile(
+  id: string,
+  title: string,
+  alt: string,
+  sentence: string,
+  src: string,
+  poster: string,
+  audio: string,
+  attribution: MediaAttribution,
+): ExperienceTile {
+  return {
+    id,
+    type: 'prefilled',
+    title,
+    alt,
+    sentence,
+    media: { kind: 'bundled-video', src, poster, audio },
+    attribution,
+  };
+}
+
 function uploadTile(id: string, label: string, sentence = ''): ExperienceTile {
   return { id, type: 'upload', label, sentence };
 }
@@ -187,33 +229,72 @@ export const seedExperience: ExperienceConfig = {
       useFirstTileAsCover: true,
       repeatCoverInGallery: false,
       tiles: [
-        prefilledTile(
-          'cover-meadow',
-          'Take a breath',
-          'A green mountain meadow scattered with dandelions beneath a blue sky.',
-          'Take a breath.',
-          '/media/experience/cover-meadow.webp',
-        ),
-        prefilledTile(
-          'nature-dunes',
-          'Mountain path',
-          'A quiet mountain valley with a winding path through green hills.',
-          'There is room for this moment.',
-          '/media/experience/nature-dunes.webp',
-        ),
-        prefilledTile(
-          'nature-forest',
-          'Forest',
-          'An evergreen forest rising through a soft morning haze.',
-          'Let the next breath arrive on its own.',
-          '/media/experience/nature-forest.webp',
-        ),
-        prefilledTile(
-          'nature-brook',
-          'Mountain lake',
-          'A green mountain valley with a lake beneath cloud-covered peaks.',
+        prefilledVideoTile(
+          'cover-wheat',
+          'Wheat field',
+          'Golden wheat swaying in a gentle breeze.',
           'Nothing needs an answer here.',
-          '/media/experience/nature-brook.webp',
+          '/media/experience/nature-wheat.webm',
+          '/media/experience/nature-wheat-poster.jpg',
+          '/media/experience/audio-wheat.mp3',
+          {
+            author: 'Yasar Baskurt',
+            licenseName: 'Pexels license',
+            licenseUrl: 'https://www.pexels.com/license/',
+            sourceUrl:
+              'https://www.pexels.com/video/wind-blowing-through-golden-wheat-field-32508413/',
+            changes: 'Scaled to 480 wide, muted.',
+          },
+        ),
+        prefilledVideoTile(
+          'nature-lake',
+          'Mountain lake',
+          'Sunrise over a misty lake surrounded by greenery.',
+          'There is room for this moment.',
+          '/media/experience/nature-lake.webm',
+          '/media/experience/nature-lake-poster.jpg',
+          '/media/experience/audio-lake.mp3',
+          {
+            author: 'Matthias Groeneveld',
+            licenseName: 'Pexels license',
+            licenseUrl: 'https://www.pexels.com/license/',
+            sourceUrl:
+              'https://www.pexels.com/video/peaceful-sunrise-over-misty-lake-with-lush-foliage-35451221/',
+            changes: '12 second excerpt, scaled to 480 wide, muted.',
+          },
+        ),
+        prefilledVideoTile(
+          'nature-valla',
+          'Forest',
+          'Sunlit conifer trees in a boreal forest.',
+          'Let the next breath arrive on its own.',
+          '/media/experience/nature-valla.webm',
+          '/media/experience/nature-valla-poster.jpg',
+          '/media/experience/audio-forest.mp3',
+          {
+            author: 'Lauri Poldre',
+            licenseName: 'Pexels license',
+            licenseUrl: 'https://www.pexels.com/license/',
+            sourceUrl: 'https://www.pexels.com/video/serene-sunlit-boreal-forest-scene-35504127/',
+            changes: '12 second excerpt, scaled to 480 wide, muted.',
+          },
+        ),
+        prefilledVideoTile(
+          'nature-brook',
+          'Mountain brook',
+          'A calm mountain stream flowing over smooth rocks.',
+          'Take a breath.',
+          '/media/experience/cover-brook.webm',
+          '/media/experience/cover-brook-poster.jpg',
+          '/media/experience/audio-brook.mp3',
+          {
+            author: 'Dr Photographer',
+            licenseName: 'Pexels license',
+            licenseUrl: 'https://www.pexels.com/license/',
+            sourceUrl:
+              'https://www.pexels.com/video/serene-mountain-stream-flowing-over-rocks-38008512/',
+            changes: 'Slowed to quarter speed, cropped to portrait, 8 second excerpt, muted.',
+          },
         ),
         uploadTile('nature-upload', 'Add a nature photo', 'A place that helps you pause.'),
       ],

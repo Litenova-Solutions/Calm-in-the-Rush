@@ -10,7 +10,7 @@ const WebExperience = dynamic(
 
 export default function DemoClient() {
   return (
-    <div className="relative aspect-phone-frame w-demo-phone max-w-phone rounded-phone bg-device-shell p-2.5 shadow-xl ring-1 ring-foreground/20">
+    <div className="relative h-dvh w-full bg-device-shell shadow-none ring-0 sm:aspect-phone-frame sm:h-auto sm:w-demo-phone sm:max-w-phone sm:rounded-phone sm:p-2.5 sm:shadow-xl sm:ring-1 sm:ring-foreground/20">
       <WebExperience />
     </div>
   );

@@ -308,7 +308,6 @@
     {
       "id": "stage-shell/default",
       "regions": [
-        "admin-link",
         "stage"
       ],
       "responsiveModes": [
@@ -411,18 +410,6 @@
       "evidence": [
         "UI-EXPERIENCE-READY",
         "UI-EXPERIENCE-ERROR"
-      ]
-    },
-    {
-      "id": "stage-admin-link/default",
-      "components": [
-        "button"
-      ],
-      "states": [
-        "ready"
-      ],
-      "evidence": [
-        "UI-EXPERIENCE-READY"
       ]
     },
     {

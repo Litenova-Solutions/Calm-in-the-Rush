@@ -11,7 +11,7 @@ import {
   useState,
 } from 'react';
 import Image from 'next/image';
-import { Camera, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
+import { Camera, ChevronLeft, ChevronRight, ExternalLink, Volume2, VolumeX } from 'lucide-react';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -47,7 +47,8 @@ function uploadMap(uploads: readonly VisitorUpload[]): Map<string, VisitorUpload
 }
 
 function mediaSource(media: ExperienceMedia, localUrls: Record<string, string>): string {
-  return media.kind === 'bundled' ? media.src : (localUrls[media.blobId] ?? '');
+  if (media.kind === 'local') return localUrls[media.blobId] ?? '';
+  return media.src;
 }
 
 function coverTile(screen: GalleryScreen): Extract<ExperienceTile, { type: 'prefilled' }> | null {
@@ -96,6 +97,60 @@ function ExperienceImage({
   }
   return (
     <Image src={source} alt={alt} fill preload={preload} sizes={sizes} className="object-cover" />
+  );
+}
+
+function ExperienceVideo({
+  source,
+  poster,
+  alt,
+  preload = false,
+}: {
+  source: string;
+  poster: string;
+  alt: string;
+  preload?: boolean;
+}) {
+  const reducedMotion = useReducedMotionPreference();
+  if (!source) return <div className="absolute inset-0 bg-muted" aria-hidden />;
+  if (reducedMotion) {
+    return (
+      <img
+        src={poster}
+        alt={alt}
+        loading={preload ? 'eager' : 'lazy'}
+        className="absolute inset-0 size-full object-cover"
+      />
+    );
+  }
+  return (
+    <video
+      className="absolute inset-0 size-full object-cover"
+      src={source}
+      poster={poster}
+      muted
+      loop
+      playsInline
+      autoPlay
+      preload={preload ? 'auto' : 'metadata'}
+      role="img"
+      aria-label={alt}
+    />
+  );
+}
+
+function SoundToggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      aria-pressed={on}
+      aria-label={on ? 'Turn ambient sound off' : 'Turn ambient sound on'}
+      onClick={onToggle}
+    >
+      {on ? <Volume2 className="size-4" aria-hidden /> : <VolumeX className="size-4" aria-hidden />}
+    </Button>
   );
 }
 
@@ -183,8 +238,12 @@ export function WebExperience({ repository }: WebExperienceProps) {
   const [uploadTarget, setUploadTarget] = useState<UploadTarget | null>(null);
   const [message, setMessage] = useState('');
   const [savingOneLiner, setSavingOneLiner] = useState(false);
+  const [soundOn, setSoundOn] = useState(true);
+  const [activeTile, setActiveTile] = useState<UploadTarget | null>(null);
   const [ready, setReady] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
   const headingRef = useRef<HTMLHeadingElement | null>(null);
 
   const refresh = useCallback(async () => {
@@ -240,6 +299,12 @@ export function WebExperience({ repository }: WebExperienceProps) {
     headingRef.current?.focus();
   }, [ready, screenIndex, showCover]);
 
+  useEffect(() => {
+    if (!message) return;
+    const timer = window.setTimeout(() => setMessage(''), 5000);
+    return () => window.clearTimeout(timer);
+  }, [message]);
+
   const currentScreen = experience.screens[screenIndex];
   const currentUploads = useMemo(() => uploadMap(uploads), [uploads]);
   const currentCover =
@@ -256,7 +321,60 @@ export function WebExperience({ repository }: WebExperienceProps) {
     screenIndex > 0 || (screenIndex === 0 && !coverVisible && Boolean(currentCover));
   const hasNext = screenIndex < experience.screens.length - 1;
 
+  const activeScreen = experience.screens.find((screen) => screen.id === activeTile?.screenId);
+  const activeViewTile =
+    activeScreen && isGalleryScreen(activeScreen)
+      ? activeScreen.tiles.find((tile) => tile.id === activeTile?.tileId)
+      : undefined;
+  const audibleAudio = ((): string | null => {
+    if (activeViewTile?.type === 'prefilled' && activeViewTile.media.kind === 'bundled-video')
+      return activeViewTile.media.audio ?? null;
+    if (activeTile) return null;
+    if (coverVisible && currentCover && currentCover.media.kind === 'bundled-video')
+      return currentCover.media.audio ?? null;
+    return null;
+  })();
+
+  useEffect(() => {
+    if (!activeTile) return;
+    dialogRef.current?.focus();
+    const close = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setActiveTile(null);
+    };
+    window.addEventListener('keydown', close);
+    return () => window.removeEventListener('keydown', close);
+  }, [activeTile]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.pause();
+    if (!soundOn || !audibleAudio) return;
+    if (audio.getAttribute('src') !== audibleAudio) audio.setAttribute('src', audibleAudio);
+    const unlock = () => {
+      void audio.play().catch(() => undefined);
+    };
+    void audio.play().catch(() => window.addEventListener('pointerdown', unlock, { once: true }));
+    return () => window.removeEventListener('pointerdown', unlock);
+  }, [audibleAudio, soundOn]);
+
+  const activeUpload =
+    activeScreen && activeViewTile?.type === 'upload'
+      ? currentUploads.get(galleryUploadKey(activeScreen.id, activeViewTile.id))
+      : undefined;
+  const activeMedia =
+    activeViewTile?.type === 'prefilled' ? activeViewTile.media : activeUpload?.media;
+  const activeTitle =
+    activeViewTile?.type === 'prefilled' ? activeViewTile.title : (activeViewTile?.label ?? '');
+  const activeSentence = activeViewTile?.type === 'prefilled' ? activeViewTile.sentence : '';
+  const activeAlt =
+    activeViewTile?.type === 'prefilled'
+      ? activeViewTile.alt
+      : (activeUpload?.media.fileName ?? '');
+
   const navigate = (direction: 'back' | 'next') => {
+    setActiveTile(null);
+    setMessage('');
     if (direction === 'back' && screenIndex === 0 && !coverVisible && currentCover) {
       setShowCover(true);
       return;
@@ -267,9 +385,29 @@ export function WebExperience({ repository }: WebExperienceProps) {
     setShowCover(false);
   };
 
+  const seeMore = () => {
+    setActiveTile(null);
+    setShowCover(false);
+    setMessage('');
+  };
+
   const chooseUpload = (screenId: string, tileId: string) => {
     setUploadTarget({ screenId, tileId });
     fileInputRef.current?.click();
+  };
+
+  const toggleSound = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (soundOn) {
+      audio.pause();
+      setSoundOn(false);
+      return;
+    }
+    void audio
+      .play()
+      .then(() => setSoundOn(true))
+      .catch(() => setSoundOn(false));
   };
 
   const saveUpload = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -329,28 +467,32 @@ export function WebExperience({ repository }: WebExperienceProps) {
               const source = media ? mediaSource(media, localUrls) : '';
               const alt = tile.type === 'prefilled' ? tile.alt : (upload?.media.fileName ?? '');
               if (media) {
-                const image = (
-                  <div className="relative size-full overflow-hidden bg-muted">
+                const visual =
+                  media.kind === 'bundled-video' ? (
+                    <ExperienceVideo source={source} poster={media.poster} alt={alt} />
+                  ) : (
                     <ExperienceImage
                       media={media}
                       source={source}
                       alt={alt}
                       sizes="(max-width: 480px) 50vw, 13rem"
                     />
-                  </div>
+                  );
+                const image = (
+                  <div className="relative size-full overflow-hidden bg-muted">{visual}</div>
                 );
-                return tile.type === 'upload' ? (
+                const openLabel =
+                  tile.type === 'upload' ? `Open ${tile.label}` : `Open ${tile.title}`;
+                return (
                   <button
                     key={tile.id}
                     type="button"
-                    className="block w-full text-left focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-                    aria-label={`Replace ${tile.label}`}
-                    onClick={() => chooseUpload(screen.id, tile.id)}
+                    className="block h-full w-full text-left focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                    aria-label={openLabel}
+                    onClick={() => setActiveTile({ screenId: screen.id, tileId: tile.id })}
                   >
                     {image}
                   </button>
-                ) : (
-                  <div key={tile.id}>{image}</div>
                 );
               }
               if (tile.type !== 'upload') return null;
@@ -477,7 +619,7 @@ export function WebExperience({ repository }: WebExperienceProps) {
   return (
     <section
       aria-label="Calm in the Rush experience"
-      className="relative size-full overflow-hidden rounded-phone-screen bg-background"
+      className="relative size-full overflow-hidden rounded-none bg-background sm:rounded-phone-screen"
     >
       <input
         ref={fileInputRef}
@@ -488,6 +630,7 @@ export function WebExperience({ repository }: WebExperienceProps) {
         className="sr-only"
         onChange={(event) => void saveUpload(event)}
       />
+      <audio ref={audioRef} loop preload="none" aria-hidden />
       <div
         aria-hidden
         className="absolute top-2.5 left-1/2 z-30 h-4 w-16 -translate-x-1/2 rounded-full bg-device-shell"
@@ -499,13 +642,22 @@ export function WebExperience({ repository }: WebExperienceProps) {
           </div>
         ) : coverVisible && currentScreen && isGalleryScreen(currentScreen) && currentCover ? (
           <div className="relative size-full overflow-hidden bg-stage">
-            <ExperienceImage
-              media={currentCover.media}
-              source={mediaSource(currentCover.media, localUrls)}
-              alt={currentCover.alt}
-              preload
-              sizes="(max-width: 480px) 100vw, 27rem"
-            />
+            {currentCover.media.kind === 'bundled-video' ? (
+              <ExperienceVideo
+                source={mediaSource(currentCover.media, localUrls)}
+                poster={currentCover.media.poster}
+                alt={currentCover.alt}
+                preload
+              />
+            ) : (
+              <ExperienceImage
+                media={currentCover.media}
+                source={mediaSource(currentCover.media, localUrls)}
+                alt={currentCover.alt}
+                preload
+                sizes="(max-width: 480px) 100vw, 27rem"
+              />
+            )}
             <div
               className="absolute inset-0 bg-linear-to-t from-scrim/70 via-transparent to-scrim/40"
               aria-hidden
@@ -538,12 +690,63 @@ export function WebExperience({ repository }: WebExperienceProps) {
           </div>
         )}
       </div>
-      {coverVisible ? (
+      {activeViewTile && activeScreen && activeMedia ? (
+        <div
+          ref={dialogRef}
+          role="dialog"
+          aria-label={activeTitle}
+          tabIndex={-1}
+          className="absolute inset-0 z-10 overflow-hidden bg-stage outline-none"
+        >
+          {activeViewTile.type === 'upload' ? (
+            <button
+              type="button"
+              className="absolute inset-0 block w-full cursor-pointer focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+              aria-label={`Replace ${activeViewTile.label}`}
+              onClick={() => chooseUpload(activeScreen.id, activeViewTile.id)}
+            >
+              <ExperienceImage
+                media={activeMedia}
+                source={mediaSource(activeMedia, localUrls)}
+                alt={activeAlt}
+                preload
+                sizes="(max-width: 480px) 100vw, 27rem"
+              />
+            </button>
+          ) : activeMedia.kind === 'bundled-video' ? (
+            <ExperienceVideo
+              source={mediaSource(activeMedia, localUrls)}
+              poster={activeMedia.poster}
+              alt={activeAlt}
+              preload
+            />
+          ) : (
+            <ExperienceImage
+              media={activeMedia}
+              source={mediaSource(activeMedia, localUrls)}
+              alt={activeAlt}
+              preload
+              sizes="(max-width: 480px) 100vw, 27rem"
+            />
+          )}
+          <div
+            className="pointer-events-none absolute inset-0 bg-linear-to-t from-scrim/70 via-transparent to-scrim/40"
+            aria-hidden
+          />
+          {activeSentence ? (
+            <p className="pointer-events-none absolute top-12 left-5 z-10 max-w-64 animate-sentence-drift text-lg font-normal leading-relaxed text-stage-foreground/85 motion-reduce:animate-none">
+              {activeSentence}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+      {coverVisible || activeTile ? (
         <nav
           aria-label="Experience navigation"
-          className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-end border-t border-border/25 bg-background/40 px-4 py-3 backdrop-blur-sm"
+          className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-between border-t border-border/25 bg-background/40 px-4 py-3 backdrop-blur-sm"
         >
-          <Button type="button" variant="ghost" size="sm" onClick={() => setShowCover(false)}>
+          <SoundToggle on={soundOn} onToggle={toggleSound} />
+          <Button type="button" variant="ghost" size="sm" onClick={seeMore}>
             See More
             <ChevronRight className="size-4" aria-hidden />
           </Button>
@@ -563,9 +766,12 @@ export function WebExperience({ repository }: WebExperienceProps) {
             <ChevronLeft className="size-4" aria-hidden />
             Back
           </Button>
-          <p aria-live="polite" className="text-xs text-muted-foreground">
-            Page {screenIndex + 1} of {experience.screens.length}
-          </p>
+          <div className="flex items-center gap-1">
+            <p aria-live="polite" className="text-xs text-muted-foreground">
+              Page {screenIndex + 1} of {experience.screens.length}
+            </p>
+            <SoundToggle on={soundOn} onToggle={toggleSound} />
+          </div>
           <Button
             type="button"
             variant="ghost"
@@ -579,7 +785,10 @@ export function WebExperience({ repository }: WebExperienceProps) {
         </nav>
       ) : null}
       {message ? (
-        <Alert className="absolute right-4 bottom-18 left-4 z-30 shadow-sm" aria-live="polite">
+        <Alert
+          className="absolute right-4 bottom-18 left-4 z-30 w-auto text-center shadow-sm"
+          aria-live="polite"
+        >
           <AlertDescription>{message}</AlertDescription>
         </Alert>
       ) : null}

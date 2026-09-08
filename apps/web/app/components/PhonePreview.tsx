@@ -10,8 +10,8 @@ export function PhonePreview() {
       <div className="rounded-phone bg-device-shell p-2.5 shadow-xl ring-1 ring-foreground/20">
         <div className="relative aspect-phone overflow-hidden rounded-phone-screen bg-stage">
           <Image
-            src="/media/experience/cover-meadow.webp"
-            alt="Long green grass in a quiet Dutch meadow"
+            src="/media/experience/nature-wheat-poster.jpg"
+            alt="Golden wheat swaying in a gentle breeze"
             fill
             priority
             sizes="18rem"
@@ -28,8 +28,8 @@ export function PhonePreview() {
         </div>
       </div>
       <p className="mt-3 text-center text-xs text-muted-foreground">
-        Generated app photograph. Its prompt, output hash, and license basis are recorded in the
-        media provenance record.
+        Still frame of the bundled opening video. Its author, license, and changes are recorded in
+        the media provenance record.
       </p>
     </div>
   );

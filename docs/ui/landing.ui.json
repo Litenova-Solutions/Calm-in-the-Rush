@@ -6,30 +6,22 @@
   "shell": "stage-shell/default",
   "regions": [
     {
-      "id": "admin-link",
-      "pattern": "stage-admin-link/default",
-      "components": ["button"],
-      "order": 1,
-      "contentLimits": "One small administration link outside the phone frame.",
-      "overflow": "The link stays outside the frame at every viewport width."
-    },
-    {
       "id": "stage",
       "pattern": "media-stage/default",
       "components": ["alert", "button", "field", "label", "separator", "textarea"],
-      "order": 2,
-      "contentLimits": "One dark-graphite phone frame with a picture-first Nature cover, screen-filling gap-free two-column galleries, two Friendly Faces upload slots, a breathing cue, RUST gateway links, and a final-page multi-line one-liner input.",
-      "overflow": "The active screen scrolls within the phone. Gallery tiles stay in two columns without captions or gaps, except for empty upload guidance."
+      "order": 1,
+      "contentLimits": "One full-screen experience with a video-first Nature cover, screen-filling gap-free two-column galleries, two Friendly Faces upload slots, a breathing cue, RUST gateway links, and a final-page multi-line one-liner input.",
+      "overflow": "The active screen scrolls within the stage. Gallery tiles stay in two columns without captions or gaps, except for empty upload guidance."
     }
   ],
   "states": ["ready", "empty", "error"],
   "initial": { "scroll": "top", "focus": "body" },
   "responsive": {
-    "compact": "The phone frame fills the available viewport with the Admin link outside its upper edge.",
-    "wide": "The phone frame stays centered at the phone container width while the Admin link remains outside it."
+    "compact": "The experience fills the viewport without a phone frame.",
+    "wide": "The experience sits centered in a dark-graphite phone frame at the phone container width."
   },
   "focus": {
-    "order": ["admin-link", "current-screen", "screen-actions", "experience-navigation", "one-liner"],
+    "order": ["current-screen", "screen-actions", "experience-navigation", "one-liner"],
     "onError": "Local image and storage failures are announced without moving focus."
   },
   "accessibility": {

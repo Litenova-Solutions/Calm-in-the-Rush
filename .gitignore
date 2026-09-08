@@ -17,3 +17,6 @@ test-results/
 
 # Local codebase-context cache
 .fuse/
+
+# Local agent session state
+.opencode/

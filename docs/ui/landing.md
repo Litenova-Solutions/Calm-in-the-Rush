@@ -4,7 +4,7 @@
 
 # Root demo page
 
-The root route renders the live phone-framed experience directly. It shares `/demo` implementation and opens on the Nature cover rather than a logo splash. The route has no public header, brand mark, introductory copy, action group, or footer. A small Admin link stays outside the frame. The surrounding canvas uses low-saturation warm yellow and sage, and the phone casing uses dark graphite.
+The root route renders the live experience directly. It shares `/demo` implementation and opens on the Nature cover rather than a logo splash. The route has no public header, brand mark, introductory copy, action group, footer, or administration link. On compact viewports the experience fills the screen. On wide viewports it sits in a phone frame. The surrounding canvas uses low-saturation warm yellow and sage, and the phone casing uses dark graphite.
 
 ## UI Contract
 
