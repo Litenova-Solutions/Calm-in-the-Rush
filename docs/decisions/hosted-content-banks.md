@@ -6,7 +6,7 @@
 
 ## Decision
 
-Do not build a backend for this web demo. Experience screens, pre-filled local images, visitor image uploads, and one-liners remain in the current browser's IndexedDB. The five bundled screens remain the fallback content.
+Do not build a backend for this web demo. Experience screens, pre-filled local images, visitor image uploads, and one-liners remain in the current browser's IndexedDB. The six bundled screens remain the fallback content.
 
 There is no API, server action, server database, cloud bucket, authentication, remote upload, cross-tab synchronization, migration, or compatibility layer. The local administration route does not publish content to other people. Images and one-liners never reach a server.
 

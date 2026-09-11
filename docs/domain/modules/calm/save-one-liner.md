@@ -6,11 +6,11 @@
 
 ## Trigger
 
-A person reaches the final RUST gateway page.
+A person reaches the final gateway page.
 
 ## Rules
 
-- Ask the administrator-configured prompt, seeded as `What does calm mean to you, and/or how do you make time for it? Keep it short.`
+- Ask the administrator-configured prompt, seeded as `What is calm for you?`
 - Allow a short optional answer of up to 160 characters.
 - Store, edit, and clear the answer only in the current browser's IndexedDB.
 - Report a recoverable message if the local write fails.

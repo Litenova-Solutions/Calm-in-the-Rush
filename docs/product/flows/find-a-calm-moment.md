@@ -12,9 +12,9 @@ Let a person move through a quiet local reflection flow, add personal photograph
 
 1. Open `/` or `/demo` and see the configured Nature cover.
 2. Select `See More`, review the four-tile Nature grid, and continue to Quiet Moments.
-3. Review Quiet Moments, then continue to Friendly Faces and add either or both independent photographs if desired.
-4. View the repeating breathing cue, then continue to the RUST gateway.
-5. Use the final-page one-liner prompt to save, edit, or clear a short answer locally.
+3. Review Quiet Moments, then continue to Relaxed Faces and add either or both independent photographs if desired.
+4. View the repeating breathing cue, then continue to the logo gateway.
+5. Continue to the final quote gateway and use the one-liner prompt to save, edit, or clear a short answer locally.
 
 ## Failure paths
 

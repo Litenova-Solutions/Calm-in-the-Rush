@@ -217,14 +217,14 @@ export const seedExperience: ExperienceConfig = {
   schemaVersion: 1,
   oneLiner: {
     enabled: true,
-    prompt: 'What does calm mean to you, and/or how do you make time for it? Keep it short.',
+    prompt: 'What is calm for you?',
     placeholder: 'For me, calm is...',
   },
   screens: [
     {
       id: 'nature',
       type: 'gallery',
-      title: 'Nature',
+      title: 'nature',
       description: 'Take a moment with the places that help you slow down.',
       useFirstTileAsCover: true,
       repeatCoverInGallery: false,
@@ -302,7 +302,7 @@ export const seedExperience: ExperienceConfig = {
     {
       id: 'quiet-moments',
       type: 'gallery',
-      title: 'Quiet Moments',
+      title: 'quiet moments',
       description: 'Calm can exist in the middle of everyday life.',
       useFirstTileAsCover: false,
       repeatCoverInGallery: false,
@@ -334,7 +334,7 @@ export const seedExperience: ExperienceConfig = {
     {
       id: 'friendly-faces',
       type: 'gallery',
-      title: 'Friendly Faces',
+      title: 'relaxed faces',
       description: 'Add people whose relaxed presence matters to you.',
       useFirstTileAsCover: false,
       repeatCoverInGallery: false,
@@ -354,26 +354,22 @@ export const seedExperience: ExperienceConfig = {
     {
       id: 'take-a-breath',
       type: 'breathing',
-      title: 'Take a Breath',
+      title: 'take a breath',
       description: 'Follow the gentle movement at your own pace.',
     },
     {
-      id: 'rust-gateway',
+      id: 'calm-logo',
       type: 'gateway',
-      title: 'RUST in de Reuring',
-      description: 'Find more people and moments that make space for calm.',
-      links: [
-        {
-          id: 'rust-site',
-          label: 'Visit RUST in de Reuring',
-          url: 'https://rustindereuring.nl/',
-        },
-        {
-          id: 'rust-friends',
-          label: 'Meet the Friends of RUST',
-          url: 'https://rustindereuring.nl/mensen-die-rust-belangrijk-vinden/',
-        },
-      ],
+      title: 'calm in the rush',
+      description: '',
+      links: [],
+    },
+    {
+      id: 'calm-quote',
+      type: 'gateway',
+      title: 'your calm quote',
+      description: '',
+      links: [],
     },
   ],
 };

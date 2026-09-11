@@ -111,8 +111,8 @@ function defaultScreen(type: ScreenType): ExperienceScreen {
   return {
     id,
     type,
-    title: 'RUST in de Reuring',
-    description: 'Find more people and moments that make space for calm.',
+    title: 'calm in the rush',
+    description: '',
     links: [],
   };
 }

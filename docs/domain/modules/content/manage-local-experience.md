@@ -15,6 +15,6 @@ A person opens `/admin` in a browser.
 - Gallery screens support a first pre-filled opening cover, an option to repeat that cover in the grid, and ordered pre-filled or visitor-upload image tiles.
 - An administrator assigns each tile its own sentence. Pre-filled tiles require a title, alternative text, sentence, and supported image media. Upload tiles require a visible label and sentence.
 - An administrator can edit the title and description for a fixed slow breathing cue.
-- An administrator can edit the one-liner prompt and placeholder shown on the final RUST page, inspect local storage, and reset local data after confirmation.
-- Reset removes v4 and known v3 local data, then restores the bundled five-screen configuration.
+- An administrator can edit the one-liner prompt and placeholder shown on the final gateway page, inspect local storage, and reset local data after confirmation.
+- Reset removes v4 and known v3 local data, then restores the bundled six-screen configuration.
 - There is no server write path, remote upload, cross-tab synchronization, migration, or compatibility layer.

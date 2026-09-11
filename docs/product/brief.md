@@ -11,12 +11,12 @@ Calm in the Rush is a phone-framed web experience for a short pause. It has no a
 ## Primary flow: find-a-calm-moment
 
 1. A person opens `/` or `/demo` and sees the Nature opening cover: the first configured Nature tile, with its assigned sentence.
-2. They select `See More` and see a quiet two-column grid of three bundled Nature photographs and one visible local upload tile.
-3. They continue to Quiet Moments, which uses the same two-column layout with three bundled photographs and one visible local upload tile.
-4. They continue to Friendly Faces, which always offers two independent local uploads: one relaxed photograph of themselves and one friendly or relaxed photograph of someone else.
-5. They continue to Take a Breath for a repeating slow visual cue without playback controls, phase labels, timers, or links.
-6. They continue to the RUST gateway, where the supplied RUST logo and links to the RUST website and Vrienden van RUST appear.
-7. On the final RUST gateway page, they can write a short local answer to `What does calm mean to you, and/or how do you make time for it? Keep it short.`, then later edit or clear it there.
+2. They select `See More` and see a quiet two-column grid of three bundled Nature videos plus one visible local upload tile, under the calm lowercase heading `nature`.
+3. They continue to Quiet Moments, which uses the same two-column layout with three bundled photographs and one visible local upload tile, under the calm lowercase heading `quiet moments`.
+4. They continue to Relaxed Faces, which always offers two independent local uploads under the calm lowercase heading `relaxed faces`: one relaxed photograph of themselves and one friendly or relaxed photograph of someone else.
+5. They continue to Take a Breath for a repeating slow visual cue without playback controls, phase labels, timers, or links, under the calm lowercase heading `take a breath`.
+6. They continue to the logo gateway, where only the supplied RUST logo and the calm lowercase heading `calm in the rush` appear.
+7. On the final quote gateway page, under the calm lowercase heading `your calm quote`, they can write a short local answer to `What is calm for you?`, then later edit or clear it there.
 
 ## Use cases
 
@@ -38,13 +38,13 @@ Calm in the Rush is a phone-framed web experience for a short pause. It has no a
 ## Visitor experience
 
 - The root route has no splash screen, public header, hero copy, footer, visitor action group, or administration link. The administration route stays reachable at its direct URL. On compact viewports the experience fills the screen without a frame. On wide viewports it sits in a phone frame.
-- Nature opens on the first configured pre-filled tile. Its seeded cover is a looping wheat field video with the assigned sentence `Nothing needs an answer here.`. The sentence is larger, non-bold, softly translucent, edge-aligned, and moves by a small amount. The cover plays its matching wind sounds. A transparent bottom navigation bar contains a small sound control and the forward `See More` action. Sound is on by default and starts at the first touch. Selecting `See More` hides the cover by default and shows three other bundled videos plus one upload tile in a borderless, gap-free two-column grid. Selecting a tile opens it as a full active view with its sentence and its matching sounds. The active view uses the same bottom bar, so `Back` and `Next` stay exclusive to the gallery grid.
-- Gallery screens have no visible title, subtext, captions, card treatment, or tile gaps. Their tiles fill the phone screen behind the transparent page navigation. Selecting a tile opens it as a full active view; the Escape key and a Back action return to the grid. Empty upload tiles retain their administrator-configured label and short guidance sentence. Administrators retain a sentence for each tile so a specific sentence stays associated with its image when the tile is made the opening cover. The visitor cannot select from a shared sentence bank.
-- Quiet Moments has three bundled photographs and one upload tile. Friendly Faces has two upload tiles, and neither is hidden after the other receives a photograph.
+- Nature opens on the first configured pre-filled tile. Its seeded cover is a looping wheat field video with the assigned sentence `Nothing needs an answer here.`. The sentence is larger, non-bold, softly translucent, edge-aligned, and moves by a small amount. The cover plays its matching wind sounds. A transparent bottom navigation bar contains a small sound control and the forward `See More` action. Sound is on by default and starts at the first touch. Selecting `See More` hides the cover by default and shows three other bundled videos plus one upload tile in a borderless, gap-free two-column grid. Selecting a video tile opens it as a full active view with its sentence, its matching sounds, and the sound control beside `See More`. Selecting a photo tile opens the same view with only `See More`. `Back` and `Next` stay exclusive to the gallery grid.
+- Gallery screens show one calm lowercase heading in a small frosted badge centered at the top of a borderless, gap-free two-column grid. They show no subtext, captions, card treatment, or tile gaps. Their tiles fill the full phone screen area behind the badge and page navigation. Selecting a tile opens it as a full active view; the Escape key and a Back action return to the grid. Empty upload tiles retain their administrator-configured label and short guidance sentence. Administrators retain a sentence for each tile so a specific sentence stays associated with its image when the tile is made the opening cover. The visitor cannot select from a shared sentence bank. The opening cover and every active tile view stay image-primary with only the assigned sentence over the image.
+- Quiet Moments has three bundled photographs and one upload tile. Relaxed Faces has two upload tiles, and neither is hidden after the other receives a photograph.
 - Upload tiles accept JPEG, PNG, WebP, and AVIF images only. Invalid or unreadable files show a recoverable message and do not replace a tile.
-- Take a Breath uses a code-native SVG visual, not an embedded or generated video. A glowing yellow-orange orb moves across a smooth blue sine wave on a blue-white background in a fixed twelve-second loop. It shows only its title, short description, and visual cue.
-- The RUST gateway shows the existing supplied logo. It links to `https://rustindereuring.nl/` and `https://rustindereuring.nl/mensen-die-rust-belangrijk-vinden/`.
-- The final RUST gateway page has an optional one-liner prompt and large multi-line input, separated from the RUST links by a divider. The answer stays in the current browser and can be changed or cleared.
+- Take a Breath uses a code-native SVG visual, not an embedded or generated video. A glowing yellow-orange orb moves across a smooth blue sine wave on a blue-white background in a fixed twelve-second loop. It shows only its lowercase title, short description, and visual cue.
+- The logo gateway shows only the existing supplied logo and its calm lowercase title. It has no description and no external links in the default configuration.
+- The final quote gateway page has an optional one-liner prompt and large multi-line input, with no external links in the default configuration. The answer stays in the current browser and can be changed or cleared. A divider appears only when a gateway screen has both links and the one-liner.
 - The phone interface uses visible focus styles, labelled controls, status messages for recoverable errors, a heading focus target after page navigation, and no animation when reduced motion is requested.
 
 ## Local content and administration
@@ -53,9 +53,9 @@ The browser owns one experience configuration, visitor image uploads, an optiona
 
 An administrator can create, edit, duplicate, remove, and reorder screens. A screen is a Gallery, Breathing, or RUST gateway screen. Gallery screens have ordered pre-filled and upload tiles. The first pre-filled tile of the first Gallery screen can act as the opening cover and can be repeated or hidden from its grid.
 
-An administrator assigns a title, alternative text, image, and sentence to every pre-filled tile. They assign a visible label and sentence to every upload tile. They can add, edit, remove, and reorder tiles, edit a breathing title and description, edit RUST gateway links, and edit the final-page one-liner prompt and placeholder. The default configuration has five screens, but local administration may temporarily contain zero screens.
+An administrator assigns a title, alternative text, image, and sentence to every pre-filled tile. They assign a visible label and sentence to every upload tile. They can add, edit, remove, and reorder tiles, edit a breathing title and description, edit RUST gateway links, and edit the final-page one-liner prompt and placeholder. The default configuration has six screens, but local administration may temporarily contain zero screens.
 
-All local content stays in the browser that created it. Removing a screen or tile removes unreferenced local media. Reset removes v4 and the known v3 database, then restores the bundled five-screen experience. There is no sign-in, server write path, remote upload, cross-tab synchronization, migration, or compatibility layer.
+All local content stays in the browser that created it. Removing a screen or tile removes unreferenced local media. Reset removes v4 and the known v3 database, then restores the bundled six-screen experience. There is no sign-in, server write path, remote upload, cross-tab synchronization, migration, or compatibility layer.
 
 ## Media, performance, and provenance
 

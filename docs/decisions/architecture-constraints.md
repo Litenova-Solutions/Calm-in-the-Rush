@@ -15,7 +15,7 @@ These constraints moved from [the product brief](../product/brief.md) so package
 
 ## Storage
 
-This demo has one storage boundary: the browser. IndexedDB holds local experience configuration, visitor image uploads, visitor one-liners, and locally curated tile images under [the local content storage decision](local-content-storage.md). The bundled five-screen experience is the fallback when no local record exists.
+This demo has one storage boundary: the browser. IndexedDB holds local experience configuration, visitor image uploads, visitor one-liners, and locally curated tile images under [the local content storage decision](local-content-storage.md). The bundled six-screen experience is the fallback when no local record exists.
 
 Do not add an API route, server action, server database, remote content service, browser-to-browser sync, migration, or compatibility layer. A hosted bank remains deferred until the product owner asks for it.
 

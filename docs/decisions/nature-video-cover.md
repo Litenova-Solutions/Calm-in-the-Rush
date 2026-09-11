@@ -6,13 +6,13 @@
 
 ## Decision
 
-The Nature screen uses four bundled looping videos without on-screen credits. The Pexels license needs no attribution, so tiles stay clean. The opening cover plays the wheat field excerpt. The gallery grid plays the brook, lake, and forest excerpts. Tapping a gallery tile opens it as a full active view with its sentence. The active view uses the same bottom bar with the sound control and `See More`, so `Back` and `Next` stay exclusive to the gallery grid. Upload tiles with a visitor photo open the same way and replace through tapping the open photo. The full credit record lives on the credits page and in the media provenance record.
+The Nature screen uses four bundled looping videos without on-screen credits. The Pexels license needs no attribution, so tiles stay clean. The opening cover plays the wheat field excerpt. The gallery grid plays the brook, lake, and forest excerpts. Tapping a video tile opens it as a full active view with its sentence, with the sound control beside `See More`. Tapping a photo tile opens the same view with only `See More`. `Back` and `Next` stay exclusive to the gallery grid. Upload tiles with a visitor photo open the same way and replace through tapping the open photo. The full credit record lives on the credits page and in the media provenance record.
 
 This decision overrides the still-image rule in [the photo motion decision](on-device-photo-motion.md) for the Nature screen only. The breathing screen keeps its code-native SVG cue. Visitor uploads stay limited to still images. The app has no sharing control, so no adaptation is distributed.
 
 ## Sound
 
-Each video carries its own bundled ambient bed: stream sounds for the brook, small waves for the lake, birds and wind for the forest, and wind in tall grass for the wheat field. All four beds are CC0. Sound is on by default and follows the active view, so only one bed ever plays. The grid itself stays silent. Browsers start audio at the first touch, so a visitor hears sound from the first tap. The small sound control in the bottom navigation bar mutes and unmutes, and this decision explicitly allows it beside the forward action. Videos carry no audio tracks of their own.
+Each video carries its own bundled ambient bed: stream sounds for the brook, small waves for the lake, birds and wind for the forest, and wind in tall grass for the wheat field. All four beds are CC0. Sound is on by default and follows the active view, so only one bed ever plays. The grid itself stays silent, with no sound control. Browsers start audio at the first touch, so a visitor hears sound from the first tap. The small sound control appears only where audio can play: beside the forward action on the cover and on active video views. Videos carry no audio tracks of their own.
 
 ## Reason
 

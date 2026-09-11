@@ -6,7 +6,7 @@
 
 ## Decision
 
-Nature, Quiet Moments, and Friendly Faces use still images. Take a Breath uses a code-native SVG: a glowing yellow-orange orb moves across a smooth blue sine wave on a blue-white background. The movement follows the stakeholder-supplied breathing visualisation. It has no embedded video and no generated video asset.
+Nature, Quiet Moments, and Relaxed Faces use still images. Take a Breath uses a code-native SVG: a glowing yellow-orange orb moves across a smooth blue sine wave on a blue-white background. The movement follows the stakeholder-supplied breathing visualisation. It has no embedded video and no generated video asset.
 
 ## Reason
 

@@ -171,7 +171,7 @@ function BreathingPanel({
         <h1
           ref={headingRef}
           tabIndex={-1}
-          className="text-2xl font-normal tracking-tight outline-none"
+          className="text-2xl font-normal lowercase tracking-tight outline-none"
         >
           {screen.title}
         </h1>
@@ -334,6 +334,7 @@ export function WebExperience({ repository }: WebExperienceProps) {
       return currentCover.media.audio ?? null;
     return null;
   })();
+  const showSoundToggle = audibleAudio !== null;
 
   useEffect(() => {
     if (!activeTile) return;
@@ -452,10 +453,16 @@ export function WebExperience({ repository }: WebExperienceProps) {
         ),
     );
     return (
-      <div className="h-full">
-        <h1 ref={headingRef} tabIndex={-1} className="sr-only outline-none">
-          {screen.title}
-        </h1>
+      <div className="relative h-full">
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center px-5 pt-12">
+          <h1
+            ref={headingRef}
+            tabIndex={-1}
+            className="pointer-events-none rounded-full border border-border/40 bg-background/80 px-3 py-1 text-center text-xs font-normal lowercase tracking-wide text-muted-foreground shadow-sm backdrop-blur-sm outline-none"
+          >
+            {screen.title}
+          </h1>
+        </div>
         {tiles.length ? (
           <div className="grid h-full grid-cols-2 gap-0" aria-label={`${screen.title} photos`}>
             {tiles.map((tile) => {
@@ -527,94 +534,109 @@ export function WebExperience({ repository }: WebExperienceProps) {
     );
   };
 
-  const renderGateway = (screen: Extract<ExperienceScreen, { type: 'gateway' }>) => (
-    <div className="flex flex-1 flex-col items-center justify-center px-5 pb-24 pt-18 text-center">
-      <Image
-        src="/brand/rir-logo-large.svg"
-        alt="RUST in de Reuring"
-        width={256}
-        height={257}
-        sizes="10rem"
-        className="h-auto w-36"
-      />
-      <h1
-        ref={headingRef}
-        tabIndex={-1}
-        className="mt-5 text-2xl font-normal tracking-tight outline-none"
-      >
-        {screen.title}
-      </h1>
-      <p className="mt-2 max-w-72 text-sm leading-relaxed text-muted-foreground">
-        {screen.description}
-      </p>
-      <div className="mt-7 flex w-full max-w-72 flex-col gap-2">
-        {screen.links.map((link) => (
-          <a
-            key={link.id}
-            href={link.url}
-            target="_blank"
-            rel="noreferrer noopener"
-            className={cn(buttonVariants({ variant: 'outline' }), 'w-full')}
-          >
-            {link.label}
-            <ExternalLink className="size-4" aria-hidden />
-          </a>
-        ))}
-      </div>
-      {experience.oneLiner.enabled && screenIndex === experience.screens.length - 1 ? (
-        <>
-          <Separator className="mt-8 w-full max-w-72" />
-          <form
-            className="mt-7 w-full max-w-72 text-left"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void saveOneLiner();
-            }}
-          >
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              {experience.oneLiner.prompt}
-            </p>
-            <Field className="mt-4">
-              <FieldLabel htmlFor="visitor-one-liner" className="sr-only">
-                Your reflection
-              </FieldLabel>
-              <Textarea
-                id="visitor-one-liner"
-                value={oneLinerDraft}
-                rows={5}
-                maxLength={160}
-                placeholder={experience.oneLiner.placeholder}
-                className="min-h-32 resize-y bg-background/40 text-base leading-relaxed"
-                onChange={(event) => setOneLinerDraft(event.target.value)}
-              />
-            </Field>
-            <div className="mt-3 flex items-center justify-between">
-              {oneLiner ? (
-                <Button
-                  type="button"
-                  variant="link"
-                  size="sm"
-                  className="h-auto px-0"
-                  disabled={savingOneLiner}
-                  onClick={() => {
-                    setOneLinerDraft('');
-                    void saveOneLiner('');
-                  }}
-                >
-                  Clear
+  const renderGateway = (screen: Extract<ExperienceScreen, { type: 'gateway' }>) => {
+    const isFinalOneLiner =
+      experience.oneLiner.enabled && screenIndex === experience.screens.length - 1;
+    const showLogo = !isFinalOneLiner;
+    return (
+      <div className="flex min-h-full flex-col items-center justify-center px-5 pb-24 pt-18 text-center">
+        {showLogo ? (
+          <Image
+            src="/brand/rir-logo-large.svg"
+            alt="RUST in de Reuring"
+            width={256}
+            height={257}
+            sizes="10rem"
+            className="h-auto w-36"
+          />
+        ) : null}
+        <h1
+          ref={headingRef}
+          tabIndex={-1}
+          className={
+            showLogo
+              ? 'mt-5 text-2xl font-normal lowercase tracking-tight outline-none'
+              : 'text-2xl font-normal lowercase tracking-tight outline-none'
+          }
+        >
+          {screen.title}
+        </h1>
+        {screen.description.trim() ? (
+          <p className="mt-2 max-w-72 text-sm leading-relaxed text-muted-foreground">
+            {screen.description}
+          </p>
+        ) : null}
+        {screen.links.length ? (
+          <div className="mt-7 flex w-full max-w-72 flex-col gap-2">
+            {screen.links.map((link) => (
+              <a
+                key={link.id}
+                href={link.url}
+                target="_blank"
+                rel="noreferrer noopener"
+                className={cn(buttonVariants({ variant: 'outline' }), 'w-full')}
+              >
+                {link.label}
+                <ExternalLink className="size-4" aria-hidden />
+              </a>
+            ))}
+          </div>
+        ) : null}
+        {experience.oneLiner.enabled && screenIndex === experience.screens.length - 1 ? (
+          <>
+            {screen.links.length ? <Separator className="mt-8 w-full max-w-72" /> : null}
+            <form
+              className="mt-7 w-full max-w-72 text-left"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void saveOneLiner();
+              }}
+            >
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {experience.oneLiner.prompt}
+              </p>
+              <Field className="mt-4">
+                <FieldLabel htmlFor="visitor-one-liner" className="sr-only">
+                  Your reflection
+                </FieldLabel>
+                <Textarea
+                  id="visitor-one-liner"
+                  value={oneLinerDraft}
+                  rows={5}
+                  maxLength={160}
+                  placeholder={experience.oneLiner.placeholder}
+                  className="min-h-32 resize-y bg-background/40 text-base leading-relaxed"
+                  onChange={(event) => setOneLinerDraft(event.target.value)}
+                />
+              </Field>
+              <div className="mt-3 flex items-center justify-between">
+                {oneLiner ? (
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="sm"
+                    className="h-auto px-0"
+                    disabled={savingOneLiner}
+                    onClick={() => {
+                      setOneLinerDraft('');
+                      void saveOneLiner('');
+                    }}
+                  >
+                    Clear
+                  </Button>
+                ) : (
+                  <span />
+                )}
+                <Button type="submit" size="sm" disabled={savingOneLiner || !oneLinerDraft.trim()}>
+                  Save
                 </Button>
-              ) : (
-                <span />
-              )}
-              <Button type="submit" size="sm" disabled={savingOneLiner || !oneLinerDraft.trim()}>
-                Save
-              </Button>
-            </div>
-          </form>
-        </>
-      ) : null}
-    </div>
-  );
+              </div>
+            </form>
+          </>
+        ) : null}
+      </div>
+    );
+  };
 
   return (
     <section
@@ -633,7 +655,7 @@ export function WebExperience({ repository }: WebExperienceProps) {
       <audio ref={audioRef} loop preload="none" aria-hidden />
       <div
         aria-hidden
-        className="absolute top-2.5 left-1/2 z-30 h-4 w-16 -translate-x-1/2 rounded-full bg-device-shell"
+        className="absolute top-2.5 left-1/2 z-30 hidden h-4 w-16 -translate-x-1/2 rounded-full bg-device-shell sm:block"
       />
       <div className="absolute inset-0 overflow-y-auto">
         {!ready ? (
@@ -745,7 +767,11 @@ export function WebExperience({ repository }: WebExperienceProps) {
           aria-label="Experience navigation"
           className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-between border-t border-border/25 bg-background/40 px-4 py-3 backdrop-blur-sm"
         >
-          <SoundToggle on={soundOn} onToggle={toggleSound} />
+          {showSoundToggle ? (
+            <SoundToggle on={soundOn} onToggle={toggleSound} />
+          ) : (
+            <span aria-hidden className="inline-block w-9" />
+          )}
           <Button type="button" variant="ghost" size="sm" onClick={seeMore}>
             See More
             <ChevronRight className="size-4" aria-hidden />
@@ -770,7 +796,6 @@ export function WebExperience({ repository }: WebExperienceProps) {
             <p aria-live="polite" className="text-xs text-muted-foreground">
               Page {screenIndex + 1} of {experience.screens.length}
             </p>
-            <SoundToggle on={soundOn} onToggle={toggleSound} />
           </div>
           <Button
             type="button"

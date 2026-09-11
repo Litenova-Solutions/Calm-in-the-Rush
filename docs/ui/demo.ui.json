@@ -10,7 +10,7 @@
       "pattern": "media-stage/default",
       "components": ["alert", "button", "field", "label", "separator", "textarea"],
       "order": 1,
-      "contentLimits": "One full-screen experience with a video-first Nature cover, screen-filling gap-free two-column galleries, a breathing cue, RUST gateway links, and a final-page multi-line one-liner input.",
+      "contentLimits": "One full-screen experience with a video-first Nature cover, calm lowercase headings, gap-free two-column galleries, a breathing cue, a logo-only gateway, and a final quote gateway with a multi-line one-liner input.",
       "overflow": "The active screen scrolls within the stage. Gallery tiles remain two columns and fill the screen area. Empty upload tiles show their configured guidance."
     }
   ],
