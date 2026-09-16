@@ -11,10 +11,26 @@ import {
   useState,
 } from 'react';
 import Image from 'next/image';
-import { Camera, ChevronLeft, ChevronRight, ExternalLink, Volume2, VolumeX } from 'lucide-react';
+import {
+  Camera,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  Trash2,
+  Volume2,
+  VolumeX,
+} from 'lucide-react';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button, buttonVariants } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
@@ -25,6 +41,7 @@ import {
   imageFileAccept,
   isGalleryScreen,
   seedExperience,
+  seedExperienceNl,
   type ExperienceConfig,
   type ExperienceMedia,
   type ExperienceScreen,
@@ -33,11 +50,17 @@ import {
   type VisitorUpload,
 } from '@/lib/content/experience';
 import { BrowserExperienceRepository } from '@/lib/content/browser-repository';
+import {
+  resolveExperienceLocale,
+  visitorStrings,
+  type ExperienceLocale,
+} from '@/lib/content/strings';
 
 type UploadTarget = { screenId: string; tileId: string };
 
 interface WebExperienceProps {
   repository?: BrowserExperienceRepository;
+  locale?: ExperienceLocale;
 }
 
 function uploadMap(uploads: readonly VisitorUpload[]): Map<string, VisitorUpload> {
@@ -139,21 +162,6 @@ function ExperienceVideo({
   );
 }
 
-function SoundToggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="sm"
-      aria-pressed={on}
-      aria-label={on ? 'Turn ambient sound off' : 'Turn ambient sound on'}
-      onClick={onToggle}
-    >
-      {on ? <Volume2 className="size-4" aria-hidden /> : <VolumeX className="size-4" aria-hidden />}
-    </Button>
-  );
-}
-
 function BreathingPanel({
   screen,
   headingRef,
@@ -171,7 +179,7 @@ function BreathingPanel({
         <h1
           ref={headingRef}
           tabIndex={-1}
-          className="text-2xl font-normal lowercase tracking-tight outline-none"
+          className="text-2xl font-normal tracking-tight outline-none"
         >
           {screen.title}
         </h1>
@@ -226,9 +234,15 @@ function BreathingPanel({
   );
 }
 
-export function WebExperience({ repository }: WebExperienceProps) {
-  const repo = useMemo(() => repository ?? new BrowserExperienceRepository(), [repository]);
-  const [experience, setExperience] = useState<ExperienceConfig>(seedExperience);
+export function WebExperience({ repository, locale }: WebExperienceProps) {
+  const activeLocale = resolveExperienceLocale(locale ?? repository?.locale);
+  const copy = visitorStrings[activeLocale];
+  const fallbackSeed = activeLocale === 'nl' ? seedExperienceNl : seedExperience;
+  const repo = useMemo(
+    () => repository ?? new BrowserExperienceRepository({ locale: activeLocale }),
+    [repository, activeLocale],
+  );
+  const [experience, setExperience] = useState<ExperienceConfig>(fallbackSeed);
   const [uploads, setUploads] = useState<VisitorUpload[]>([]);
   const [localUrls, setLocalUrls] = useState<Record<string, string>>({});
   const [oneLiner, setOneLiner] = useState('');
@@ -236,6 +250,7 @@ export function WebExperience({ repository }: WebExperienceProps) {
   const [screenIndex, setScreenIndex] = useState(0);
   const [showCover, setShowCover] = useState(true);
   const [uploadTarget, setUploadTarget] = useState<UploadTarget | null>(null);
+  const [removalTarget, setRemovalTarget] = useState<UploadTarget | null>(null);
   const [message, setMessage] = useState('');
   const [savingOneLiner, setSavingOneLiner] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
@@ -249,7 +264,7 @@ export function WebExperience({ repository }: WebExperienceProps) {
   const refresh = useCallback(async () => {
     try {
       const [nextExperience, nextUploads, nextOneLiner] = await Promise.all([
-        repo.readExperience(),
+        repo.readExperience(fallbackSeed),
         repo.readVisitorUploads(),
         repo.readOneLiner(),
       ]);
@@ -277,15 +292,13 @@ export function WebExperience({ repository }: WebExperienceProps) {
         Math.min(current, Math.max(0, nextExperience.screens.length - 1)),
       );
     } catch (error) {
-      setExperience(seedExperience);
+      setExperience(fallbackSeed);
       setUploads([]);
-      setMessage(
-        error instanceof Error ? error.message : 'Your local experience could not be read.',
-      );
+      setMessage(error instanceof Error ? error.message : copy.experienceUnreadable);
     } finally {
       setReady(true);
     }
-  }, [repo]);
+  }, [repo, fallbackSeed, copy]);
 
   useEffect(() => {
     void refresh();
@@ -412,17 +425,66 @@ export function WebExperience({ repository }: WebExperienceProps) {
   };
 
   const saveUpload = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+    const files = event.target.files ? Array.from(event.target.files) : [];
     event.target.value = '';
     const target = uploadTarget;
     setUploadTarget(null);
-    if (!file || !target) return;
+    if (files.length === 0 || !target) return;
     try {
-      await repo.saveVisitorUpload(target.screenId, target.tileId, file);
+      const saved = await repo.saveVisitorUploadBatch(target.screenId, target.tileId, files);
       await refresh();
-      setMessage('Your photo is saved in this browser.');
+      if (saved.length === 1) {
+        setMessage(copy.photoSaved);
+      } else if (saved.length === 0) {
+        setMessage(copy.uploadSlotsFull);
+      } else if (saved.length < files.length) {
+        setMessage(copy.photosPartial(saved.length, files.length));
+      } else {
+        setMessage(copy.photosSaved(saved.length));
+      }
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Your photo could not be saved.');
+      setMessage(error instanceof Error ? error.message : copy.photosFailed);
+    }
+  };
+
+  const confirmRemoval = async () => {
+    const target = removalTarget;
+    setRemovalTarget(null);
+    if (!target) return;
+    try {
+      await repo.clearVisitorUpload(target.screenId, target.tileId);
+      await refresh();
+      setMessage(copy.photoRemoved);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : copy.photoRemoveFailed);
+    }
+  };
+
+  const shareMedia = (media: ExperienceMedia) => {
+    const src = media.kind === 'local' ? mediaSource(media, localUrls) : media.src;
+    if (!src) return;
+    let filename: string;
+    if (media.kind === 'local') {
+      const ext = media.mimeType.split('/')[1] ?? 'jpg';
+      const base = media.fileName.replace(/\.[^.]+$/, '');
+      filename = `${base || 'photo'}.${ext}`;
+    } else {
+      const last = media.src.split('/').pop() ?? 'photo';
+      filename = last.split('?')[0] ?? 'photo';
+    }
+    const anchor = document.createElement('a');
+    anchor.href = src;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+  };
+
+  const shareCurrentView = () => {
+    if (activeMedia) {
+      shareMedia(activeMedia);
+    } else if (coverVisible && currentCover?.media) {
+      shareMedia(currentCover.media);
     }
   };
 
@@ -432,11 +494,9 @@ export function WebExperience({ repository }: WebExperienceProps) {
       const saved = await repo.saveOneLiner(value);
       setOneLiner(saved);
       setOneLinerDraft(saved);
-      setMessage(
-        saved ? 'Your one-liner is saved in this browser.' : 'Your one-liner was cleared.',
-      );
+      setMessage(saved ? copy.oneLinerSaved : copy.oneLinerCleared);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Your one-liner could not be saved.');
+      setMessage(error instanceof Error ? error.message : copy.oneLinerFailed);
     } finally {
       setSavingOneLiner(false);
     }
@@ -458,13 +518,16 @@ export function WebExperience({ repository }: WebExperienceProps) {
           <h1
             ref={headingRef}
             tabIndex={-1}
-            className="pointer-events-none rounded-full border border-border/40 bg-background/80 px-3 py-1 text-center text-xs font-normal lowercase tracking-wide text-muted-foreground shadow-sm backdrop-blur-sm outline-none"
+            className="pointer-events-none rounded-full border border-border/40 bg-background/80 px-3 py-1 text-center text-xs font-normal tracking-wide text-muted-foreground shadow-sm backdrop-blur-sm outline-none"
           >
             {screen.title}
           </h1>
         </div>
         {tiles.length ? (
-          <div className="grid h-full grid-cols-2 gap-0" aria-label={`${screen.title} photos`}>
+          <div
+            className="grid h-full grid-cols-2 gap-0"
+            aria-label={copy.galleryPhotos(screen.title)}
+          >
             {tiles.map((tile) => {
               const upload =
                 tile.type === 'upload'
@@ -488,18 +551,33 @@ export function WebExperience({ repository }: WebExperienceProps) {
                 const image = (
                   <div className="relative size-full overflow-hidden bg-muted">{visual}</div>
                 );
-                const openLabel =
-                  tile.type === 'upload' ? `Open ${tile.label}` : `Open ${tile.title}`;
+                const openLabel = copy.openTile(tile.type === 'upload' ? tile.label : tile.title);
                 return (
-                  <button
-                    key={tile.id}
-                    type="button"
-                    className="block h-full w-full text-left focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-                    aria-label={openLabel}
-                    onClick={() => setActiveTile({ screenId: screen.id, tileId: tile.id })}
-                  >
-                    {image}
-                  </button>
+                  <div key={tile.id} className="relative h-full">
+                    <button
+                      type="button"
+                      className="block h-full w-full text-left focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                      aria-label={openLabel}
+                      onClick={() => setActiveTile({ screenId: screen.id, tileId: tile.id })}
+                    >
+                      {image}
+                    </button>
+                    {tile.type === 'upload' ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={copy.removeTile(tile.label)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setRemovalTarget({ screenId: screen.id, tileId: tile.id });
+                        }}
+                        className="absolute top-2 left-2 z-10 h-8 w-8 rounded-full bg-background/70 text-foreground backdrop-blur-sm hover:bg-background/90 focus-visible:ring-3 focus-visible:ring-ring/50"
+                      >
+                        <Trash2 className="size-4" aria-hidden />
+                      </Button>
+                    ) : null}
+                  </div>
                 );
               }
               if (tile.type !== 'upload') return null;
@@ -527,7 +605,7 @@ export function WebExperience({ repository }: WebExperienceProps) {
           </div>
         ) : (
           <div className="grid min-h-full place-items-center p-6 text-center text-sm text-muted-foreground">
-            No photos are configured for this page yet.
+            {copy.noPhotos}
           </div>
         )}
       </div>
@@ -546,8 +624,8 @@ export function WebExperience({ repository }: WebExperienceProps) {
             alt="RUST in de Reuring"
             width={256}
             height={257}
-            sizes="10rem"
-            className="h-auto w-36"
+            sizes="16rem"
+            className="h-auto w-64"
           />
         ) : null}
         <h1
@@ -555,8 +633,8 @@ export function WebExperience({ repository }: WebExperienceProps) {
           tabIndex={-1}
           className={
             showLogo
-              ? 'mt-5 text-2xl font-normal lowercase tracking-tight outline-none'
-              : 'text-2xl font-normal lowercase tracking-tight outline-none'
+              ? 'mt-5 text-2xl font-normal tracking-tight outline-none'
+              : 'text-2xl font-normal tracking-tight outline-none'
           }
         >
           {screen.title}
@@ -597,7 +675,7 @@ export function WebExperience({ repository }: WebExperienceProps) {
               </p>
               <Field className="mt-4">
                 <FieldLabel htmlFor="visitor-one-liner" className="sr-only">
-                  Your reflection
+                  {copy.reflectionLabel}
                 </FieldLabel>
                 <Textarea
                   id="visitor-one-liner"
@@ -622,13 +700,13 @@ export function WebExperience({ repository }: WebExperienceProps) {
                       void saveOneLiner('');
                     }}
                   >
-                    Clear
+                    {copy.clear}
                   </Button>
                 ) : (
                   <span />
                 )}
                 <Button type="submit" size="sm" disabled={savingOneLiner || !oneLinerDraft.trim()}>
-                  Save
+                  {copy.save}
                 </Button>
               </div>
             </form>
@@ -640,15 +718,17 @@ export function WebExperience({ repository }: WebExperienceProps) {
 
   return (
     <section
-      aria-label="Calm in the Rush experience"
+      aria-label={copy.experienceLabel}
+      lang={activeLocale}
       className="relative size-full overflow-hidden rounded-none bg-background sm:rounded-phone-screen"
     >
       <input
         ref={fileInputRef}
         type="file"
         accept={imageFileAccept}
+        multiple
         tabIndex={-1}
-        aria-label="Choose a photo from your device"
+        aria-label={copy.choosePhotos}
         className="sr-only"
         onChange={(event) => void saveUpload(event)}
       />
@@ -657,10 +737,10 @@ export function WebExperience({ repository }: WebExperienceProps) {
         aria-hidden
         className="absolute top-2.5 left-1/2 z-30 hidden h-4 w-16 -translate-x-1/2 rounded-full bg-device-shell sm:block"
       />
-      <div className="absolute inset-0 overflow-y-auto">
+      <div className="absolute inset-0 overflow-y-auto no-scrollbar">
         {!ready ? (
           <div className="grid size-full place-items-center p-6 text-center text-sm text-muted-foreground">
-            Preparing your calm moment...
+            {copy.preparing}
           </div>
         ) : coverVisible && currentScreen && isGalleryScreen(currentScreen) && currentCover ? (
           <div className="relative size-full overflow-hidden bg-stage">
@@ -692,6 +772,21 @@ export function WebExperience({ repository }: WebExperienceProps) {
                 {currentCover.sentence}
               </p>
             ) : null}
+            {showSoundToggle ? (
+              <button
+                type="button"
+                aria-pressed={soundOn}
+                aria-label={soundOn ? copy.muteSound : copy.unmuteSound}
+                onClick={toggleSound}
+                className="absolute top-3 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-background/60 text-foreground backdrop-blur-sm hover:bg-background/80 focus-visible:ring-2 focus-visible:ring-ring/50 outline-none"
+              >
+                {soundOn ? (
+                  <Volume2 className="size-4" aria-hidden />
+                ) : (
+                  <VolumeX className="size-4" aria-hidden />
+                )}
+              </button>
+            ) : null}
           </div>
         ) : currentScreen?.type === 'gallery' ? (
           renderGallery(currentScreen)
@@ -703,10 +798,10 @@ export function WebExperience({ repository }: WebExperienceProps) {
           <div className="grid size-full place-items-center p-6 text-center">
             <div className="max-w-64">
               <h1 ref={headingRef} tabIndex={-1} className="text-xl font-normal outline-none">
-                No screens yet
+                {copy.noScreensTitle}
               </h1>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                Local administration can add the first screen for this experience.
+                {copy.noScreensDescription}
               </p>
             </div>
           </div>
@@ -724,7 +819,7 @@ export function WebExperience({ repository }: WebExperienceProps) {
             <button
               type="button"
               className="absolute inset-0 block w-full cursor-pointer focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-              aria-label={`Replace ${activeViewTile.label}`}
+              aria-label={copy.replaceTile(activeViewTile.label)}
               onClick={() => chooseUpload(activeScreen.id, activeViewTile.id)}
             >
               <ExperienceImage
@@ -760,26 +855,43 @@ export function WebExperience({ repository }: WebExperienceProps) {
               {activeSentence}
             </p>
           ) : null}
+          {showSoundToggle ? (
+            <button
+              type="button"
+              aria-pressed={soundOn}
+              aria-label={soundOn ? copy.muteSound : copy.unmuteSound}
+              onClick={toggleSound}
+              className="absolute top-3 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-background/60 text-foreground backdrop-blur-sm hover:bg-background/80 focus-visible:ring-2 focus-visible:ring-ring/50 outline-none"
+            >
+              {soundOn ? (
+                <Volume2 className="size-4" aria-hidden />
+              ) : (
+                <VolumeX className="size-4" aria-hidden />
+              )}
+            </button>
+          ) : null}
         </div>
       ) : null}
       {coverVisible || activeTile ? (
         <nav
-          aria-label="Experience navigation"
+          aria-label={copy.navigationLabel}
           className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-between border-t border-border/25 bg-background/40 px-4 py-3 backdrop-blur-sm"
         >
-          {showSoundToggle ? (
-            <SoundToggle on={soundOn} onToggle={toggleSound} />
+          {activeMedia || (coverVisible && currentCover?.media) ? (
+            <Button type="button" variant="ghost" size="sm" onClick={shareCurrentView}>
+              {copy.share}
+            </Button>
           ) : (
             <span aria-hidden className="inline-block w-9" />
           )}
           <Button type="button" variant="ghost" size="sm" onClick={seeMore}>
-            See More
+            {copy.seeMore}
             <ChevronRight className="size-4" aria-hidden />
           </Button>
         </nav>
       ) : currentScreen ? (
         <nav
-          aria-label="Experience navigation"
+          aria-label={copy.navigationLabel}
           className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-between border-t border-border/25 bg-background/40 px-4 py-3 backdrop-blur-sm"
         >
           <Button
@@ -790,11 +902,11 @@ export function WebExperience({ repository }: WebExperienceProps) {
             onClick={() => navigate('back')}
           >
             <ChevronLeft className="size-4" aria-hidden />
-            Back
+            {copy.back}
           </Button>
           <div className="flex items-center gap-1">
             <p aria-live="polite" className="text-xs text-muted-foreground">
-              Page {screenIndex + 1} of {experience.screens.length}
+              {copy.pageOf(screenIndex + 1, experience.screens.length)}
             </p>
           </div>
           <Button
@@ -804,7 +916,7 @@ export function WebExperience({ repository }: WebExperienceProps) {
             disabled={!hasNext}
             onClick={() => navigate('next')}
           >
-            Next
+            {copy.next}
             <ChevronRight className="size-4" aria-hidden />
           </Button>
         </nav>
@@ -817,6 +929,27 @@ export function WebExperience({ repository }: WebExperienceProps) {
           <AlertDescription>{message}</AlertDescription>
         </Alert>
       ) : null}
+      <Dialog
+        open={removalTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setRemovalTarget(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{copy.removePhotoTitle}</DialogTitle>
+            <DialogDescription>{copy.removePhotoDescription}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setRemovalTarget(null)}>
+              {copy.keepIt}
+            </Button>
+            <Button type="button" variant="destructive" onClick={() => void confirmRemoval()}>
+              {copy.remove}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

@@ -19,6 +19,9 @@ export const metadata: Metadata = {
     description: 'A quiet minute in the middle of everything.',
     type: 'website',
   },
+  alternates: {
+    languages: { 'nl-NL': '/nl' },
+  },
   icons: { icon: '/icon.svg' },
 };
 

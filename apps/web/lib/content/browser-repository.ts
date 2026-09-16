@@ -14,8 +14,10 @@ import {
   type ExperienceTile,
   type VisitorUpload,
 } from './experience';
+import { repositoryStrings, resolveExperienceLocale, type ExperienceLocale } from './strings';
 
 const DB_NAME = 'calm-in-the-rush-local-v4';
+const DB_NAME_NL = 'calm-in-the-rush-local-v4-nl';
 const LEGACY_DB_NAME = 'calm-in-the-rush-local-v3';
 const DB_VERSION = 1;
 
@@ -39,9 +41,12 @@ function dbAvailable(): boolean {
   return typeof window !== 'undefined' && typeof indexedDB !== 'undefined';
 }
 
-async function openCalmDb(): Promise<IDBPDatabase<CalmDb>> {
-  if (!dbAvailable()) throw new Error('Browser storage is not available in this environment.');
-  return openDB<CalmDb>(DB_NAME, DB_VERSION, {
+async function openCalmDb(
+  database: string,
+  storageMessage = 'Browser storage is not available in this environment.',
+): Promise<IDBPDatabase<CalmDb>> {
+  if (!dbAvailable()) throw new Error(storageMessage);
+  return openDB<CalmDb>(database, DB_VERSION, {
     upgrade(database) {
       if (!database.objectStoreNames.contains('experience'))
         database.createObjectStore('experience');
@@ -53,9 +58,12 @@ async function openCalmDb(): Promise<IDBPDatabase<CalmDb>> {
   });
 }
 
-function localMedia(file: File): Extract<ExperienceMedia, { kind: 'local' }> {
+function localMedia(
+  file: File,
+  invalidMessage: string,
+): Extract<ExperienceMedia, { kind: 'local' }> {
   if (!imageFileAccept.split(',').includes(file.type)) {
-    throw new Error('Choose a JPEG, PNG, WebP, or AVIF image.');
+    throw new Error(invalidMessage);
   }
   return {
     kind: 'local',
@@ -91,14 +99,25 @@ function localMediaIds(config: ExperienceConfig, uploads: readonly VisitorUpload
 }
 
 export class BrowserExperienceRepository {
+  readonly locale: ExperienceLocale;
+  private readonly dbName: string;
   private objectUrls = new Map<string, string>();
 
-  async readExperience(): Promise<ExperienceConfig> {
-    if (!dbAvailable()) return cloneExperience(seedExperience);
-    const db = await openCalmDb();
+  constructor(options: { locale?: ExperienceLocale } = {}) {
+    this.locale = resolveExperienceLocale(options.locale);
+    this.dbName = this.locale === 'nl' ? DB_NAME_NL : DB_NAME;
+  }
+
+  private get copy() {
+    return repositoryStrings[this.locale];
+  }
+
+  async readExperience(fallback: ExperienceConfig = seedExperience): Promise<ExperienceConfig> {
+    if (!dbAvailable()) return cloneExperience(fallback);
+    const db = await openCalmDb(this.dbName, this.copy.storageUnavailable);
     try {
       const local = await db.get('experience', 'current');
-      return local ? experienceConfigSchema.parse(local) : cloneExperience(seedExperience);
+      return local ? experienceConfigSchema.parse(local) : cloneExperience(fallback);
     } finally {
       db.close();
     }
@@ -106,7 +125,7 @@ export class BrowserExperienceRepository {
 
   async readVisitorUploads(): Promise<VisitorUpload[]> {
     if (!dbAvailable()) return [];
-    const db = await openCalmDb();
+    const db = await openCalmDb(this.dbName, this.copy.storageUnavailable);
     try {
       return (await db.getAll('visitorUploads')).map((upload) => visitorUploadSchema.parse(upload));
     } finally {
@@ -116,7 +135,7 @@ export class BrowserExperienceRepository {
 
   async readOneLiner(): Promise<string> {
     if (!dbAvailable()) return '';
-    const db = await openCalmDb();
+    const db = await openCalmDb(this.dbName, this.copy.storageUnavailable);
     try {
       const oneLiner = await db.get('oneLiner', 'current');
       return oneLiner ? visitorOneLinerSchema.parse(oneLiner).value : '';
@@ -126,9 +145,9 @@ export class BrowserExperienceRepository {
   }
 
   async saveExperience(input: ExperienceConfig): Promise<ExperienceConfig> {
-    if (!dbAvailable()) throw new Error('Browser storage is not available.');
+    if (!dbAvailable()) throw new Error(this.copy.storageUnavailableShort);
     const config = experienceConfigSchema.parse(input);
-    const db = await openCalmDb();
+    const db = await openCalmDb(this.dbName, this.copy.storageUnavailable);
     try {
       const slots = validUploadSlots(config);
       const uploads: VisitorUpload[] = [];
@@ -163,18 +182,14 @@ export class BrowserExperienceRepository {
   ): Promise<ExperienceConfig> {
     const current = await this.readExperience();
     const screen = current.screens.find((candidate) => candidate.id === screenId);
-    if (!screen || !isGalleryScreen(screen))
-      throw new Error('That gallery screen is no longer available.');
+    if (!screen || !isGalleryScreen(screen)) throw new Error(this.copy.galleryGone);
     const title = input.title.trim();
     const alt = input.alt.trim() || title;
     const sentence = input.sentence.trim();
-    if (!title || title.length > 60)
-      throw new Error('Tile title must be between 1 and 60 characters.');
-    if (!alt || alt.length > 160)
-      throw new Error('Image description must be between 1 and 160 characters.');
-    if (sentence.length > 160)
-      throw new Error('Assigned sentence must be 160 characters or fewer.');
-    const media = localMedia(file);
+    if (!title || title.length > 60) throw new Error(this.copy.titleLength);
+    if (!alt || alt.length > 160) throw new Error(this.copy.altLength);
+    if (sentence.length > 160) throw new Error(this.copy.sentenceLength);
+    const media = localMedia(file, this.copy.invalidImage);
     const next = experienceConfigSchema.parse({
       ...current,
       screens: current.screens.map((candidate) =>
@@ -189,7 +204,7 @@ export class BrowserExperienceRepository {
           : candidate,
       ),
     });
-    const db = await openCalmDb();
+    const db = await openCalmDb(this.dbName, this.copy.storageUnavailable);
     try {
       await db.put('media', file, media.blobId);
     } finally {
@@ -198,7 +213,7 @@ export class BrowserExperienceRepository {
     try {
       return await this.saveExperience(next);
     } catch (error) {
-      const cleanup = await openCalmDb();
+      const cleanup = await openCalmDb(this.dbName, this.copy.storageUnavailable);
       try {
         await cleanup.delete('media', media.blobId);
       } finally {
@@ -217,22 +232,19 @@ export class BrowserExperienceRepository {
     const current = await this.readExperience();
     const screen = current.screens.find((candidate) => candidate.id === screenId);
     if (!screen || !isGalleryScreen(screen)) {
-      throw new Error('That pre-filled tile is no longer available.');
+      throw new Error(this.copy.tileGone);
     }
     const tile = screen.tiles.find((candidate) => candidate.id === tileId);
     if (!tile || tile.type !== 'prefilled') {
-      throw new Error('That pre-filled tile is no longer available.');
+      throw new Error(this.copy.tileGone);
     }
     const title = input.title.trim();
     const alt = input.alt.trim() || title;
     const sentence = input.sentence.trim();
-    if (!title || title.length > 60)
-      throw new Error('Tile title must be between 1 and 60 characters.');
-    if (!alt || alt.length > 160)
-      throw new Error('Image description must be between 1 and 160 characters.');
-    if (sentence.length > 160)
-      throw new Error('Assigned sentence must be 160 characters or fewer.');
-    const replacement = file ? localMedia(file) : null;
+    if (!title || title.length > 60) throw new Error(this.copy.titleLength);
+    if (!alt || alt.length > 160) throw new Error(this.copy.altLength);
+    if (sentence.length > 160) throw new Error(this.copy.sentenceLength);
+    const replacement = file ? localMedia(file, this.copy.invalidImage) : null;
     const next = experienceConfigSchema.parse({
       ...current,
       screens: current.screens.map((candidate) =>
@@ -256,7 +268,7 @@ export class BrowserExperienceRepository {
       ),
     });
     if (!replacement || !file) return this.saveExperience(next);
-    const db = await openCalmDb();
+    const db = await openCalmDb(this.dbName, this.copy.storageUnavailable);
     try {
       await db.put('media', file, replacement.blobId);
     } finally {
@@ -265,7 +277,7 @@ export class BrowserExperienceRepository {
     try {
       return await this.saveExperience(next);
     } catch (error) {
-      const cleanup = await openCalmDb();
+      const cleanup = await openCalmDb(this.dbName, this.copy.storageUnavailable);
       try {
         await cleanup.delete('media', replacement.blobId);
       } finally {
@@ -276,20 +288,20 @@ export class BrowserExperienceRepository {
   }
 
   async saveVisitorUpload(screenId: string, tileId: string, file: File): Promise<VisitorUpload> {
-    if (!dbAvailable()) throw new Error('Browser storage is not available.');
+    if (!dbAvailable()) throw new Error(this.copy.storageUnavailableShort);
     const config = await this.readExperience();
     const screen = config.screens.find((candidate) => candidate.id === screenId);
     if (!screen || !isGalleryScreen(screen)) {
-      throw new Error('That photo upload space is no longer available.');
+      throw new Error(this.copy.uploadGone);
     }
     const tile = screen.tiles.find((candidate) => candidate.id === tileId);
     if (!tile || tile.type !== 'upload') {
-      throw new Error('That photo upload space is no longer available.');
+      throw new Error(this.copy.uploadGone);
     }
-    const media = localMedia(file);
+    const media = localMedia(file, this.copy.invalidImage);
     const upload = visitorUploadSchema.parse({ schemaVersion: 1, screenId, tileId, media });
     const key = galleryUploadKey(screenId, tileId);
-    const db = await openCalmDb();
+    const db = await openCalmDb(this.dbName, this.copy.storageUnavailable);
     try {
       const previous = await db.get('visitorUploads', key);
       await db.put('media', file, media.blobId);
@@ -308,10 +320,99 @@ export class BrowserExperienceRepository {
     }
   }
 
+  async saveVisitorUploadBatch(
+    screenId: string,
+    sourceTileId: string,
+    files: File[],
+  ): Promise<VisitorUpload[]> {
+    if (!dbAvailable()) throw new Error(this.copy.storageUnavailableShort);
+    if (files.length === 0) return [];
+    const config = await this.readExperience();
+    const screen = config.screens.find((candidate) => candidate.id === screenId);
+    if (!screen || !isGalleryScreen(screen)) {
+      throw new Error(this.copy.uploadGone);
+    }
+    const sourceTile = screen.tiles.find((candidate) => candidate.id === sourceTileId);
+    if (!sourceTile || sourceTile.type !== 'upload') {
+      throw new Error(this.copy.uploadGone);
+    }
+    const existingUploads = await this.readVisitorUploads();
+    const filledTileIds = new Set(
+      existingUploads
+        .filter((upload) => upload.screenId === screenId)
+        .map((upload) => upload.tileId),
+    );
+    const emptyUploadTiles = screen.tiles.filter(
+      (tile) => tile.type === 'upload' && tile.id !== sourceTileId && !filledTileIds.has(tile.id),
+    );
+    const pairs: Array<{ file: File; tileId: string }> = [];
+    if (files.length > 0) {
+      pairs.push({ file: files[0]!, tileId: sourceTileId });
+    }
+    for (let index = 1; index < files.length && index - 1 < emptyUploadTiles.length; index += 1) {
+      pairs.push({ file: files[index]!, tileId: emptyUploadTiles[index - 1]!.id });
+    }
+    if (pairs.length === 0) return [];
+    const failedMedia: string[] = [];
+    const db = await openCalmDb(this.dbName, this.copy.storageUnavailable);
+    try {
+      const saved: VisitorUpload[] = [];
+      for (const { file, tileId } of pairs) {
+        const media = localMedia(file, this.copy.invalidImage);
+        const key = galleryUploadKey(screenId, tileId);
+        try {
+          const previous = await db.get('visitorUploads', key);
+          await db.put('media', file, media.blobId);
+          const upload = visitorUploadSchema.parse({
+            schemaVersion: 1,
+            screenId,
+            tileId,
+            media,
+          });
+          await db.put('visitorUploads', upload, key);
+          if (previous) {
+            const old = visitorUploadSchema.parse(previous);
+            await db.delete('media', old.media.blobId).catch(() => undefined);
+            this.revokeObjectUrl(old.media.blobId);
+          }
+          saved.push(upload);
+        } catch (innerError) {
+          failedMedia.push(media.blobId);
+          throw innerError;
+        }
+      }
+      return saved;
+    } catch (error) {
+      for (const blobId of failedMedia) {
+        await db.delete('media', blobId).catch(() => undefined);
+      }
+      throw error;
+    } finally {
+      db.close();
+    }
+  }
+
+  async clearVisitorUpload(screenId: string, tileId: string): Promise<void> {
+    if (!dbAvailable()) return;
+    const key = galleryUploadKey(screenId, tileId);
+    const db = await openCalmDb(this.dbName, this.copy.storageUnavailable);
+    try {
+      const previous = await db.get('visitorUploads', key);
+      if (previous) {
+        const old = visitorUploadSchema.parse(previous);
+        await db.delete('media', old.media.blobId).catch(() => undefined);
+        this.revokeObjectUrl(old.media.blobId);
+      }
+      await db.delete('visitorUploads', key);
+    } finally {
+      db.close();
+    }
+  }
+
   async saveOneLiner(value: string): Promise<string> {
-    if (!dbAvailable()) throw new Error('Browser storage is not available.');
+    if (!dbAvailable()) throw new Error(this.copy.storageUnavailableShort);
     const trimmed = value.trim();
-    const db = await openCalmDb();
+    const db = await openCalmDb(this.dbName, this.copy.storageUnavailable);
     try {
       if (!trimmed) {
         await db.delete('oneLiner', 'current');
@@ -329,7 +430,7 @@ export class BrowserExperienceRepository {
     if (media.kind === 'bundled' || media.kind === 'bundled-video') return media.src;
     const existing = this.objectUrls.get(media.blobId);
     if (existing) return existing;
-    const db = await openCalmDb();
+    const db = await openCalmDb(this.dbName, this.copy.storageUnavailable);
     try {
       const blob = await db.get('media', media.blobId);
       if (!blob) return null;
@@ -344,7 +445,7 @@ export class BrowserExperienceRepository {
   async getStorageReport(): Promise<StorageReport> {
     let usedBytes = 0;
     if (dbAvailable()) {
-      const db = await openCalmDb();
+      const db = await openCalmDb(this.dbName, this.copy.storageUnavailable);
       try {
         for (const mediaId of await db.getAllKeys('media')) {
           const blob = await db.get('media', mediaId);
@@ -361,8 +462,8 @@ export class BrowserExperienceRepository {
   async reset(): Promise<void> {
     this.revokeObjectUrls();
     if (!dbAvailable()) return;
-    await deleteDB(DB_NAME);
-    await deleteDB(LEGACY_DB_NAME);
+    await deleteDB(this.dbName);
+    if (this.locale === 'en') await deleteDB(LEGACY_DB_NAME);
   }
 
   dispose(): void {

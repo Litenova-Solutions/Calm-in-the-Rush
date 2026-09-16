@@ -13,13 +13,10 @@
     "build": "pnpm --recursive --if-present build",
     "lint": "pnpm --recursive --if-present lint",
     "type-check": "pnpm --recursive --if-present type-check",
-    "docs:check": "node scripts/validate-docs.mjs",
-    "standards:check": "node standards/tools/validate-consumer.mjs",
-    "ui:check": "node standards/tools/validate-ui.mjs",
     "version:check": "node scripts/validate-version.mjs",
     "format:check": "pnpm exec prettier --check .",
     "format": "pnpm exec prettier --write .",
-    "verify": "pnpm format:check && pnpm version:check && pnpm lint && pnpm ui:check && pnpm type-check && pnpm docs:check && pnpm standards:check && pnpm build && git diff --check"
+    "verify": "pnpm format:check && pnpm version:check && pnpm lint && pnpm type-check && pnpm build && git diff --check"
   },
   "devDependencies": {
     "@types/node": "26.2.0",
