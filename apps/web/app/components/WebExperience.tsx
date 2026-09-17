@@ -162,6 +162,21 @@ function ExperienceVideo({
   );
 }
 
+function RelaxedFacePlaceholder({ variant = 0 }: { variant?: number }) {
+  const faces = [
+    String.fromCodePoint(0x1f468, 0x200d, 0x1f469, 0x200d, 0x1f467, 0x200d, 0x1f466),
+    ...[0x1f60a, 0x1f60c, 0x1f9d8].map((code) => String.fromCodePoint(code)),
+  ];
+  const face = faces[variant % faces.length] ?? faces[0]!;
+  return (
+    <span className="flex size-32 items-center justify-center rounded-full bg-muted/50">
+      <span className="text-7xl leading-none" aria-hidden>
+        {face}
+      </span>
+    </span>
+  );
+}
+
 function BreathingPanel({
   screen,
   headingRef,
@@ -380,7 +395,6 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
     activeViewTile?.type === 'prefilled' ? activeViewTile.media : activeUpload?.media;
   const activeTitle =
     activeViewTile?.type === 'prefilled' ? activeViewTile.title : (activeViewTile?.label ?? '');
-  const activeSentence = activeViewTile?.type === 'prefilled' ? activeViewTile.sentence : '';
   const activeAlt =
     activeViewTile?.type === 'prefilled'
       ? activeViewTile.alt
@@ -460,34 +474,6 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
     }
   };
 
-  const shareMedia = (media: ExperienceMedia) => {
-    const src = media.kind === 'local' ? mediaSource(media, localUrls) : media.src;
-    if (!src) return;
-    let filename: string;
-    if (media.kind === 'local') {
-      const ext = media.mimeType.split('/')[1] ?? 'jpg';
-      const base = media.fileName.replace(/\.[^.]+$/, '');
-      filename = `${base || 'photo'}.${ext}`;
-    } else {
-      const last = media.src.split('/').pop() ?? 'photo';
-      filename = last.split('?')[0] ?? 'photo';
-    }
-    const anchor = document.createElement('a');
-    anchor.href = src;
-    anchor.download = filename;
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-  };
-
-  const shareCurrentView = () => {
-    if (activeMedia) {
-      shareMedia(activeMedia);
-    } else if (coverVisible && currentCover?.media) {
-      shareMedia(currentCover.media);
-    }
-  };
-
   const saveOneLiner = async (value = oneLinerDraft) => {
     setSavingOneLiner(true);
     try {
@@ -514,21 +500,27 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
     );
     return (
       <div className="relative h-full">
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center px-5 pt-12">
-          <h1
-            ref={headingRef}
-            tabIndex={-1}
-            className="pointer-events-none rounded-full border border-border/40 bg-background/80 px-3 py-1 text-center text-xs font-normal tracking-wide text-muted-foreground shadow-sm backdrop-blur-sm outline-none"
-          >
+        {screen.id === 'nature' ? (
+          <h1 ref={headingRef} tabIndex={-1} className="sr-only outline-none">
             {screen.title}
           </h1>
-        </div>
+        ) : (
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center px-5 pt-12">
+            <h1
+              ref={headingRef}
+              tabIndex={-1}
+              className="pointer-events-none rounded-full border border-border/40 bg-background/80 px-3 py-1 text-center text-xs font-normal tracking-wide text-muted-foreground shadow-sm backdrop-blur-sm outline-none"
+            >
+              {screen.title}
+            </h1>
+          </div>
+        )}
         {tiles.length ? (
           <div
             className="grid h-full grid-cols-2 gap-0"
             aria-label={copy.galleryPhotos(screen.title)}
           >
-            {tiles.map((tile) => {
+            {tiles.map((tile, tileIndex) => {
               const upload =
                 tile.type === 'upload'
                   ? currentUploads.get(galleryUploadKey(screen.id, tile.id))
@@ -591,13 +583,20 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
                   onClick={() => chooseUpload(screen.id, tile.id)}
                 >
                   <span className="flex max-w-44 flex-col items-center gap-2 px-4 text-center whitespace-normal">
-                    <Camera className="size-5 text-muted-foreground" aria-hidden />
+                    {screen.id === 'friendly-faces' ? (
+                      <RelaxedFacePlaceholder variant={tileIndex} />
+                    ) : (
+                      <Camera className="size-5 text-muted-foreground" aria-hidden />
+                    )}
                     <span className="text-sm leading-snug text-foreground">{tile.label}</span>
                     {tile.sentence ? (
                       <span className="text-xs leading-snug text-muted-foreground">
                         {tile.sentence}
                       </span>
                     ) : null}
+                    <span className="text-xs leading-snug text-muted-foreground/70">
+                      {copy.uploadHint}
+                    </span>
                   </span>
                 </Button>
               );
@@ -616,6 +615,7 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
     const isFinalOneLiner =
       experience.oneLiner.enabled && screenIndex === experience.screens.length - 1;
     const showLogo = !isFinalOneLiner;
+    const hideTitle = screen.id === 'calm-logo' && activeLocale === 'nl';
     return (
       <div className="flex min-h-full flex-col items-center justify-center px-5 pb-24 pt-18 text-center">
         {showLogo ? (
@@ -628,17 +628,23 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
             className="h-auto w-64"
           />
         ) : null}
-        <h1
-          ref={headingRef}
-          tabIndex={-1}
-          className={
-            showLogo
-              ? 'mt-5 text-2xl font-normal tracking-tight outline-none'
-              : 'text-2xl font-normal tracking-tight outline-none'
-          }
-        >
-          {screen.title}
-        </h1>
+        {hideTitle ? (
+          <h1 ref={headingRef} tabIndex={-1} className="sr-only outline-none">
+            {screen.title}
+          </h1>
+        ) : (
+          <h1
+            ref={headingRef}
+            tabIndex={-1}
+            className={
+              showLogo
+                ? 'mt-5 text-2xl font-normal tracking-tight outline-none'
+                : 'text-2xl font-normal tracking-tight outline-none'
+            }
+          >
+            {screen.title}
+          </h1>
+        )}
         {screen.description.trim() ? (
           <p className="mt-2 max-w-72 text-sm leading-relaxed text-muted-foreground">
             {screen.description}
@@ -768,7 +774,7 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
               {currentScreen.title}
             </h1>
             {currentCover.sentence ? (
-              <p className="absolute top-12 left-5 z-10 max-w-64 animate-sentence-drift text-lg font-normal leading-relaxed text-stage-foreground/85 motion-reduce:animate-none">
+              <p className="absolute top-12 left-5 z-10 max-w-64 animate-sentence-drift text-base font-normal leading-relaxed text-stage-foreground/85 motion-reduce:animate-none">
                 {currentCover.sentence}
               </p>
             ) : null}
@@ -850,11 +856,6 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
             className="pointer-events-none absolute inset-0 bg-linear-to-t from-scrim/70 via-transparent to-scrim/40"
             aria-hidden
           />
-          {activeSentence ? (
-            <p className="pointer-events-none absolute top-12 left-5 z-10 max-w-64 animate-sentence-drift text-lg font-normal leading-relaxed text-stage-foreground/85 motion-reduce:animate-none">
-              {activeSentence}
-            </p>
-          ) : null}
           {showSoundToggle ? (
             <button
               type="button"
@@ -877,13 +878,7 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
           aria-label={copy.navigationLabel}
           className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-between border-t border-border/25 bg-background/40 px-4 py-3 backdrop-blur-sm"
         >
-          {activeMedia || (coverVisible && currentCover?.media) ? (
-            <Button type="button" variant="ghost" size="sm" onClick={shareCurrentView}>
-              {copy.share}
-            </Button>
-          ) : (
-            <span aria-hidden className="inline-block w-9" />
-          )}
+          <span aria-hidden className="inline-block w-9" />
           <Button type="button" variant="ghost" size="sm" onClick={seeMore}>
             {copy.seeMore}
             <ChevronRight className="size-4" aria-hidden />

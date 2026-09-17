@@ -18,6 +18,7 @@ interface VisitorCopy {
   keepIt: string;
   remove: string;
   reflectionLabel: string;
+  uploadHint: string;
   muteSound: string;
   unmuteSound: string;
   noPhotos: string;
@@ -70,6 +71,7 @@ export const visitorStrings: Record<ExperienceLocale, VisitorCopy> = {
     keepIt: 'Keep it',
     remove: 'Remove',
     reflectionLabel: 'Your reflection',
+    uploadHint: 'Vertical format',
     muteSound: 'Mute ambient sound',
     unmuteSound: 'Unmute ambient sound',
     noPhotos: 'No photos are configured for this page yet.',
@@ -112,6 +114,7 @@ export const visitorStrings: Record<ExperienceLocale, VisitorCopy> = {
     keepIt: 'Bewaren',
     remove: 'Verwijderen',
     reflectionLabel: 'Jouw reflectie',
+    uploadHint: 'Verticaal formaat',
     muteSound: 'Omgevingsgeluid dempen',
     unmuteSound: 'Omgevingsgeluid inschakelen',
     noPhotos: "Voor deze pagina zijn nog geen foto's ingesteld.",
