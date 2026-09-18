@@ -163,7 +163,7 @@ function ExperienceVideo({
 }
 
 function RelaxedFacePlaceholder({ variant = 0 }: { variant?: number }) {
-  const faces = [0x1f601, 0x1f601, 0x1f601, 0x1f60c].map((code) => String.fromCodePoint(code));
+  const faces = [0x1f600, 0x1f600, 0x1f600, 0x1f60c].map((code) => String.fromCodePoint(code));
   const face = faces[variant % faces.length] ?? faces[0]!;
   return (
     <span className="flex size-32 items-center justify-center rounded-full bg-muted/50">
@@ -392,6 +392,10 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
     activeViewTile?.type === 'prefilled' ? activeViewTile.media : activeUpload?.media;
   const activeTitle =
     activeViewTile?.type === 'prefilled' ? activeViewTile.title : (activeViewTile?.label ?? '');
+  const activeSentence =
+    activeScreen?.id === 'quiet-moments' && activeViewTile?.type === 'prefilled'
+      ? activeViewTile.sentence
+      : '';
   const activeAlt =
     activeViewTile?.type === 'prefilled'
       ? activeViewTile.alt
@@ -564,16 +568,25 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
                 );
               }
               if (tile.type !== 'upload') return null;
+              const alignFacesTop = screen.id === 'friendly-faces';
               return (
                 <Button
                   key={tile.id}
                   type="button"
                   variant="ghost"
-                  className="h-full w-full whitespace-normal rounded-none bg-muted/70 p-0 hover:bg-muted"
+                  className={cn(
+                    'h-full w-full whitespace-normal rounded-none bg-muted/70 p-0 hover:bg-muted',
+                    alignFacesTop && 'items-start',
+                  )}
                   aria-label={tile.label}
                   onClick={() => chooseUpload(screen.id, tile.id)}
                 >
-                  <span className="flex max-w-44 flex-col items-center gap-2 px-4 text-center whitespace-normal">
+                  <span
+                    className={cn(
+                      'flex max-w-44 flex-col items-center gap-2 px-4 text-center whitespace-normal',
+                      alignFacesTop && 'pt-14',
+                    )}
+                  >
                     {screen.id === 'friendly-faces' ? (
                       <RelaxedFacePlaceholder variant={tileIndex} />
                     ) : (
@@ -851,6 +864,11 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
             className="pointer-events-none absolute inset-0 bg-linear-to-t from-scrim/70 via-transparent to-scrim/40"
             aria-hidden
           />
+          {activeSentence ? (
+            <p className="pointer-events-none absolute top-12 left-5 z-10 max-w-64 animate-sentence-drift text-base font-normal leading-relaxed text-stage-foreground/85 motion-reduce:animate-none">
+              {activeSentence}
+            </p>
+          ) : null}
           {showSoundToggle ? (
             <button
               type="button"
