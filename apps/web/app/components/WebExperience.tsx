@@ -163,10 +163,7 @@ function ExperienceVideo({
 }
 
 function RelaxedFacePlaceholder({ variant = 0 }: { variant?: number }) {
-  const faces = [
-    String.fromCodePoint(0x1f468, 0x200d, 0x1f469, 0x200d, 0x1f467, 0x200d, 0x1f466),
-    ...[0x1f60a, 0x1f60c, 0x1f9d8].map((code) => String.fromCodePoint(code)),
-  ];
+  const faces = [0x1f601, 0x1f601, 0x1f601, 0x1f60c].map((code) => String.fromCodePoint(code));
   const face = faces[variant % faces.length] ?? faces[0]!;
   return (
     <span className="flex size-32 items-center justify-center rounded-full bg-muted/50">
@@ -500,21 +497,15 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
     );
     return (
       <div className="relative h-full">
-        {screen.id === 'nature' ? (
-          <h1 ref={headingRef} tabIndex={-1} className="sr-only outline-none">
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center px-5 pt-12">
+          <h1
+            ref={headingRef}
+            tabIndex={-1}
+            className="pointer-events-none rounded-full border border-border/40 bg-background/80 px-3 py-1 text-center text-xs font-normal tracking-wide text-muted-foreground shadow-sm backdrop-blur-sm outline-none"
+          >
             {screen.title}
           </h1>
-        ) : (
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center px-5 pt-12">
-            <h1
-              ref={headingRef}
-              tabIndex={-1}
-              className="pointer-events-none rounded-full border border-border/40 bg-background/80 px-3 py-1 text-center text-xs font-normal tracking-wide text-muted-foreground shadow-sm backdrop-blur-sm outline-none"
-            >
-              {screen.title}
-            </h1>
-          </div>
-        )}
+        </div>
         {tiles.length ? (
           <div
             className="grid h-full grid-cols-2 gap-0"
@@ -615,20 +606,24 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
     const isFinalOneLiner =
       experience.oneLiner.enabled && screenIndex === experience.screens.length - 1;
     const showLogo = !isFinalOneLiner;
-    const hideTitle = screen.id === 'calm-logo' && activeLocale === 'nl';
+    const isLogoGateway = screen.id === 'calm-logo';
+    const logo = {
+      src: activeLocale === 'nl' ? '/brand/rir-logo-large.svg' : '/brand/calm-logo-large.png',
+      alt: activeLocale === 'nl' ? 'RUST in de Reuring' : 'CALM in the rush',
+    };
     return (
       <div className="flex min-h-full flex-col items-center justify-center px-5 pb-24 pt-18 text-center">
         {showLogo ? (
           <Image
-            src="/brand/rir-logo-large.svg"
-            alt="RUST in de Reuring"
-            width={256}
-            height={257}
+            src={logo.src}
+            alt={logo.alt}
+            width={480}
+            height={480}
             sizes="16rem"
             className="h-auto w-64"
           />
         ) : null}
-        {hideTitle ? (
+        {isLogoGateway ? (
           <h1 ref={headingRef} tabIndex={-1} className="sr-only outline-none">
             {screen.title}
           </h1>

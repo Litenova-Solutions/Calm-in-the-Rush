@@ -349,12 +349,8 @@ export const seedExperience: ExperienceConfig = {
           'Add a friendly or relaxed photo of someone else',
           'Someone whose presence feels good.',
         ),
-        uploadTile(
-          'friendly-third-upload',
-          'Add another relaxed photo',
-          'Another presence that feels good.',
-        ),
-        uploadTile('friendly-fourth-upload', 'Add one more relaxed photo', 'One more calm moment.'),
+        uploadTile('friendly-third-upload', 'Add another relaxed photo'),
+        uploadTile('friendly-fourth-upload', 'Add one more relaxed photo'),
       ],
     },
     {
@@ -473,7 +469,7 @@ export const seedExperienceNl: ExperienceConfig = {
     {
       id: 'quiet-moments',
       type: 'gallery',
-      title: 'Stille momenten',
+      title: 'Rust Momenten',
       description: 'Rust kan bestaan midden in het dagelijks leven.',
       useFirstTileAsCover: false,
       repeatCoverInGallery: false,
@@ -505,7 +501,7 @@ export const seedExperienceNl: ExperienceConfig = {
     {
       id: 'friendly-faces',
       type: 'gallery',
-      title: 'Ontspannen gezichten',
+      title: 'Ontspannen Gezichten',
       description: 'Voeg mensen toe wiens ontspannen aanwezigheid belangrijk voor je is.',
       useFirstTileAsCover: false,
       repeatCoverInGallery: false,
@@ -520,16 +516,8 @@ export const seedExperienceNl: ExperienceConfig = {
           'Voeg een vriendelijke of ontspannen foto van iemand anders toe',
           'Iemand wiens aanwezigheid goed voelt.',
         ),
-        uploadTile(
-          'friendly-third-upload',
-          'Voeg nog een ontspannen foto toe',
-          'Nog iemand wiens aanwezigheid goed voelt.',
-        ),
-        uploadTile(
-          'friendly-fourth-upload',
-          'Voeg een extra ontspannen foto toe',
-          'Nog een rustig moment.',
-        ),
+        uploadTile('friendly-third-upload', 'Voeg nog een ontspannen foto toe'),
+        uploadTile('friendly-fourth-upload', 'Voeg een extra ontspannen foto toe'),
       ],
     },
     {
