@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "LiteSpec.Cli": {
+      "version": "3.0.0",
+      "commands": ["litespec"]
+    }
+  }
+}

@@ -20,3 +20,10 @@ test-results/
 
 # Local agent session state
 .opencode/
+
+# .NET build output
+bin/
+obj/
+
+# Local agent working files
+.agents/

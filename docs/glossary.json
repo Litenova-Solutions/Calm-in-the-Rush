@@ -1,0 +1,94 @@
+{
+  "$schema": "https://litespec.dev/3.0.0/schemas/glossary.schema.json",
+  "schemaVersion": 2,
+  "terms": [
+    {
+      "id": "term/visitor",
+      "term": "visitor",
+      "meaning": "A person who walks through the experience on their own device, without an account.",
+      "labels": {
+        "nl": "bezoeker"
+      },
+      "owner": "A. Shafie",
+      "status": "draft"
+    },
+    {
+      "id": "term/experience",
+      "term": "experience",
+      "meaning": "The ordered set of screens a visitor walks through, in one language.",
+      "labels": {
+        "nl": "ervaring"
+      },
+      "owner": "A. Shafie",
+      "status": "draft"
+    },
+    {
+      "id": "term/cover",
+      "term": "cover",
+      "meaning": "The full-screen first tile of the opening gallery, shown before its grid.",
+      "labels": {
+        "nl": "omslag"
+      },
+      "owner": "A. Shafie",
+      "status": "draft"
+    },
+    {
+      "id": "term/gallery",
+      "term": "gallery",
+      "meaning": "A screen that shows tiles in a borderless two-column grid.",
+      "labels": {
+        "nl": "galerij"
+      },
+      "owner": "A. Shafie",
+      "status": "draft"
+    },
+    {
+      "id": "term/tile",
+      "term": "tile",
+      "meaning": "One cell of a gallery: a bundled photo or video, or an upload slot.",
+      "labels": {
+        "nl": "tegel"
+      },
+      "owner": "A. Shafie",
+      "status": "draft"
+    },
+    {
+      "id": "term/upload-tile",
+      "term": "upload tile",
+      "meaning": "A tile the visitor fills with a photo of their own, kept only on their device.",
+      "labels": {
+        "nl": "uploadtegel"
+      },
+      "owner": "A. Shafie",
+      "status": "draft"
+    },
+    {
+      "id": "term/one-liner",
+      "term": "one-liner",
+      "meaning": "The short sentence a visitor writes on the last screen about what calm means to them.",
+      "labels": {
+        "nl": "oneliner"
+      },
+      "owner": "A. Shafie",
+      "status": "draft"
+    }
+  ],
+  "mannered": [
+    {
+      "term": "load-bearing",
+      "instead": "required"
+    },
+    {
+      "term": "one-way door",
+      "instead": "irreversible"
+    },
+    {
+      "term": "earns its keep",
+      "instead": "still matters"
+    },
+    {
+      "term": "a dial worth turning",
+      "instead": "a parameter worth varying"
+    }
+  ]
+}

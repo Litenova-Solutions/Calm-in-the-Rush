@@ -1,0 +1,39 @@
+{
+  "$schema": "https://litespec.dev/3.0.0/schemas/litespec-project.schema.json",
+  "project": {
+    "name": "Calm in the Rush"
+  },
+  "size": "small",
+  "shape": "client-only",
+  "stacks": ["android"],
+  "reviewedLiteSpecVersion": "3.0.0",
+  "optionalTypes": [],
+  "constraints": {
+    "answered": true
+  },
+  "owners": ["A. Shafie"],
+  "review": {
+    "vetoWindowDays": 7,
+    "securityReviewer": "A. Shafie"
+  },
+  "adoption": {
+    "transcriptionEndsWith": "decision/0001-native-android-app-with-dotnet"
+  },
+  "paths": {
+    "docs": "docs",
+    "behaviorDocs": "docs/behavior",
+    "uiDocs": "docs/ui",
+    "unstructuredDocs": [],
+    "testRoots": ["apps/mobile/tests"],
+    "frontends": [
+      {
+        "name": "android",
+        "path": "apps/mobile/src/CalmInTheRush.Android",
+        "platform": "android"
+      }
+    ],
+    "sites": [],
+    "glossaryScan": []
+  },
+  "selectedExtensions": []
+}

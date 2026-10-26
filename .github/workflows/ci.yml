@@ -14,8 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
       - uses: pnpm/action-setup@v4
         with:
           version: 11.13.1
@@ -26,20 +24,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm verify
 
-  documentation:
-    name: Documentation
+  android:
+    name: Android
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
         with:
-          submodules: recursive
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.13.1
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm docs:check
-      - run: pnpm standards:check
+          global-json-file: apps/mobile/global.json
+      - run: dotnet workload install android
+      - run: dotnet build apps/mobile/CalmInTheRush.Mobile.slnx

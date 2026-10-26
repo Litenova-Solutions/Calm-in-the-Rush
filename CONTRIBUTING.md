@@ -1,8 +1,7 @@
 # Contributing
 
-Read `AGENTS.md`, `standards/AGENTS.md`, the product brief, and the relevant domain or page
-specification before editing. Keep changes within the web demo or documented repository files that
-the task names.
+Read `AGENTS.md`, `litespec.project.json`, and the records in `docs/` before editing. Keep changes
+within the application and documented repository files that the task names.
 
 ## Local checks
 
@@ -11,8 +10,8 @@ pnpm install --frozen-lockfile
 pnpm format:check
 pnpm lint
 pnpm type-check
-pnpm docs:check
 pnpm build
+dotnet build apps/mobile/CalmInTheRush.Mobile.slnx
 ```
 
 Use ASCII prose, visible focus states, screen-reader labels, and controls at least 44 by 44. Do not
