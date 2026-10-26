@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CalmInTheRush.Domain/CalmInTheRush.Domain.csproj" />
+    <Project Path="src/CalmInTheRush.Application/CalmInTheRush.Application.csproj" />
+    <Project Path="src/CalmInTheRush.Infrastructure/CalmInTheRush.Infrastructure.csproj" />
+    <Project Path="src/CalmInTheRush.Android/CalmInTheRush.Android.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-android</TargetFramework>
+    <SupportedOSPlatformVersion>26</SupportedOSPlatformVersion>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>CalmInTheRush.Android</RootNamespace>
+    <ApplicationId>com.litenova.calmintherush</ApplicationId>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>0.1.0</ApplicationDisplayVersion>
+    <!-- Players open media through AssetManager.OpenFd, which needs uncompressed entries. -->
+    <AndroidStoreUncompressedFileExtensions>.webm;.mp3</AndroidStoreUncompressedFileExtensions>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CalmInTheRush.Application\CalmInTheRush.Application.csproj" />
+    <ProjectReference Include="..\CalmInTheRush.Domain\CalmInTheRush.Domain.csproj" />
+    <ProjectReference Include="..\CalmInTheRush.Infrastructure\CalmInTheRush.Infrastructure.csproj" />
+  </ItemGroup>
+  <PropertyGroup>
+    <WebMedia>..\..\..\web\public\media\experience\</WebMedia>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- The web demo's public media stays the single source; the app packs the files the seed content names. -->
+    <WebMediaFile Include="$(WebMedia)nature-meadow.webm;$(WebMedia)nature-meadow-poster.jpg" />
+    <WebMediaFile Include="$(WebMedia)nature-wheat.webm;$(WebMedia)nature-wheat-poster.jpg" />
+    <WebMediaFile Include="$(WebMedia)nature-valla.webm;$(WebMedia)nature-valla-poster.jpg" />
+    <WebMediaFile Include="$(WebMedia)cover-brook.webm;$(WebMedia)cover-brook-poster.jpg" />
+    <WebMediaFile Include="$(WebMedia)audio-wheat.mp3;$(WebMedia)audio-forest.mp3;$(WebMedia)audio-brook.mp3" />
+    <WebMediaFile Include="$(WebMedia)quiet-city-reading.webp;$(WebMedia)quiet-window-tea.webp;$(WebMedia)quiet-balcony-garden.webp" />
+    <AndroidAsset Include="@(WebMediaFile)">
+      <Link>Assets\media\experience\%(Filename)%(Extension)</Link>
+    </AndroidAsset>
+  </ItemGroup>
+</Project>

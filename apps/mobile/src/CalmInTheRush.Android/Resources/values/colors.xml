@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- oklch(0.965 0.028 95) -->
+    <color name="calm_background">#F9F4DF</color>
+    <!-- oklch(0.29 0.035 150) -->
+    <color name="calm_foreground">#1E3022</color>
+    <!-- oklch(0.93 0.032 130) -->
+    <color name="calm_muted">#E1EDD6</color>
+    <!-- oklch(0.4 0.04 150) -->
+    <color name="calm_muted_foreground">#384E3C</color>
+    <!-- oklch(0.42 0.08 150) -->
+    <color name="calm_primary">#295935</color>
+    <!-- oklch(0.985 0.018 95) -->
+    <color name="calm_primary_foreground">#FEFAED</color>
+    <!-- oklch(0.8 0.04 120) -->
+    <color name="calm_border">#BAC2A5</color>
+    <!-- oklch(0.49 0.18 28) -->
+    <color name="calm_destructive">#B01F1C</color>
+    <!-- oklch(0.37 0.055 155) -->
+    <color name="calm_stage">#264833</color>
+    <!-- oklch(0.985 0.018 95) -->
+    <color name="calm_stage_foreground">#FEFAED</color>
+    <!-- oklch(0.2 0.045 155) at 56% alpha -->
+    <color name="calm_scrim">#8F021C0D</color>
+    <!-- calm_background at 40% alpha -->
+    <color name="calm_chrome">#66F9F4DF</color>
+    <!-- calm_background at 80% alpha -->
+    <color name="calm_chip">#CCF9F4DF</color>
+    <!-- oklch(0.98 0.012 240) -->
+    <color name="breathing_sky_start">#F2FAFF</color>
+    <!-- oklch(0.84 0.065 235) -->
+    <color name="breathing_sky_end">#A2D2EF</color>
+    <!-- oklch(0.57 0.1 235) -->
+    <color name="breathing_wave">#2F80AA</color>
+    <!-- oklch(0.91 0.15 92) -->
+    <color name="breathing_orb_start">#FFDE5E</color>
+    <!-- oklch(0.7 0.16 52) -->
+    <color name="breathing_orb_end">#EA7D2E</color>
+</resources>

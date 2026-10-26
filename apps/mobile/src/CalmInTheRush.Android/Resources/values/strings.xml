@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Calm in the Rush</string>
+    <string name="experience_label">Calm in the Rush experience</string>
+    <string name="navigation_label">Experience navigation</string>
+    <string name="preparing">Preparing your calm moment...</string>
+    <string name="choose_photos">Choose photos from your device</string>
+    <string name="see_more">See More</string>
+    <string name="back">Back</string>
+    <string name="next">Next</string>
+    <string name="save">Save</string>
+    <string name="clear">Clear</string>
+    <string name="keep_it">Keep it</string>
+    <string name="remove">Remove</string>
+    <string name="reflection_label">Your reflection</string>
+    <string name="upload_hint">Vertical format</string>
+    <string name="mute_sound">Mute ambient sound</string>
+    <string name="unmute_sound">Unmute ambient sound</string>
+    <string name="no_photos">No photos are configured for this page yet.</string>
+    <string name="no_screens_title">No screens yet</string>
+    <string name="no_screens_description">Local administration can add the first screen for this experience.</string>
+    <string name="remove_photo_title">Remove this photo?</string>
+    <string name="remove_photo_description">The photo is removed from this device. The empty slot stays, so a new photo can take its place.</string>
+    <string name="experience_unreadable">Your local experience could not be read.</string>
+    <string name="photo_saved">Your photo is saved on this device.</string>
+    <string name="upload_slots_full">No empty upload slots were available for those photos.</string>
+    <string name="photos_failed">Your photos could not be saved.</string>
+    <string name="photo_removed">The photo was removed from this device.</string>
+    <string name="photo_remove_failed">The photo could not be removed.</string>
+    <string name="one_liner_saved">Your one-liner is saved on this device.</string>
+    <string name="one_liner_cleared">Your one-liner was cleared.</string>
+    <string name="one_liner_failed">Your one-liner could not be saved.</string>
+    <string name="one_liner_too_long">Keep it to 160 characters.</string>
+    <string name="page_of">Page %1$d of %2$d</string>
+    <string name="gallery_photos">%1$s photos</string>
+    <string name="open_tile">Open %1$s</string>
+    <string name="remove_tile">Remove %1$s</string>
+    <string name="replace_tile">Replace %1$s</string>
+    <string name="photos_saved">%1$d photos are saved on this device.</string>
+    <string name="photos_partial">%1$d of %2$d photos are saved on this device.</string>
+    <string name="logo_calm_description">CALM in the rush</string>
+    <string name="logo_rust_description">RUST in de Reuring</string>
+</resources>

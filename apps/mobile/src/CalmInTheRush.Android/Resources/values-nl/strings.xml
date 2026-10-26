@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Calm in the Rush</string>
+    <string name="experience_label">Rust in de Drukte-ervaring</string>
+    <string name="navigation_label">Ervaringsnavigatie</string>
+    <string name="preparing">Je rustmoment wordt voorbereid...</string>
+    <string name="choose_photos">Kies foto\'s van je apparaat</string>
+    <string name="see_more">Bekijk meer</string>
+    <string name="back">Terug</string>
+    <string name="next">Volgende</string>
+    <string name="save">Opslaan</string>
+    <string name="clear">Wissen</string>
+    <string name="keep_it">Bewaren</string>
+    <string name="remove">Verwijderen</string>
+    <string name="reflection_label">Jouw reflectie</string>
+    <string name="upload_hint">Verticaal formaat</string>
+    <string name="mute_sound">Omgevingsgeluid dempen</string>
+    <string name="unmute_sound">Omgevingsgeluid inschakelen</string>
+    <string name="no_photos">Voor deze pagina zijn nog geen foto\'s ingesteld.</string>
+    <string name="no_screens_title">Nog geen schermen</string>
+    <string name="no_screens_description">Via lokaal beheer kan het eerste scherm voor deze ervaring worden toegevoegd.</string>
+    <string name="remove_photo_title">Deze foto verwijderen?</string>
+    <string name="remove_photo_description">De foto wordt van dit apparaat verwijderd. De lege plek blijft, zodat je een nieuwe foto kunt toevoegen.</string>
+    <string name="experience_unreadable">Je lokale ervaring kon niet worden gelezen.</string>
+    <string name="photo_saved">Je foto is opgeslagen op dit apparaat.</string>
+    <string name="upload_slots_full">Er zijn geen lege uploadplekken meer voor die foto\'s.</string>
+    <string name="photos_failed">Je foto\'s konden niet worden opgeslagen.</string>
+    <string name="photo_removed">De foto is verwijderd van dit apparaat.</string>
+    <string name="photo_remove_failed">De foto kon niet worden verwijderd.</string>
+    <string name="one_liner_saved">Je oneliner is opgeslagen op dit apparaat.</string>
+    <string name="one_liner_cleared">Je oneliner is gewist.</string>
+    <string name="one_liner_failed">Je oneliner kon niet worden opgeslagen.</string>
+    <string name="one_liner_too_long">Houd het bij 160 tekens.</string>
+    <string name="page_of">Pagina %1$d van %2$d</string>
+    <string name="gallery_photos">%1$s-foto\'s</string>
+    <string name="open_tile">%1$s openen</string>
+    <string name="remove_tile">%1$s verwijderen</string>
+    <string name="replace_tile">%1$s vervangen</string>
+    <string name="photos_saved">%1$d foto\'s zijn opgeslagen op dit apparaat.</string>
+    <string name="photos_partial">%1$d van %2$d foto\'s zijn opgeslagen op dit apparaat.</string>
+    <string name="logo_calm_description">CALM in the rush</string>
+    <string name="logo_rust_description">RUST in de Reuring</string>
+</resources>
