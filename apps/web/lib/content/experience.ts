@@ -24,7 +24,7 @@ const localMediaSchema = z.object({
   size: z.number().int().positive(),
 });
 
-export const experienceMediaSchema = z.union([
+const experienceMediaSchema = z.union([
   bundledMediaSchema,
   bundledVideoMediaSchema,
   localMediaSchema,
@@ -38,7 +38,7 @@ const attributionSchema = z.object({
   sourceUrl: z.string().url().startsWith('https://'),
   changes: z.string().trim().min(1).max(160),
 });
-export type MediaAttribution = z.infer<typeof attributionSchema>;
+type MediaAttribution = z.infer<typeof attributionSchema>;
 
 const assignedSentenceSchema = z.string().trim().max(160);
 
@@ -59,7 +59,7 @@ const uploadTileSchema = z.object({
   sentence: assignedSentenceSchema,
 });
 
-export const experienceTileSchema = z.union([prefilledTileSchema, uploadTileSchema]);
+const experienceTileSchema = z.union([prefilledTileSchema, uploadTileSchema]);
 export type ExperienceTile = z.infer<typeof experienceTileSchema>;
 
 const galleryScreenSchema = z.object({
@@ -68,7 +68,6 @@ const galleryScreenSchema = z.object({
   title: z.string().trim().min(1).max(60),
   description: z.string().trim().max(160),
   useFirstTileAsCover: z.boolean(),
-  repeatCoverInGallery: z.boolean(),
   tiles: z.array(experienceTileSchema),
 });
 
@@ -93,7 +92,7 @@ const gatewayScreenSchema = z.object({
   links: z.array(externalLinkSchema),
 });
 
-export const experienceScreenSchema = z.discriminatedUnion('type', [
+const experienceScreenSchema = z.discriminatedUnion('type', [
   galleryScreenSchema,
   breathingScreenSchema,
   gatewayScreenSchema,
@@ -102,12 +101,11 @@ export type ExperienceScreen = z.infer<typeof experienceScreenSchema>;
 export type GalleryScreen = Extract<ExperienceScreen, { type: 'gallery' }>;
 
 const oneLinerSettingsSchema = z.object({
-  enabled: z.boolean(),
   prompt: z.string().trim().min(1).max(200),
   placeholder: z.string().trim().min(1).max(100),
 });
 
-export const experienceConfigSchema = z
+const experienceConfigSchema = z
   .object({
     schemaVersion: z.literal(1),
     screens: z.array(experienceScreenSchema),
@@ -155,9 +153,23 @@ export const visitorUploadSchema = z.object({
 });
 export type VisitorUpload = z.infer<typeof visitorUploadSchema>;
 
+/** The one-line comment visitors saved before the calm rating existed. Read only, for carry-over. */
 export const visitorOneLinerSchema = z.object({
   value: z.string().trim().min(1).max(160),
 });
+
+/** The visitor's feedback: how calm they feel from 0 (not calm) to 100 (very calm and happy), and an optional comment, kept on the device. */
+export const visitorFeedbackSchema = z.object({
+  calm: z.number().int().min(0).max(100),
+  comment: z.string().trim().max(160),
+});
+
+/** Feedback saved by the earlier five-face rating (1 to 5). Read only, for carry-over. */
+export const legacyRatedFeedbackSchema = z.object({
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().trim().max(160),
+});
+export type VisitorFeedback = z.infer<typeof visitorFeedbackSchema>;
 
 export function createExperienceId(prefix: string): string {
   return (
@@ -213,10 +225,11 @@ function uploadTile(id: string, label: string, sentence = ''): ExperienceTile {
   return { id, type: 'upload', label, sentence };
 }
 
-export const seedExperience: ExperienceConfig = {
+// The built-in content is checked against the schema at load, so an edit with a duplicate
+// ID or a cover without a photo fails at once instead of breaking uploads later.
+export const seedExperience: ExperienceConfig = experienceConfigSchema.parse({
   schemaVersion: 1,
   oneLiner: {
-    enabled: true,
     prompt: 'What is calm for you?',
     placeholder: 'For me, calm is...',
   },
@@ -227,7 +240,6 @@ export const seedExperience: ExperienceConfig = {
       title: 'Nature',
       description: 'Take a moment with the places that help you slow down.',
       useFirstTileAsCover: true,
-      repeatCoverInGallery: false,
       tiles: [
         prefilledVideoTile(
           'cover-meadow',
@@ -305,7 +317,6 @@ export const seedExperience: ExperienceConfig = {
       title: 'Quiet Moments',
       description: 'Calm can exist in the middle of everyday life.',
       useFirstTileAsCover: false,
-      repeatCoverInGallery: false,
       tiles: [
         prefilledTile(
           'quiet-city-reading',
@@ -337,7 +348,6 @@ export const seedExperience: ExperienceConfig = {
       title: 'Relaxed Faces',
       description: 'Add people whose relaxed presence matters to you.',
       useFirstTileAsCover: false,
-      repeatCoverInGallery: false,
       tiles: [
         uploadTile(
           'friendly-self-upload',
@@ -374,12 +384,11 @@ export const seedExperience: ExperienceConfig = {
       links: [],
     },
   ],
-};
+});
 
-export const seedExperienceNl: ExperienceConfig = {
+export const seedExperienceNl: ExperienceConfig = experienceConfigSchema.parse({
   schemaVersion: 1,
   oneLiner: {
-    enabled: true,
     prompt: 'Wat is rust voor jou?',
     placeholder: 'Voor mij is rust...',
   },
@@ -390,7 +399,6 @@ export const seedExperienceNl: ExperienceConfig = {
       title: 'Natuur',
       description: 'Neem even de tijd voor de plekken waar je tot rust komt.',
       useFirstTileAsCover: true,
-      repeatCoverInGallery: false,
       tiles: [
         prefilledVideoTile(
           'cover-meadow',
@@ -472,7 +480,6 @@ export const seedExperienceNl: ExperienceConfig = {
       title: 'Rust Momenten',
       description: 'Rust kan bestaan midden in het dagelijks leven.',
       useFirstTileAsCover: false,
-      repeatCoverInGallery: false,
       tiles: [
         prefilledTile(
           'quiet-city-reading',
@@ -504,7 +511,6 @@ export const seedExperienceNl: ExperienceConfig = {
       title: 'Ontspannen Gezichten',
       description: 'Voeg mensen toe wiens ontspannen aanwezigheid belangrijk voor je is.',
       useFirstTileAsCover: false,
-      repeatCoverInGallery: false,
       tiles: [
         uploadTile(
           'friendly-self-upload',
@@ -541,4 +547,4 @@ export const seedExperienceNl: ExperienceConfig = {
       links: [],
     },
   ],
-};
+});

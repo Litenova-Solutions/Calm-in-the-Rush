@@ -29,6 +29,18 @@ export default tseslint.config(
     },
   },
   {
+    files: ['public/sw.js'],
+    languageOptions: {
+      sourceType: 'script',
+      globals: {
+        self: 'readonly',
+        caches: 'readonly',
+        fetch: 'readonly',
+        URL: 'readonly',
+      },
+    },
+  },
+  {
     files: ['app/**/*.tsx', 'app/**/*.ts', 'lib/**/*.ts'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',

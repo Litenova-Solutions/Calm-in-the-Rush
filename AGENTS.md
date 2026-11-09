@@ -18,6 +18,14 @@ date. Decisions live in `docs/intent/decisions/`. (litespec/core/agent#apply-gui
 
 Read `C:\Users\a.shafie\.config\writing-rules.md` before editing prose. Keep prose ASCII.
 
+## Testing
+
+The project is in early development and has no automated tests. Do not add unit, integration,
+end-to-end, or device tests to the web demo or the Android app, and do not add a test runner or
+test configuration. Verify a change by walking the changed flow instead: in a browser through the
+Playwright CLI or Browser MCP for the web demo, on an emulator or device for the Android app. Check
+phone and desktop widths, report what you saw, and run `pnpm verify` for web changes.
+
 ## Applications
 
 | Application        | Path                                                                      | Stack                                   |
@@ -41,15 +49,28 @@ pnpm verify
 ```
 
 Do not add authentication, a server, a database, analytics, cookies, uploads to a server, or a
-remote content service. Visitor photos and the one-liner stay in the app's private storage, and
-in IndexedDB on the web. Add no NuGet package without a decision. Preserve the untracked `.fuse/`
+remote content service. Visitor photos and feedback stay in the app's private storage, and in
+browser storage on the web. Add no NuGet package without a decision. Preserve the untracked `.fuse/`
 directory.
+
+## Visitor navigation
+
+The web demo has one active page and a few pages around it, not a linear sequence:
+
+- The active page shows the visitor's chosen photo or video full screen, with its own sentence and sound. A still photo without sound keeps the opening ambience. The first visit shows the opening cover, and the last choice is remembered per browser.
+- The active page bar always shows the brand logo on the left, which opens About, and the sound toggle and gallery button on the right.
+- The gallery lists topics: each gallery screen and breathing screen of the built-in content in `apps/web/lib/content/experience.ts`, in that order. There is no admin; content changes are code changes. A topic opens its photo grid or breathing cue. Tapping a photo makes it the active photo and returns to the active page; the grid marks the current choice. There is no separate full-screen photo viewer.
+- About is one plain page, with no cards: the logo, the gateway description and links, the feedback, and a way to replay the tour. Feedback is a calm slider in the style of an emoji slider sticker and an optional comment, saved on the device. The slider face is the brand smiley with eyes in place of the logo letters, drawn in `apps/web/app/components/experience/CalmFace.tsx`; it morphs from a frown (0, not calm) to the logo smile with closed eyes (100, very calm and happy) and grows while held.
+- Every view starts with the same 3.5rem bar and 2.5rem round controls on a 1rem side gutter. On pages with content the bar is frosted and the content scrolls under it. Back walks up one level through browser history, so the phone's back gesture matches the back button.
+- A first-visit tour walks the visitor through the app: it lights the sound, logo, and gallery controls on the active page, then opens the gallery to light a topic, then opens that topic to light a photo and an empty upload tile. Tapping the lit target advances it. Finishing or skipping returns to the active page; leaving by the back gesture ends it where it is. It runs once per browser and can be replayed from About.
+- Do not add a Back and Next pager, a page counter, or a second route to the same view.
 
 ## Visitor visual hierarchy
 
-- Active-image screens make the image primary. Do not show a page title, progress label, persistent utility, or more than one low-prominence action over an active image.
+- Active-image screens make the image primary. Do not show a page title, progress label, or added actions over an active image. The bar controls listed under Visitor navigation are the only exception.
 - An assigned sentence on active media stays calm, non-bold, and edge-aligned. A slow low-amplitude motion cue is permitted when it respects reduced-motion preferences. Do not turn the sentence into a headline.
 - Gallery screens use borderless, gap-free two-column image grids. Do not add card chrome, captions, metadata, or surrounding copy unless an explicit product requirement needs it.
 - An empty upload tile is an explicit exception to the gallery text rule. Show its configured prompt so people know which photo to add.
-- Put personal reflection controls at an intentional endpoint, never as a persistent control over active media.
+- Put personal reflection and feedback controls on About, never as a persistent control over active media.
+- Cards that float at the bottom (the tour, the install prompt, status messages) share one style. The install prompt never appears over an active image or during the tour.
 - A calming motion screen shows only its necessary title, short description, and visual cue. Do not add playback controls, phase labels, timers, or external links without an explicit product decision.

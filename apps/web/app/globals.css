@@ -94,20 +94,17 @@
   }
 }
 /* Product tokens. Values live here; feature code names them and never restates
-   a raw value. Recorded in docs/ui/web/vocabulary.json. */
+   a raw value. */
 @theme inline {
   --color-stage: var(--stage);
   --color-stage-foreground: var(--stage-foreground);
   --color-scrim: var(--scrim);
-  --color-demo-canvas: var(--demo-canvas);
-  --color-device-shell: var(--device-shell);
-  --aspect-phone: 9 / 19.5;
-  --aspect-phone-frame: 9 / 19;
-  --container-phone: 26.875rem;
-  --container-demo-phone: var(--demo-phone-width);
-  --radius-phone: 2.25rem;
-  --radius-phone-screen: 1.8rem;
-  --container-phone-preview: 18rem;
+  --color-app-canvas: var(--app-canvas);
+  --color-tour-dim: var(--tour-dim);
+  --color-brand-sun: var(--brand-sun);
+  --color-breathing-sky-start: var(--breathing-sky-start);
+  --color-breathing-sky-end: var(--breathing-sky-end);
+  --container-app: 26.875rem;
   --animate-sentence-drift: sentence-drift 10s ease-in-out infinite;
 }
 
@@ -115,9 +112,15 @@
   --stage: oklch(0.37 0.055 155);
   --stage-foreground: oklch(0.985 0.018 95);
   --scrim: oklch(0.2 0.045 155 / 56%);
-  --demo-canvas: oklch(0.91 0.045 120);
-  --device-shell: oklch(0.21 0.014 260);
-  --demo-phone-width: min(100%, calc((100dvh - 1.5rem) * 9 / 19));
+  /* Dims everything outside the tour spotlight. */
+  --tour-dim: oklch(0.2 0.045 155 / 62%);
+  /* The page beside the app column on screens wider than a phone. */
+  --app-canvas: oklch(0.91 0.045 120);
+  /* The RiR smiley logo colours, used by the calm rating faces. */
+  --brand-sun: #fdf186;
+  --brand-ink: #000000;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
   --breathing-sky-start: oklch(0.98 0.012 240);
   --breathing-sky-end: oklch(0.84 0.065 235);
   --breathing-wave: oklch(0.57 0.1 235);
@@ -136,7 +139,60 @@
   }
 }
 
+/* Safe-area spacing for an installed app drawn edge to edge (viewport-fit=cover). */
+@utility pt-safe {
+  padding-top: var(--safe-top);
+}
+
+@utility pb-safe {
+  padding-bottom: var(--safe-bottom);
+}
+
+/* Bottom padding for a scrolling page, so its last line clears the home indicator. */
+@utility pb-page {
+  padding-bottom: calc(2.5rem + var(--safe-bottom));
+}
+
+/* Cards that float over the app: the tour, the install prompt, messages. */
+@utility bottom-float {
+  bottom: calc(0.75rem + var(--safe-bottom));
+}
+
+@utility top-float {
+  top: calc(0.75rem + var(--safe-top));
+}
+
+/* The tour spotlight: a huge spread shadow dims everything outside the lit box. */
+@utility shadow-tour-dim {
+  box-shadow: 0 0 0 100vmax var(--tour-dim);
+}
+
+/* Gallery rows share the screen height and never shrink below a readable photo. */
+@utility gallery-rows {
+  grid-auto-rows: minmax(13rem, 1fr);
+}
+
 @layer utilities {
+  /* The calm slider draws its own track and face; the native range input stays on top,
+     invisible, with a thumb the size of the face so taps land where the face is drawn. */
+  .calm-range {
+    appearance: none;
+    background: transparent;
+  }
+
+  .calm-range::-webkit-slider-thumb {
+    appearance: none;
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+
+  .calm-range::-moz-range-thumb {
+    width: 3.5rem;
+    height: 3.5rem;
+    border: 0;
+    background: transparent;
+  }
+
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
