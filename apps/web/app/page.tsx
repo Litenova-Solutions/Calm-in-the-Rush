@@ -1,5 +1,5 @@
-import { AppShell } from './components/AppShell';
+import { DemoStage } from './components/DemoStage';
 
-export default function HomePage() {
-  return <AppShell />;
+export default function LandingPage() {
+  return <DemoStage />;
 }

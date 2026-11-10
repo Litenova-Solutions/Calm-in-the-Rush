@@ -1,16 +1,10 @@
-import type { Metadata } from 'next';
+import { DemoStage } from '../components/DemoStage';
 
-import { appName, manifestPath } from '@/lib/pwa/manifest';
-
-import { AppShell } from '../components/AppShell';
-
-export const metadata: Metadata = {
-  title: appName('nl'),
+export const metadata = {
+  title: 'Rust in de Drukte',
   description: 'Een rustige minuut te midden van alles.',
-  manifest: manifestPath('nl'),
-  appleWebApp: { capable: true, title: appName('nl'), statusBarStyle: 'default' },
 };
 
 export default function DutchPage() {
-  return <AppShell locale="nl" />;
+  return <DemoStage locale="nl" />;
 }

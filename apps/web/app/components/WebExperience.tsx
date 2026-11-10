@@ -1,10 +1,28 @@
-// Client boundary: this surface owns the visitor's uploads, chosen photo, and feedback in browser storage.
+// Client boundary: this surface owns browser-local content, visitor uploads, and the one-liner.
 'use client';
 
-import { type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  type ChangeEvent,
+  type RefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import Image from 'next/image';
-import { ChevronLeft, LayoutGrid, Volume2, VolumeX } from 'lucide-react';
+import {
+  Camera,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  Trash2,
+  Volume2,
+  VolumeX,
+} from 'lucide-react';
 
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -13,8 +31,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Field, FieldLabel } from '@/components/ui/field';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+
 import {
   galleryUploadKey,
   imageFileAccept,
@@ -33,227 +54,275 @@ import {
   resolveExperienceLocale,
   visitorStrings,
   type ExperienceLocale,
-  type TourTarget,
 } from '@/lib/content/strings';
 
-import { tileAlt, tileMedia, type LocalUrls, type UploadsByKey } from './experience/media';
-import { BarButton, LogoButton, TopBar, brandLogo } from './experience/TopBar';
-import { Tour, floatingCardClass, isTourComplete, markTourComplete } from './experience/Tour';
-import {
-  AboutView,
-  ActiveView,
-  BreathingView,
-  GalleryView,
-  TopicsView,
-  type TopicCard,
-} from './experience/views';
-import { InstallPrompt } from './InstallPrompt';
-
-/**
- * Where the visitor is. The active page shows the chosen photo with its sound
- * and sentence; the gallery lists topics; a topic shows its photos or breathing
- * cue; About holds the logo, links, and the visitor's feedback.
- */
-type View =
-  { name: 'active' } | { name: 'topics' } | { name: 'topic'; screenId: string } | { name: 'about' };
-
-/** How many history entries a view sits above the active page. */
-const viewDepth: Record<View['name'], number> = { active: 0, topics: 1, about: 1, topic: 2 };
-
-type TileRef = { screenId: string; tileId: string };
-type TopicScreen = Exclude<ExperienceScreen, { type: 'gateway' }>;
-
-interface ActiveChoice {
-  key: string;
-  screen: GalleryScreen;
-  tile: ExperienceTile;
-  media: ExperienceMedia;
-  alt: string;
-  sentence: string;
-  audio: string | null;
-}
+type UploadTarget = { screenId: string; tileId: string };
 
 interface WebExperienceProps {
   repository?: BrowserExperienceRepository;
   locale?: ExperienceLocale;
 }
 
-const historyKey = 'calmView';
-
-function uploadMap(uploads: readonly VisitorUpload[]): UploadsByKey {
+function uploadMap(uploads: readonly VisitorUpload[]): Map<string, VisitorUpload> {
   return new Map(
     uploads.map((upload) => [galleryUploadKey(upload.screenId, upload.tileId), upload]),
   );
 }
 
-/** The first choice: the first pre-filled tile of the first gallery set to open with it. */
-function defaultChoice(screens: readonly ExperienceScreen[]): TileRef | null {
-  for (const screen of screens) {
-    if (!isGalleryScreen(screen) || !screen.useFirstTileAsCover) continue;
-    const tile = screen.tiles[0];
-    if (tile?.type === 'prefilled') return { screenId: screen.id, tileId: tile.id };
+function mediaSource(media: ExperienceMedia, localUrls: Record<string, string>): string {
+  if (media.kind === 'local') return localUrls[media.blobId] ?? '';
+  return media.src;
+}
+
+function coverTile(screen: GalleryScreen): Extract<ExperienceTile, { type: 'prefilled' }> | null {
+  const tile = screen.tiles[0];
+  return tile?.type === 'prefilled' ? tile : null;
+}
+
+function useReducedMotionPreference(): boolean {
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    if (!window.matchMedia) return;
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReducedMotion(query.matches);
+    update();
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, []);
+
+  return reducedMotion;
+}
+
+function ExperienceImage({
+  media,
+  source,
+  alt,
+  preload = false,
+  sizes,
+}: {
+  media: ExperienceMedia;
+  source: string;
+  alt: string;
+  preload?: boolean;
+  sizes: string;
+}) {
+  if (!source) return <div className="absolute inset-0 bg-muted" aria-hidden />;
+  if (media.kind === 'local') {
+    return (
+      <img
+        src={source}
+        alt={alt}
+        loading={preload ? 'eager' : 'lazy'}
+        className="absolute inset-0 size-full object-cover"
+      />
+    );
   }
-  const first = screens.filter(isGalleryScreen).find((screen) => screen.tiles[0]);
-  return first ? { screenId: first.id, tileId: first.tiles[0]!.id } : null;
+  return (
+    <Image src={source} alt={alt} fill preload={preload} sizes={sizes} className="object-cover" />
+  );
 }
 
-function isTopic(screen: ExperienceScreen): screen is TopicScreen {
-  return screen.type !== 'gateway';
-}
-
-function videoAudio(media: ExperienceMedia | undefined): string | null {
-  return media?.kind === 'bundled-video' ? (media.audio ?? null) : null;
-}
-
-const choiceKey = (locale: ExperienceLocale) => `calm:active-photo:${locale}`;
-
-function readStoredChoice(locale: ExperienceLocale): TileRef | null {
-  try {
-    const value = JSON.parse(window.localStorage.getItem(choiceKey(locale)) ?? 'null') as unknown;
-    if (value && typeof value === 'object' && 'screenId' in value && 'tileId' in value) {
-      const { screenId, tileId } = value as Record<string, unknown>;
-      if (typeof screenId === 'string' && typeof tileId === 'string') return { screenId, tileId };
-    }
-  } catch {
-    // Unreadable or blocked storage falls back to the default photo.
+function ExperienceVideo({
+  source,
+  poster,
+  alt,
+  preload = false,
+}: {
+  source: string;
+  poster: string;
+  alt: string;
+  preload?: boolean;
+}) {
+  const reducedMotion = useReducedMotionPreference();
+  if (!source) return <div className="absolute inset-0 bg-muted" aria-hidden />;
+  if (reducedMotion) {
+    return (
+      <img
+        src={poster}
+        alt={alt}
+        loading={preload ? 'eager' : 'lazy'}
+        className="absolute inset-0 size-full object-cover"
+      />
+    );
   }
-  return null;
+  return (
+    <video
+      className="absolute inset-0 size-full object-cover"
+      src={source}
+      poster={poster}
+      muted
+      loop
+      playsInline
+      autoPlay
+      preload={preload ? 'auto' : 'metadata'}
+      role="img"
+      aria-label={alt}
+    />
+  );
 }
 
-function storeChoice(locale: ExperienceLocale, choice: TileRef): void {
-  try {
-    window.localStorage.setItem(choiceKey(locale), JSON.stringify(choice));
-  } catch {
-    // Blocked storage only means the choice is not remembered next visit.
-  }
+function RelaxedFacePlaceholder({ variant = 0 }: { variant?: number }) {
+  const faces = [0x1f600, 0x1f600, 0x1f600, 0x1f60c].map((code) => String.fromCodePoint(code));
+  const face = faces[variant % faces.length] ?? faces[0]!;
+  return (
+    <span className="flex size-32 items-center justify-center rounded-full bg-muted/50">
+      <span className="text-7xl leading-none" aria-hidden>
+        {face}
+      </span>
+    </span>
+  );
+}
+
+function BreathingPanel({
+  screen,
+  headingRef,
+}: {
+  screen: Extract<ExperienceScreen, { type: 'breathing' }>;
+  headingRef: RefObject<HTMLHeadingElement | null>;
+}) {
+  const reducedMotion = useReducedMotionPreference();
+  const breathingWavePath =
+    'M 16 132 C 42 132, 48 48, 80 48 S 118 132, 160 132 S 198 48, 240 48 S 278 132, 304 132';
+
+  return (
+    <div className="flex min-h-full flex-col items-center px-5 pb-24 pt-14 text-center">
+      <div className="flex max-w-72 flex-col gap-2">
+        <h1
+          ref={headingRef}
+          tabIndex={-1}
+          className="text-2xl font-normal tracking-tight outline-none"
+        >
+          {screen.title}
+        </h1>
+        <p className="text-sm leading-relaxed text-muted-foreground">{screen.description}</p>
+      </div>
+      <div
+        className="mt-9 w-full max-w-80 overflow-hidden rounded-3xl border border-primary/15 shadow-inner"
+        aria-hidden
+      >
+        <svg viewBox="0 0 320 180" className="block h-auto w-full">
+          <defs>
+            <linearGradient id="breathing-sky" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stopColor="var(--breathing-sky-start)" />
+              <stop offset="100%" stopColor="var(--breathing-sky-end)" />
+            </linearGradient>
+            <linearGradient id="breathing-orb" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stopColor="var(--breathing-orb-start)" />
+              <stop offset="100%" stopColor="var(--breathing-orb-end)" />
+            </linearGradient>
+            <filter id="breathing-glow" x="-100%" y="-100%" width="300%" height="300%">
+              <feGaussianBlur stdDeviation="5" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+          <rect width="320" height="180" rx="24" fill="url(#breathing-sky)" />
+          <path
+            d={breathingWavePath}
+            fill="none"
+            stroke="var(--breathing-wave)"
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
+          {reducedMotion ? (
+            <circle
+              cx="16"
+              cy="132"
+              r="13"
+              fill="url(#breathing-orb)"
+              filter="url(#breathing-glow)"
+            />
+          ) : (
+            <circle r="13" fill="url(#breathing-orb)" filter="url(#breathing-glow)">
+              <animateMotion dur="12s" repeatCount="indefinite" path={breathingWavePath} />
+            </circle>
+          )}
+        </svg>
+      </div>
+    </div>
+  );
 }
 
 export function WebExperience({ repository, locale }: WebExperienceProps) {
   const activeLocale = resolveExperienceLocale(locale ?? repository?.locale);
   const copy = visitorStrings[activeLocale];
-  const experience: ExperienceConfig = activeLocale === 'nl' ? seedExperienceNl : seedExperience;
+  const fallbackSeed = activeLocale === 'nl' ? seedExperienceNl : seedExperience;
   const repo = useMemo(
     () => repository ?? new BrowserExperienceRepository({ locale: activeLocale }),
     [repository, activeLocale],
   );
+  const [experience, setExperience] = useState<ExperienceConfig>(fallbackSeed);
   const [uploads, setUploads] = useState<VisitorUpload[]>([]);
-  const [localUrls, setLocalUrls] = useState<LocalUrls>({});
-  // Saved feedback, and the form's working copy of it.
-  const [feedback, setFeedback] = useState<{ calm: number | null; comment: string }>({
-    calm: null,
-    comment: '',
-  });
-  const [calmDraft, setCalmDraft] = useState<number | null>(null);
-  const [commentDraft, setCommentDraft] = useState('');
-  const [view, setView] = useState<View>({ name: 'active' });
-  const [choice, setChoice] = useState<TileRef | null>(null);
-  const [uploadTarget, setUploadTarget] = useState<TileRef | null>(null);
-  const [removalTarget, setRemovalTarget] = useState<TileRef | null>(null);
+  const [localUrls, setLocalUrls] = useState<Record<string, string>>({});
+  const [oneLiner, setOneLiner] = useState('');
+  const [oneLinerDraft, setOneLinerDraft] = useState('');
+  const [screenIndex, setScreenIndex] = useState(0);
+  const [showCover, setShowCover] = useState(true);
+  const [uploadTarget, setUploadTarget] = useState<UploadTarget | null>(null);
+  const [removalTarget, setRemovalTarget] = useState<UploadTarget | null>(null);
   const [message, setMessage] = useState('');
-  const [savingFeedback, setSavingFeedback] = useState(false);
+  const [savingOneLiner, setSavingOneLiner] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
-  const [tourStep, setTourStep] = useState<number | null>(null);
+  const [activeTile, setActiveTile] = useState<UploadTarget | null>(null);
   const [ready, setReady] = useState(false);
-  // The install prompt waits until the visitor has chosen a photo or visited the breathing cue.
-  const [engaged, setEngaged] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
   const headingRef = useRef<HTMLHeadingElement | null>(null);
-  const sectionRef = useRef<HTMLElement | null>(null);
 
   const refresh = useCallback(async () => {
     try {
-      const [nextUploads, nextFeedback] = await Promise.all([
+      const [nextExperience, nextUploads, nextOneLiner] = await Promise.all([
+        repo.readExperience(fallbackSeed),
         repo.readVisitorUploads(),
-        repo.readFeedback(),
+        repo.readOneLiner(),
       ]);
-      const urls: LocalUrls = {};
-      for (const upload of nextUploads) {
-        const url = await repo.getObjectUrl(upload.media);
-        if (url) urls[upload.media.blobId] = url;
+      const localMedia = [
+        ...nextExperience.screens.flatMap((screen) =>
+          isGalleryScreen(screen)
+            ? screen.tiles.flatMap((tile) =>
+                tile.type === 'prefilled' && tile.media.kind === 'local' ? [tile.media] : [],
+              )
+            : [],
+        ),
+        ...nextUploads.map((upload) => upload.media),
+      ];
+      const urls: Record<string, string> = {};
+      for (const media of localMedia) {
+        const url = await repo.getObjectUrl(media);
+        if (url) urls[media.blobId] = url;
       }
+      setExperience(nextExperience);
       setUploads(nextUploads);
       setLocalUrls(urls);
-      setFeedback(nextFeedback);
-      setCalmDraft(nextFeedback.calm);
-      setCommentDraft(nextFeedback.comment);
+      setOneLiner(nextOneLiner);
+      setOneLinerDraft(nextOneLiner);
+      setScreenIndex((current) =>
+        Math.min(current, Math.max(0, nextExperience.screens.length - 1)),
+      );
     } catch (error) {
+      setExperience(fallbackSeed);
       setUploads([]);
       setMessage(error instanceof Error ? error.message : copy.experienceUnreadable);
     } finally {
       setReady(true);
     }
-  }, [repo, copy]);
+  }, [repo, fallbackSeed, copy]);
 
   useEffect(() => {
-    setChoice(readStoredChoice(activeLocale));
     void refresh();
     return () => {
       if (!repository) repo.dispose();
     };
-  }, [refresh, repo, repository, activeLocale]);
-
-  const currentUploads = useMemo(() => uploadMap(uploads), [uploads]);
-  const fallbackRef = useMemo(() => defaultChoice(experience.screens), [experience.screens]);
-
-  /** Resolves a tile reference to something showable, or null when the photo is gone. */
-  const resolveChoice = (ref: TileRef | null): ActiveChoice | null => {
-    if (!ref) return null;
-    const screen = experience.screens.find((candidate) => candidate.id === ref.screenId);
-    if (!screen || !isGalleryScreen(screen)) return null;
-    const tile = screen.tiles.find((candidate) => candidate.id === ref.tileId);
-    const media = tile ? tileMedia(screen, tile, currentUploads) : undefined;
-    if (!tile || !media) return null;
-    return {
-      key: `${screen.id}/${tile.id}/${media.kind === 'local' ? media.blobId : media.src}`,
-      screen,
-      tile,
-      media,
-      alt: tileAlt(screen, tile, currentUploads),
-      sentence: tile.sentence,
-      audio: videoAudio(media),
-    };
-  };
-  const fallbackChoice = resolveChoice(fallbackRef);
-  const active = resolveChoice(choice) ?? fallbackChoice;
-  // A still photo has no sound of its own; it keeps the opening ambience so sound never cuts out.
-  const activeAudio = active ? (active.audio ?? fallbackChoice?.audio ?? null) : null;
-
-  // Navigation goes through browser history, so the phone's back gesture walks back up the app.
-  useEffect(() => {
-    const root: View = { name: 'active' };
-    window.history.replaceState({ ...window.history.state, [historyKey]: root }, '');
-    const onPop = (event: PopStateEvent) => {
-      const state = (event.state as Record<string, View> | null)?.[historyKey];
-      setView(state ?? root);
-    };
-    window.addEventListener('popstate', onPop);
-    return () => window.removeEventListener('popstate', onPop);
-  }, []);
-
-  const go = (next: View) => {
-    setMessage('');
-    window.history.pushState({ [historyKey]: next }, '');
-    setView(next);
-  };
-  const back = () => window.history.back();
-  /** Returns to the active page by unwinding the history entries above it. */
-  const returnToActive = (from: View = view) => {
-    const depth = viewDepth[from.name];
-    if (depth > 0) window.history.go(-depth);
-  };
-
-  // Each new view moves focus to its heading, unless the tour card holds focus.
-  const tourStepRef = useRef<number | null>(null);
-  tourStepRef.current = tourStep;
-  useEffect(() => {
-    if (!ready || tourStepRef.current !== null) return;
-    headingRef.current?.focus({ preventScroll: true });
-  }, [ready, view]);
+  }, [refresh, repo, repository]);
 
   useEffect(() => {
-    if (ready && !isTourComplete()) setTourStep(0);
-  }, [ready]);
+    if (!ready) return;
+    headingRef.current?.focus();
+  }, [ready, screenIndex, showCover]);
 
   useEffect(() => {
     if (!message) return;
@@ -261,16 +330,46 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
     return () => window.clearTimeout(timer);
   }, [message]);
 
-  const viewScreen =
-    view.name === 'topic'
-      ? experience.screens.find((screen) => screen.id === view.screenId)
+  const currentScreen = experience.screens[screenIndex];
+  const currentUploads = useMemo(() => uploadMap(uploads), [uploads]);
+  const currentCover =
+    currentScreen && isGalleryScreen(currentScreen) ? coverTile(currentScreen) : null;
+  const coverVisible = Boolean(
+    screenIndex === 0 &&
+    currentScreen &&
+    isGalleryScreen(currentScreen) &&
+    currentScreen.useFirstTileAsCover &&
+    currentCover &&
+    showCover,
+  );
+  const hasPrevious =
+    screenIndex > 0 || (screenIndex === 0 && !coverVisible && Boolean(currentCover));
+  const hasNext = screenIndex < experience.screens.length - 1;
+
+  const activeScreen = experience.screens.find((screen) => screen.id === activeTile?.screenId);
+  const activeViewTile =
+    activeScreen && isGalleryScreen(activeScreen)
+      ? activeScreen.tiles.find((tile) => tile.id === activeTile?.tileId)
       : undefined;
+  const audibleAudio = ((): string | null => {
+    if (activeViewTile?.type === 'prefilled' && activeViewTile.media.kind === 'bundled-video')
+      return activeViewTile.media.audio ?? null;
+    if (activeTile) return null;
+    if (coverVisible && currentCover && currentCover.media.kind === 'bundled-video')
+      return currentCover.media.audio ?? null;
+    return null;
+  })();
+  const showSoundToggle = audibleAudio !== null;
 
   useEffect(() => {
-    if (viewScreen?.type === 'breathing') setEngaged(true);
-  }, [viewScreen?.type]);
-
-  const audibleAudio = view.name === 'active' ? activeAudio : null;
+    if (!activeTile) return;
+    dialogRef.current?.focus();
+    const close = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setActiveTile(null);
+    };
+    window.addEventListener('keydown', close);
+    return () => window.removeEventListener('keydown', close);
+  }, [activeTile]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -285,6 +384,47 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
     return () => window.removeEventListener('pointerdown', unlock);
   }, [audibleAudio, soundOn]);
 
+  const activeUpload =
+    activeScreen && activeViewTile?.type === 'upload'
+      ? currentUploads.get(galleryUploadKey(activeScreen.id, activeViewTile.id))
+      : undefined;
+  const activeMedia =
+    activeViewTile?.type === 'prefilled' ? activeViewTile.media : activeUpload?.media;
+  const activeTitle =
+    activeViewTile?.type === 'prefilled' ? activeViewTile.title : (activeViewTile?.label ?? '');
+  const activeSentence =
+    activeScreen?.id === 'quiet-moments' && activeViewTile?.type === 'prefilled'
+      ? activeViewTile.sentence
+      : '';
+  const activeAlt =
+    activeViewTile?.type === 'prefilled'
+      ? activeViewTile.alt
+      : (activeUpload?.media.fileName ?? '');
+
+  const navigate = (direction: 'back' | 'next') => {
+    setActiveTile(null);
+    setMessage('');
+    if (direction === 'back' && screenIndex === 0 && !coverVisible && currentCover) {
+      setShowCover(true);
+      return;
+    }
+    const target = direction === 'next' ? screenIndex + 1 : screenIndex - 1;
+    if (target < 0 || target >= experience.screens.length) return;
+    setScreenIndex(target);
+    setShowCover(false);
+  };
+
+  const seeMore = () => {
+    setActiveTile(null);
+    setShowCover(false);
+    setMessage('');
+  };
+
+  const chooseUpload = (screenId: string, tileId: string) => {
+    setUploadTarget({ screenId, tileId });
+    fileInputRef.current?.click();
+  };
+
   const toggleSound = () => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -297,19 +437,6 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
       .play()
       .then(() => setSoundOn(true))
       .catch(() => setSoundOn(false));
-  };
-
-  /** Makes a photo the active page and goes back to it. */
-  const choose = (ref: TileRef) => {
-    setChoice(ref);
-    storeChoice(activeLocale, ref);
-    setEngaged(true);
-    returnToActive();
-  };
-
-  const chooseUpload = (screenId: string, tileId: string) => {
-    setUploadTarget({ screenId, tileId });
-    fileInputRef.current?.click();
   };
 
   const saveUpload = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -348,306 +475,266 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
     }
   };
 
-  const saveFeedback = async () => {
-    if (calmDraft === null) return;
-    setSavingFeedback(true);
+  const saveOneLiner = async (value = oneLinerDraft) => {
+    setSavingOneLiner(true);
     try {
-      const saved = await repo.saveFeedback({ calm: calmDraft, comment: commentDraft });
-      setFeedback(saved);
-      setCommentDraft(saved.comment);
-      setMessage(copy.feedback.feedbackSaved);
+      const saved = await repo.saveOneLiner(value);
+      setOneLiner(saved);
+      setOneLinerDraft(saved);
+      setMessage(saved ? copy.oneLinerSaved : copy.oneLinerCleared);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : copy.feedback.feedbackFailed);
+      setMessage(error instanceof Error ? error.message : copy.oneLinerFailed);
     } finally {
-      setSavingFeedback(false);
+      setSavingOneLiner(false);
     }
   };
 
-  const clearFeedback = async () => {
-    setSavingFeedback(true);
-    try {
-      await repo.clearFeedback();
-      setFeedback({ calm: null, comment: '' });
-      setCalmDraft(null);
-      setCommentDraft('');
-      setMessage(copy.feedback.feedbackCleared);
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : copy.feedback.feedbackFailed);
-    } finally {
-      setSavingFeedback(false);
-    }
+  const renderGallery = (screen: GalleryScreen) => {
+    const tiles = screen.tiles.filter(
+      (_, index) =>
+        !(
+          screenIndex === 0 &&
+          screen.useFirstTileAsCover &&
+          !screen.repeatCoverInGallery &&
+          index === 0
+        ),
+    );
+    return (
+      <div className="relative h-full">
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center px-5 pt-12">
+          <h1
+            ref={headingRef}
+            tabIndex={-1}
+            className="pointer-events-none rounded-full border border-border/40 bg-background/80 px-3 py-1 text-center text-xs font-normal tracking-wide text-muted-foreground shadow-sm backdrop-blur-sm outline-none"
+          >
+            {screen.title}
+          </h1>
+        </div>
+        {tiles.length ? (
+          <div
+            className="grid h-full grid-cols-2 gap-0"
+            aria-label={copy.galleryPhotos(screen.title)}
+          >
+            {tiles.map((tile, tileIndex) => {
+              const upload =
+                tile.type === 'upload'
+                  ? currentUploads.get(galleryUploadKey(screen.id, tile.id))
+                  : undefined;
+              const media = tile.type === 'prefilled' ? tile.media : upload?.media;
+              const source = media ? mediaSource(media, localUrls) : '';
+              const alt = tile.type === 'prefilled' ? tile.alt : (upload?.media.fileName ?? '');
+              if (media) {
+                const visual =
+                  media.kind === 'bundled-video' ? (
+                    <ExperienceVideo source={source} poster={media.poster} alt={alt} />
+                  ) : (
+                    <ExperienceImage
+                      media={media}
+                      source={source}
+                      alt={alt}
+                      sizes="(max-width: 480px) 50vw, 13rem"
+                    />
+                  );
+                const image = (
+                  <div className="relative size-full overflow-hidden bg-muted">{visual}</div>
+                );
+                const openLabel = copy.openTile(tile.type === 'upload' ? tile.label : tile.title);
+                return (
+                  <div key={tile.id} className="relative h-full">
+                    <button
+                      type="button"
+                      className="block h-full w-full text-left focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                      aria-label={openLabel}
+                      onClick={() => setActiveTile({ screenId: screen.id, tileId: tile.id })}
+                    >
+                      {image}
+                    </button>
+                    {tile.type === 'upload' ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={copy.removeTile(tile.label)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setRemovalTarget({ screenId: screen.id, tileId: tile.id });
+                        }}
+                        className="absolute top-2 left-2 z-10 h-8 w-8 rounded-full bg-background/70 text-foreground backdrop-blur-sm hover:bg-background/90 focus-visible:ring-3 focus-visible:ring-ring/50"
+                      >
+                        <Trash2 className="size-4" aria-hidden />
+                      </Button>
+                    ) : null}
+                  </div>
+                );
+              }
+              if (tile.type !== 'upload') return null;
+              const alignFacesTop = screen.id === 'friendly-faces';
+              return (
+                <Button
+                  key={tile.id}
+                  type="button"
+                  variant="ghost"
+                  className={cn(
+                    'h-full w-full whitespace-normal rounded-none bg-muted/70 p-0 hover:bg-muted',
+                    alignFacesTop && 'items-start',
+                  )}
+                  aria-label={tile.label}
+                  onClick={() => chooseUpload(screen.id, tile.id)}
+                >
+                  <span
+                    className={cn(
+                      'flex max-w-44 flex-col items-center gap-2 px-4 text-center whitespace-normal',
+                      alignFacesTop && 'pt-14',
+                    )}
+                  >
+                    {screen.id === 'friendly-faces' ? (
+                      <RelaxedFacePlaceholder variant={tileIndex} />
+                    ) : (
+                      <Camera className="size-5 text-muted-foreground" aria-hidden />
+                    )}
+                    <span className="text-sm leading-snug text-foreground">{tile.label}</span>
+                    {tile.sentence ? (
+                      <span className="text-xs leading-snug text-muted-foreground">
+                        {tile.sentence}
+                      </span>
+                    ) : null}
+                    <span className="text-xs leading-snug text-muted-foreground/70">
+                      {copy.uploadHint}
+                    </span>
+                  </span>
+                </Button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="grid min-h-full place-items-center p-6 text-center text-sm text-muted-foreground">
+            {copy.noPhotos}
+          </div>
+        )}
+      </div>
+    );
   };
 
-  const topics: TopicCard[] = experience.screens.filter(isTopic).map((screen) => {
-    if (screen.type === 'breathing') {
-      return {
-        id: screen.id,
-        title: screen.title,
-        subtitle: copy.breathingKind,
-        kind: screen.type,
-      };
-    }
-    const withMedia = screen.tiles.flatMap((tile) => {
-      const media = tileMedia(screen, tile, currentUploads);
-      return media ? [media] : [];
-    });
-    return {
-      id: screen.id,
-      title: screen.title,
-      subtitle: withMedia.length ? copy.topicPhotoCount(withMedia.length) : copy.topicEmpty,
-      kind: screen.type,
-      media: withMedia[0],
+  const renderGateway = (screen: Extract<ExperienceScreen, { type: 'gateway' }>) => {
+    const isFinalOneLiner =
+      experience.oneLiner.enabled && screenIndex === experience.screens.length - 1;
+    const showLogo = !isFinalOneLiner;
+    const isLogoGateway = screen.id === 'calm-logo';
+    const logo = {
+      src: activeLocale === 'nl' ? '/brand/rir-logo-large.svg' : '/brand/calm-logo-large.png',
+      alt: activeLocale === 'nl' ? 'RUST in de Reuring' : 'CALM in the rush',
     };
-  });
-
-  const gateways = experience.screens.filter(
-    (screen): screen is Extract<ExperienceScreen, { type: 'gateway' }> => screen.type === 'gateway',
-  );
-  const aboutDescription =
-    gateways.map((screen) => screen.description.trim()).find(Boolean) ?? copy.aboutDescription;
-  const aboutLinks = gateways.flatMap((screen) => screen.links);
-
-  // The tour walks into the first gallery topic that has both a picture and an upload tile.
-  const galleryTopics = experience.screens.filter(isGalleryScreen);
-  const hasPhoto = (screen: GalleryScreen) =>
-    screen.tiles.some((tile) => tile.type === 'prefilled');
-  const hasUpload = (screen: GalleryScreen) => screen.tiles.some((tile) => tile.type === 'upload');
-  const tourTopic =
-    galleryTopics.find((screen) => hasPhoto(screen) && hasUpload(screen)) ??
-    galleryTopics.find(hasPhoto);
-  const tourSteps = copy.tour.steps.filter((step) => {
-    if (step.target === 'sound') return Boolean(activeAudio);
-    if (step.target === 'logo' || step.target === 'gallery') return Boolean(active);
-    if (step.target === 'upload') return Boolean(tourTopic && hasUpload(tourTopic));
-    return Boolean(tourTopic);
-  });
-  /** The view that holds a tour target. */
-  const tourViewFor = (target: TourTarget): View => {
-    if (target === 'topic') return { name: 'topics' };
-    if ((target === 'photo' || target === 'upload') && tourTopic) {
-      return { name: 'topic', screenId: tourTopic.id };
-    }
-    return { name: 'active' };
-  };
-  const sameView = (a: View, b: View) =>
-    a.name === b.name && (a.name !== 'topic' || (b.name === 'topic' && a.screenId === b.screenId));
-  const tourCurrent = tourStep !== null ? tourSteps[tourStep] : undefined;
-  const tourOpen = Boolean(tourCurrent && sameView(view, tourViewFor(tourCurrent.target)));
-  const tourOpenRef = useRef(false);
-  tourOpenRef.current = tourOpen;
-
-  const endTour = useCallback(() => {
-    markTourComplete();
-    setTourStep(null);
-  }, []);
-
-  /** Finishing or skipping the tour lands on the active page, wherever the tour was. */
-  const finishTour = () => {
-    endTour();
-    returnToActive();
-  };
-
-  /** Moves the tour on, opening the view the next step points into. */
-  const nextTourStep = () => {
-    if (tourStep === null) return;
-    const following = tourSteps[tourStep + 1];
-    if (!following) {
-      finishTour();
-      return;
-    }
-    const target = tourViewFor(following.target);
-    if (!sameView(view, target)) go(target);
-    setTourStep(tourStep + 1);
-  };
-
-  // Leaving the tour's view another way, such as the back gesture, ends the tour where it is.
-  useEffect(() => {
-    if (tourStepRef.current !== null && !tourOpenRef.current) endTour();
-  }, [view, endTour]);
-
-  const backButton = (
-    <BarButton label={copy.back} variant="page" onClick={back}>
-      <ChevronLeft aria-hidden />
-    </BarButton>
-  );
-
-  const renderView = () => {
-    if (!ready || !active) {
-      const logo = brandLogo(activeLocale);
-      return (
-        <div className="grid size-full place-items-center bg-background" role="status">
+    return (
+      <div className="flex min-h-full flex-col items-center justify-center px-5 pb-24 pt-18 text-center">
+        {showLogo ? (
           <Image
             src={logo.src}
-            alt=""
+            alt={logo.alt}
             width={480}
             height={480}
-            sizes="5rem"
-            className="h-auto w-20 animate-pulse motion-reduce:animate-none"
-            preload
+            sizes="16rem"
+            className="h-auto w-64"
           />
-          <span className="sr-only">{copy.preparing}</span>
-        </div>
-      );
-    }
-    if (view.name === 'topics') {
-      return (
-        <TopicsView
-          topics={topics}
-          tourTopicId={tourTopic?.id}
-          localUrls={localUrls}
-          onOpen={(screenId) => go({ name: 'topic', screenId })}
-          bar={
-            <TopBar
-              variant="page"
-              title={copy.galleryTitle}
-              headingRef={headingRef}
-              left={backButton}
-            />
-          }
-        />
-      );
-    }
-    if (view.name === 'topic' && viewScreen && isTopic(viewScreen)) {
-      if (viewScreen.type === 'breathing') {
-        return (
-          <BreathingView
-            description={viewScreen.description}
-            bar={
-              <TopBar
-                variant="overlay"
-                title={viewScreen.title}
-                headingRef={headingRef}
-                left={
-                  <BarButton label={copy.back} variant="overlay" onClick={back}>
-                    <ChevronLeft aria-hidden />
-                  </BarButton>
-                }
-              />
+        ) : null}
+        {isLogoGateway ? (
+          <h1 ref={headingRef} tabIndex={-1} className="sr-only outline-none">
+            {screen.title}
+          </h1>
+        ) : (
+          <h1
+            ref={headingRef}
+            tabIndex={-1}
+            className={
+              showLogo
+                ? 'mt-5 text-2xl font-normal tracking-tight outline-none'
+                : 'text-2xl font-normal tracking-tight outline-none'
             }
-          />
-        );
-      }
-      return (
-        <GalleryView
-          screen={viewScreen}
-          uploads={currentUploads}
-          localUrls={localUrls}
-          activeTileId={active.screen.id === viewScreen.id ? active.tile.id : undefined}
-          labels={{
-            grid: copy.galleryPhotos(viewScreen.title),
-            show: copy.showTile,
-            showing: copy.showing,
-            remove: copy.removeTile,
-            uploadHint: copy.uploadHint,
-            noPhotos: copy.noPhotos,
-          }}
-          onSelect={(tileId) => choose({ screenId: viewScreen.id, tileId })}
-          onAddPhoto={(tileId) => chooseUpload(viewScreen.id, tileId)}
-          onRemovePhoto={(tileId) => setRemovalTarget({ screenId: viewScreen.id, tileId })}
-          bar={
-            <TopBar
-              variant="page"
-              title={viewScreen.title}
-              headingRef={headingRef}
-              left={backButton}
-            />
-          }
-        />
-      );
-    }
-    if (view.name === 'about') {
-      return (
-        <AboutView
-          locale={activeLocale}
-          description={aboutDescription}
-          links={aboutLinks}
-          oneLiner={experience.oneLiner}
-          feedback={feedback}
-          calm={calmDraft}
-          comment={commentDraft}
-          saving={savingFeedback}
-          labels={{
-            ...copy.feedback,
-            save: copy.save,
-            clear: copy.clear,
-            showTour: copy.showTour,
-            privacyNote: copy.privacyNote,
-          }}
-          onCalmChange={setCalmDraft}
-          onCommentChange={setCommentDraft}
-          onSave={() => void saveFeedback()}
-          onClear={() => void clearFeedback()}
-          onShowTour={() => {
-            setTourStep(0);
-            back();
-          }}
-          bar={
-            <TopBar
-              variant="page"
-              title={copy.aboutTitle}
-              titleHidden
-              headingRef={headingRef}
-              left={backButton}
-            />
-          }
-        />
-      );
-    }
-    return (
-      <ActiveView
-        media={active.media}
-        mediaKey={active.key}
-        alt={active.alt}
-        sentence={active.sentence}
-        localUrls={localUrls}
-        bar={
-          <TopBar
-            variant="overlay"
-            title={copy.homeTitle}
-            titleHidden
-            headingRef={headingRef}
-            left={
-              <LogoButton
-                locale={activeLocale}
-                label={copy.openAbout}
-                onClick={() => go({ name: 'about' })}
-              />
-            }
-            right={
-              <>
-                {activeAudio ? (
-                  <BarButton
-                    label={soundOn ? copy.muteSound : copy.unmuteSound}
-                    variant="overlay"
-                    pressed={soundOn}
-                    tourId="sound"
-                    onClick={toggleSound}
+          >
+            {screen.title}
+          </h1>
+        )}
+        {screen.description.trim() ? (
+          <p className="mt-2 max-w-72 text-sm leading-relaxed text-muted-foreground">
+            {screen.description}
+          </p>
+        ) : null}
+        {screen.links.length ? (
+          <div className="mt-7 flex w-full max-w-72 flex-col gap-2">
+            {screen.links.map((link) => (
+              <a
+                key={link.id}
+                href={link.url}
+                target="_blank"
+                rel="noreferrer noopener"
+                className={cn(buttonVariants({ variant: 'outline' }), 'w-full')}
+              >
+                {link.label}
+                <ExternalLink className="size-4" aria-hidden />
+              </a>
+            ))}
+          </div>
+        ) : null}
+        {experience.oneLiner.enabled && screenIndex === experience.screens.length - 1 ? (
+          <>
+            {screen.links.length ? <Separator className="mt-8 w-full max-w-72" /> : null}
+            <form
+              className="mt-7 w-full max-w-72 text-left"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void saveOneLiner();
+              }}
+            >
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {experience.oneLiner.prompt}
+              </p>
+              <Field className="mt-4">
+                <FieldLabel htmlFor="visitor-one-liner" className="sr-only">
+                  {copy.reflectionLabel}
+                </FieldLabel>
+                <Textarea
+                  id="visitor-one-liner"
+                  value={oneLinerDraft}
+                  rows={5}
+                  maxLength={160}
+                  placeholder={experience.oneLiner.placeholder}
+                  className="min-h-32 resize-y bg-background/40 text-base leading-relaxed"
+                  onChange={(event) => setOneLinerDraft(event.target.value)}
+                />
+              </Field>
+              <div className="mt-3 flex items-center justify-between">
+                {oneLiner ? (
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="sm"
+                    className="h-auto px-0"
+                    disabled={savingOneLiner}
+                    onClick={() => {
+                      setOneLinerDraft('');
+                      void saveOneLiner('');
+                    }}
                   >
-                    {soundOn ? <Volume2 aria-hidden /> : <VolumeX aria-hidden />}
-                  </BarButton>
-                ) : null}
-                <BarButton
-                  label={copy.openGallery}
-                  variant="overlay"
-                  tourId="gallery"
-                  onClick={() => go({ name: 'topics' })}
-                >
-                  <LayoutGrid aria-hidden />
-                </BarButton>
-              </>
-            }
-          />
-        }
-      />
+                    {copy.clear}
+                  </Button>
+                ) : (
+                  <span />
+                )}
+                <Button type="submit" size="sm" disabled={savingOneLiner || !oneLinerDraft.trim()}>
+                  {copy.save}
+                </Button>
+              </div>
+            </form>
+          </>
+        ) : null}
+      </div>
     );
   };
 
   return (
     <section
-      ref={sectionRef}
       aria-label={copy.experienceLabel}
       lang={activeLocale}
-      className="relative size-full overflow-hidden bg-background"
+      className="relative size-full overflow-hidden rounded-none bg-background sm:rounded-phone-screen"
     >
       <input
         ref={fileInputRef}
@@ -660,34 +747,195 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
         onChange={(event) => void saveUpload(event)}
       />
       <audio ref={audioRef} loop preload="none" aria-hidden />
-      {renderView()}
-      {tourOpen && tourCurrent && tourStep !== null ? (
-        <Tour
-          copy={copy.tour}
-          step={tourCurrent}
-          index={tourStep}
-          total={tourSteps.length}
-          container={sectionRef}
-          onNext={nextTourStep}
-          onClose={finishTour}
-        />
-      ) : null}
-      <InstallPrompt
-        copy={copy.install}
-        allowed={
-          ready &&
-          engaged &&
-          !tourOpen &&
-          view.name !== 'active' &&
-          !message &&
-          !uploadTarget &&
-          !removalTarget
-        }
+      <div
+        aria-hidden
+        className="absolute top-2.5 left-1/2 z-30 hidden h-4 w-16 -translate-x-1/2 rounded-full bg-device-shell sm:block"
       />
+      <div className="absolute inset-0 overflow-y-auto no-scrollbar">
+        {!ready ? (
+          <div className="grid size-full place-items-center p-6 text-center text-sm text-muted-foreground">
+            {copy.preparing}
+          </div>
+        ) : coverVisible && currentScreen && isGalleryScreen(currentScreen) && currentCover ? (
+          <div className="relative size-full overflow-hidden bg-stage">
+            {currentCover.media.kind === 'bundled-video' ? (
+              <ExperienceVideo
+                source={mediaSource(currentCover.media, localUrls)}
+                poster={currentCover.media.poster}
+                alt={currentCover.alt}
+                preload
+              />
+            ) : (
+              <ExperienceImage
+                media={currentCover.media}
+                source={mediaSource(currentCover.media, localUrls)}
+                alt={currentCover.alt}
+                preload
+                sizes="(max-width: 480px) 100vw, 27rem"
+              />
+            )}
+            <div
+              className="absolute inset-0 bg-linear-to-t from-scrim/70 via-transparent to-scrim/40"
+              aria-hidden
+            />
+            <h1 ref={headingRef} tabIndex={-1} className="sr-only outline-none">
+              {currentScreen.title}
+            </h1>
+            {currentCover.sentence ? (
+              <p className="absolute top-12 left-5 z-10 max-w-64 animate-sentence-drift text-base font-normal leading-relaxed text-stage-foreground/85 motion-reduce:animate-none">
+                {currentCover.sentence}
+              </p>
+            ) : null}
+            {showSoundToggle ? (
+              <button
+                type="button"
+                aria-pressed={soundOn}
+                aria-label={soundOn ? copy.muteSound : copy.unmuteSound}
+                onClick={toggleSound}
+                className="absolute top-3 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-background/60 text-foreground backdrop-blur-sm hover:bg-background/80 focus-visible:ring-2 focus-visible:ring-ring/50 outline-none"
+              >
+                {soundOn ? (
+                  <Volume2 className="size-4" aria-hidden />
+                ) : (
+                  <VolumeX className="size-4" aria-hidden />
+                )}
+              </button>
+            ) : null}
+          </div>
+        ) : currentScreen?.type === 'gallery' ? (
+          renderGallery(currentScreen)
+        ) : currentScreen?.type === 'breathing' ? (
+          <BreathingPanel screen={currentScreen} headingRef={headingRef} />
+        ) : currentScreen?.type === 'gateway' ? (
+          renderGateway(currentScreen)
+        ) : (
+          <div className="grid size-full place-items-center p-6 text-center">
+            <div className="max-w-64">
+              <h1 ref={headingRef} tabIndex={-1} className="text-xl font-normal outline-none">
+                {copy.noScreensTitle}
+              </h1>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                {copy.noScreensDescription}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+      {activeViewTile && activeScreen && activeMedia ? (
+        <div
+          ref={dialogRef}
+          role="dialog"
+          aria-label={activeTitle}
+          tabIndex={-1}
+          className="absolute inset-0 z-10 overflow-hidden bg-stage outline-none"
+        >
+          {activeViewTile.type === 'upload' ? (
+            <button
+              type="button"
+              className="absolute inset-0 block w-full cursor-pointer focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+              aria-label={copy.replaceTile(activeViewTile.label)}
+              onClick={() => chooseUpload(activeScreen.id, activeViewTile.id)}
+            >
+              <ExperienceImage
+                media={activeMedia}
+                source={mediaSource(activeMedia, localUrls)}
+                alt={activeAlt}
+                preload
+                sizes="(max-width: 480px) 100vw, 27rem"
+              />
+            </button>
+          ) : activeMedia.kind === 'bundled-video' ? (
+            <ExperienceVideo
+              source={mediaSource(activeMedia, localUrls)}
+              poster={activeMedia.poster}
+              alt={activeAlt}
+              preload
+            />
+          ) : (
+            <ExperienceImage
+              media={activeMedia}
+              source={mediaSource(activeMedia, localUrls)}
+              alt={activeAlt}
+              preload
+              sizes="(max-width: 480px) 100vw, 27rem"
+            />
+          )}
+          <div
+            className="pointer-events-none absolute inset-0 bg-linear-to-t from-scrim/70 via-transparent to-scrim/40"
+            aria-hidden
+          />
+          {activeSentence ? (
+            <p className="pointer-events-none absolute top-12 left-5 z-10 max-w-64 animate-sentence-drift text-base font-normal leading-relaxed text-stage-foreground/85 motion-reduce:animate-none">
+              {activeSentence}
+            </p>
+          ) : null}
+          {showSoundToggle ? (
+            <button
+              type="button"
+              aria-pressed={soundOn}
+              aria-label={soundOn ? copy.muteSound : copy.unmuteSound}
+              onClick={toggleSound}
+              className="absolute top-3 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-background/60 text-foreground backdrop-blur-sm hover:bg-background/80 focus-visible:ring-2 focus-visible:ring-ring/50 outline-none"
+            >
+              {soundOn ? (
+                <Volume2 className="size-4" aria-hidden />
+              ) : (
+                <VolumeX className="size-4" aria-hidden />
+              )}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+      {coverVisible || activeTile ? (
+        <nav
+          aria-label={copy.navigationLabel}
+          className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-between border-t border-border/25 bg-background/40 px-4 py-3 backdrop-blur-sm"
+        >
+          <span aria-hidden className="inline-block w-9" />
+          <Button type="button" variant="ghost" size="sm" onClick={seeMore}>
+            {copy.seeMore}
+            <ChevronRight className="size-4" aria-hidden />
+          </Button>
+        </nav>
+      ) : currentScreen ? (
+        <nav
+          aria-label={copy.navigationLabel}
+          className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-between border-t border-border/25 bg-background/40 px-4 py-3 backdrop-blur-sm"
+        >
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={!hasPrevious}
+            onClick={() => navigate('back')}
+          >
+            <ChevronLeft className="size-4" aria-hidden />
+            {copy.back}
+          </Button>
+          <div className="flex items-center gap-1">
+            <p aria-live="polite" className="text-xs text-muted-foreground">
+              {copy.pageOf(screenIndex + 1, experience.screens.length)}
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={!hasNext}
+            onClick={() => navigate('next')}
+          >
+            {copy.next}
+            <ChevronRight className="size-4" aria-hidden />
+          </Button>
+        </nav>
+      ) : null}
       {message ? (
-        <p role="status" className={cn(floatingCardClass, 'bottom-float z-30 text-center text-sm')}>
-          {message}
-        </p>
+        <Alert
+          className="absolute right-4 bottom-18 left-4 z-30 w-auto text-center shadow-sm"
+          aria-live="polite"
+        >
+          <AlertDescription>{message}</AlertDescription>
+        </Alert>
       ) : null}
       <Dialog
         open={removalTarget !== null}

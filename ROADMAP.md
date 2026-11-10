@@ -3,7 +3,7 @@
 ## Current demo
 
 - Publish four attributed nature scenes in web and native experiences.
-- Keep visitor photos and feedback in the current browser.
+- Keep administration content in the current browser.
 - Verify accessibility, content provenance, and privacy boundaries in CI.
 
 ## Later work
