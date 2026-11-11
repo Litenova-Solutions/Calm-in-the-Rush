@@ -4,6 +4,10 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Screens with room for the demo phone frame: wide and tall. A phone in either
+   orientation stays edge to edge, so the flow never shows a phone inside a phone. */
+@custom-variant framed (@media (min-width: 40rem) and (min-height: 44rem));
+
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: var(--font-sans);
@@ -109,9 +113,21 @@
   --radius-phone-screen: 1.8rem;
   --container-phone-preview: 18rem;
   --animate-sentence-drift: sentence-drift 10s ease-in-out infinite;
+  --animate-sound-hint: sound-hint 2.8s ease-in-out infinite;
+  --animate-screen-in: screen-in 0.6s ease-out both;
+  --color-brand-sun: var(--brand-sun);
+  --color-sun-warm: var(--breathing-orb-end);
+  /* A gentle overshoot, so the calm face springs back when it is let go. */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 :root {
+  /* Safe-area insets for an app drawn edge to edge (viewport-fit=cover). */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  /* The RiR smiley logo colours, used by the relaxed face placeholders. */
+  --brand-sun: #fdf084;
+  --brand-ink: oklch(0.2 0 0);
   --stage: oklch(0.37 0.055 155);
   --stage-foreground: oklch(0.985 0.018 95);
   --scrim: oklch(0.2 0.045 155 / 56%);
@@ -136,7 +152,112 @@
   }
 }
 
+/* A slow ring that tells a visitor the ambient sound waits for their first tap. */
+@keyframes sound-hint {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--stage-foreground) 55%, transparent);
+  }
+
+  50% {
+    box-shadow: 0 0 0 0.5rem color-mix(in oklch, var(--stage-foreground) 0%, transparent);
+  }
+}
+
+/* Each screen settles in with a soft fade and a small rise. */
+@keyframes screen-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.375rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Overlays on media keep clear of a notch or status bar. */
+@utility top-overlay {
+  top: calc(3rem + var(--safe-top));
+}
+
+@utility top-control {
+  top: calc(0.75rem + var(--safe-top));
+}
+
+@utility pt-overlay {
+  padding-top: calc(3rem + var(--safe-top));
+}
+
+/* Content under the floating screen title starts below it. */
+@utility pt-overlay-title {
+  padding-top: calc(5.5rem + var(--safe-top));
+}
+
+/* The bottom navigation clears the home indicator; cards float just above it. */
+@utility pb-nav {
+  padding-bottom: calc(0.75rem + var(--safe-bottom));
+}
+
+@utility bottom-above-nav {
+  bottom: calc(5rem + var(--safe-bottom));
+}
+
+/* A gallery ends where the navigation bar begins, so no tile text hides behind it. */
+@utility pb-nav-space {
+  padding-bottom: calc(4rem + var(--safe-bottom));
+}
+
+/* The scrolling screen area. Its size is a container, so a gallery can size its
+   rows against the visible screen rather than against its own content. */
+@utility screen-container {
+  container-type: size;
+}
+
+/* Gallery rows share the visible screen height above the navigation bar, and a row
+   grows when a tile's text needs more room. --gallery-rows is set per gallery. */
+@utility gallery-rows {
+  grid-auto-rows: minmax(calc((100cqh - 4rem - var(--safe-bottom)) / var(--gallery-rows, 2)), auto);
+}
+
+/* Scrolling screens leave room for the navigation bar under their last line. */
+@utility pb-screen {
+  padding-bottom: calc(6rem + var(--safe-bottom));
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
 @layer utilities {
+  /* The calm slider draws its own track and face; the native range input stays on top,
+     invisible, with a thumb the size of the face so a drag starts where the face is. */
+  .calm-range {
+    appearance: none;
+    background: transparent;
+  }
+
+  .calm-range::-webkit-slider-thumb {
+    appearance: none;
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+
+  .calm-range::-moz-range-thumb {
+    width: 3.5rem;
+    height: 3.5rem;
+    border: 0;
+    background: transparent;
+  }
+
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;

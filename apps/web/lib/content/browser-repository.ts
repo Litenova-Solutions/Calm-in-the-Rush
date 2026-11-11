@@ -7,11 +7,13 @@ import {
   imageFileAccept,
   isGalleryScreen,
   seedExperience,
+  visitorCalmSchema,
   visitorOneLinerSchema,
   visitorUploadSchema,
   type ExperienceConfig,
   type ExperienceMedia,
   type ExperienceTile,
+  type VisitorCalm,
   type VisitorUpload,
 } from './experience';
 import { repositoryStrings, resolveExperienceLocale, type ExperienceLocale } from './strings';
@@ -24,7 +26,8 @@ const DB_VERSION = 1;
 interface CalmDb extends DBSchema {
   experience: { key: string; value: ExperienceConfig };
   visitorUploads: { key: string; value: VisitorUpload };
-  oneLiner: { key: string; value: { value: string } };
+  /** Holds the visitor's reflection: 'current' is the one-liner, 'calm' the calm slider answer. */
+  oneLiner: { key: string; value: { value: string } | VisitorCalm };
   media: { key: string; value: Blob };
 }
 
@@ -421,6 +424,30 @@ export class BrowserExperienceRepository {
       const oneLiner = visitorOneLinerSchema.parse({ value: trimmed });
       await db.put('oneLiner', oneLiner, 'current');
       return oneLiner.value;
+    } finally {
+      db.close();
+    }
+  }
+
+  /** Reads the calm slider answer, or null when the visitor has not answered. */
+  async readCalm(): Promise<number | null> {
+    if (!dbAvailable()) return null;
+    const db = await openCalmDb(this.dbName, this.copy.storageUnavailable);
+    try {
+      const saved = visitorCalmSchema.safeParse(await db.get('oneLiner', 'calm'));
+      return saved.success ? saved.data.calm : null;
+    } finally {
+      db.close();
+    }
+  }
+
+  async saveCalm(calm: number): Promise<number> {
+    if (!dbAvailable()) throw new Error(this.copy.storageUnavailableShort);
+    const answer = visitorCalmSchema.parse({ calm: Math.round(calm) });
+    const db = await openCalmDb(this.dbName, this.copy.storageUnavailable);
+    try {
+      await db.put('oneLiner', answer, 'calm');
+      return answer.calm;
     } finally {
       db.close();
     }

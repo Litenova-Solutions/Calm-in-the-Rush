@@ -29,6 +29,19 @@ export default tseslint.config(
     },
   },
   {
+    // The service worker runs as a classic script with the worker globals.
+    files: ['public/sw.js'],
+    languageOptions: {
+      sourceType: 'script',
+      globals: {
+        self: 'readonly',
+        caches: 'readonly',
+        fetch: 'readonly',
+        URL: 'readonly',
+      },
+    },
+  },
+  {
     files: ['app/**/*.tsx', 'app/**/*.ts', 'lib/**/*.ts'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',

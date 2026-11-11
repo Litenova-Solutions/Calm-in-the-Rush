@@ -4,6 +4,18 @@ export function resolveExperienceLocale(value: unknown): ExperienceLocale {
   return value === 'nl' ? 'nl' : 'en';
 }
 
+export interface InstallCopy {
+  title: string;
+  description: string;
+  iosStepsBefore: string;
+  iosStepsAfter: string;
+  shareIcon: string;
+  menuSteps: string;
+  install: string;
+  notNow: string;
+  gotIt: string;
+}
+
 interface VisitorCopy {
   experienceLabel: string;
   navigationLabel: string;
@@ -42,6 +54,18 @@ interface VisitorCopy {
   replaceTile: (label: string) => string;
   photosSaved: (count: number) => string;
   photosPartial: (saved: number, total: number) => string;
+  install: InstallCopy;
+  calm: CalmCopy;
+}
+
+/** The calm slider on the final reflection screen. */
+export interface CalmCopy {
+  question: string;
+  hint: string;
+  /** Level words from not calm to calm and happy, one per equal stretch of the slider. */
+  levels: readonly string[];
+  saved: string;
+  failed: string;
 }
 
 export interface RepositoryCopy {
@@ -89,6 +113,13 @@ export const visitorStrings: Record<ExperienceLocale, VisitorCopy> = {
     oneLinerSaved: 'Your one-liner is saved in this browser.',
     oneLinerCleared: 'Your one-liner was cleared.',
     oneLinerFailed: 'Your one-liner could not be saved.',
+    calm: {
+      question: 'How calm and happy do you feel right now?',
+      hint: 'Slide the face to answer',
+      levels: ['Not calm', 'A little calm', 'Calm', 'Very calm', 'Calm and happy'],
+      saved: 'Saved in this browser',
+      failed: 'Your answer could not be saved.',
+    },
     pageOf: (current, total) => `Page ${current} of ${total}`,
     galleryPhotos: (title) => `${title} photos`,
     openTile: (label) => `Open ${label}`,
@@ -99,6 +130,17 @@ export const visitorStrings: Record<ExperienceLocale, VisitorCopy> = {
         ? '1 photo is saved in this browser.'
         : `${count} photos are saved in this browser.`,
     photosPartial: (saved, total) => `${saved} of ${total} photos are saved in this browser.`,
+    install: {
+      title: 'Add Calm in the Rush to your home screen',
+      description: 'Open it full screen whenever you need a quiet minute.',
+      iosStepsBefore: 'Tap',
+      iosStepsAfter: 'then choose Add to Home Screen.',
+      shareIcon: 'Share',
+      menuSteps: 'Open the browser menu, then tap Add to Home screen.',
+      install: 'Install',
+      notNow: 'Not now',
+      gotIt: 'Got it',
+    },
   },
   nl: {
     experienceLabel: 'Rust in de Drukte-ervaring',
@@ -133,6 +175,13 @@ export const visitorStrings: Record<ExperienceLocale, VisitorCopy> = {
     oneLinerSaved: 'Je oneliner is opgeslagen in deze browser.',
     oneLinerCleared: 'Je oneliner is gewist.',
     oneLinerFailed: 'Je oneliner kon niet worden opgeslagen.',
+    calm: {
+      question: 'Hoe rustig en blij voel je je nu?',
+      hint: 'Schuif het gezicht om te antwoorden',
+      levels: ['Niet rustig', 'Een beetje rustig', 'Rustig', 'Heel rustig', 'Rustig en blij'],
+      saved: 'Opgeslagen in deze browser',
+      failed: 'Je antwoord kon niet worden opgeslagen.',
+    },
     pageOf: (current, total) => `Pagina ${current} van ${total}`,
     galleryPhotos: (title) => `${title}-foto's`,
     openTile: (label) => `${label} openen`,
@@ -144,6 +193,17 @@ export const visitorStrings: Record<ExperienceLocale, VisitorCopy> = {
         : `${count} foto's zijn opgeslagen in deze browser.`,
     photosPartial: (saved, total) =>
       `${saved} van ${total} foto's zijn opgeslagen in deze browser.`,
+    install: {
+      title: 'Zet Rust in de Drukte op je beginscherm',
+      description: 'Open het schermvullend wanneer je een rustige minuut nodig hebt.',
+      iosStepsBefore: 'Tik op',
+      iosStepsAfter: 'en kies Zet op beginscherm.',
+      shareIcon: 'Deel',
+      menuSteps: 'Open het browsermenu en tik op Toevoegen aan startscherm.',
+      install: 'Installeren',
+      notNow: 'Niet nu',
+      gotIt: 'Begrepen',
+    },
   },
 };
 

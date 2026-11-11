@@ -1,11 +1,11 @@
 # Calm in the Rush
 
-Calm in the Rush is a source-available reflection experience: a native Android app and a phone-framed web demo. It opens on a Nature cover and continues through photo galleries, a local breathing cue, and a RUST gateway without an account, streak, notification, analytics, cookie, or tracking service.
+Calm in the Rush is a source-available reflection experience: a native Android app and a web demo that fills a phone screen and installs to the home screen. It opens on a Nature cover and continues through photo galleries, a local breathing cue, and a RUST gateway without an account, streak, notification, analytics, cookie, or tracking service.
 
 ## Apps
 
 - `apps/mobile`: the native Android app, built with .NET for Android, and the plain .NET core it shares with later apps.
-- `apps/web`: Next.js phone-framed experience and browser-local admin.
+- `apps/web`: Next.js experience and browser-local admin. It fills the screen on a phone, shows a phone frame on wider screens, and installs as a web app with a manifest per language and a service worker.
 - `packages/config`: Shared lint configuration.
 
 ## Development

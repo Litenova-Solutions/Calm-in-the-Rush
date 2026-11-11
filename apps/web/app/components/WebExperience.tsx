@@ -3,6 +3,8 @@
 
 import {
   type ChangeEvent,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
   type RefObject,
   useCallback,
   useEffect,
@@ -56,12 +58,29 @@ import {
   type ExperienceLocale,
 } from '@/lib/content/strings';
 
+import { CalmFace } from './CalmFace';
+import { CalmSlider } from './CalmSlider';
+import { InstallPrompt } from './InstallPrompt';
+
 type UploadTarget = { screenId: string; tileId: string };
 
 interface WebExperienceProps {
   repository?: BrowserExperienceRepository;
   locale?: ExperienceLocale;
 }
+
+/** How long the ambient sound takes to rise from silence when it starts. */
+const ambientFadeMs = 1800;
+
+/**
+ * The events that count as a user activation, so `play()` with sound is allowed
+ * inside their handlers. A touch `pointerdown` is not one of them; `pointerup`,
+ * `touchend`, `click` and `keydown` are.
+ */
+const activationEvents = ['pointerup', 'touchend', 'click', 'keydown'] as const;
+
+/** A horizontal swipe of at least this many CSS pixels moves between screens. */
+const swipeMinDistance = 56;
 
 function uploadMap(uploads: readonly VisitorUpload[]): Map<string, VisitorUpload> {
   return new Map(
@@ -77,6 +96,36 @@ function mediaSource(media: ExperienceMedia, localUrls: Record<string, string>):
 function coverTile(screen: GalleryScreen): Extract<ExperienceTile, { type: 'prefilled' }> | null {
   const tile = screen.tiles[0];
   return tile?.type === 'prefilled' ? tile : null;
+}
+
+/**
+ * Bundled videos ship as WebM, which the Android app also packs, with an H.264
+ * MP4 beside each one for iPhones and older browsers. The MP4 comes first: it
+ * plays everywhere and is the smaller file. A browser that cannot load it moves
+ * on to the WebM, so a configured video without an MP4 still plays.
+ */
+function videoSources(source: string): { src: string; type?: string }[] {
+  if (!source.endsWith('.webm')) return [{ src: source }];
+  return [
+    { src: source.replace(/\.webm$/, '.mp4'), type: 'video/mp4' },
+    { src: source, type: 'video/webm' },
+  ];
+}
+
+/** Starts the ambient sound from silence and raises it over `ambientFadeMs`. */
+function startAmbient(audio: HTMLAudioElement): Promise<void> {
+  if (!audio.paused) return Promise.resolve();
+  audio.volume = 0;
+  return audio.play().then(() => {
+    const start = performance.now();
+    const rise = (now: number) => {
+      // A frame time can be a little earlier than `start`, so clamp to the valid volume range.
+      const progress = Math.min(1, Math.max(0, (now - start) / ambientFadeMs));
+      audio.volume = progress;
+      if (progress < 1 && !audio.paused) requestAnimationFrame(rise);
+    };
+    requestAnimationFrame(rise);
+  });
 }
 
 function useReducedMotionPreference(): boolean {
@@ -148,30 +197,33 @@ function ExperienceVideo({
   }
   return (
     <video
+      key={source}
       className="absolute inset-0 size-full object-cover"
-      src={source}
       poster={poster}
       muted
       loop
       playsInline
       autoPlay
+      disablePictureInPicture
+      disableRemotePlayback
       preload={preload ? 'auto' : 'metadata'}
       role="img"
       aria-label={alt}
-    />
+    >
+      {videoSources(source).map((item) => (
+        <source key={item.src} src={item.src} type={item.type} />
+      ))}
+    </video>
   );
 }
 
+/**
+ * The brand face for an empty Relaxed Faces tile, drawn rather than an emoji so
+ * it looks the same on every device. Even tiles are calm and happy, with closed
+ * eyes; odd tiles are very calm, with open eyes and a softer smile.
+ */
 function RelaxedFacePlaceholder({ variant = 0 }: { variant?: number }) {
-  const faces = [0x1f600, 0x1f600, 0x1f600, 0x1f60c].map((code) => String.fromCodePoint(code));
-  const face = faces[variant % faces.length] ?? faces[0]!;
-  return (
-    <span className="flex size-32 items-center justify-center rounded-full bg-muted/50">
-      <span className="text-7xl leading-none" aria-hidden>
-        {face}
-      </span>
-    </span>
-  );
+  return <CalmFace value={variant % 2 === 0 ? 100 : 75} className="size-24 drop-shadow-sm" />;
 }
 
 function BreathingPanel({
@@ -186,7 +238,7 @@ function BreathingPanel({
     'M 16 132 C 42 132, 48 48, 80 48 S 118 132, 160 132 S 198 48, 240 48 S 278 132, 304 132';
 
   return (
-    <div className="flex min-h-full flex-col items-center px-5 pb-24 pt-14 text-center">
+    <div className="flex min-h-full flex-col items-center justify-center px-5 pt-overlay pb-screen text-center">
       <div className="flex max-w-72 flex-col gap-2">
         <h1
           ref={headingRef}
@@ -198,7 +250,7 @@ function BreathingPanel({
         <p className="text-sm leading-relaxed text-muted-foreground">{screen.description}</p>
       </div>
       <div
-        className="mt-9 w-full max-w-80 overflow-hidden rounded-3xl border border-primary/15 shadow-inner"
+        className="mt-10 w-full max-w-sm overflow-hidden rounded-3xl shadow-lg ring-1 shadow-primary/10 ring-primary/10"
         aria-hidden
       >
         <svg viewBox="0 0 320 180" className="block h-auto w-full">
@@ -219,11 +271,12 @@ function BreathingPanel({
               </feMerge>
             </filter>
           </defs>
-          <rect width="320" height="180" rx="24" fill="url(#breathing-sky)" />
+          <rect width="320" height="180" fill="url(#breathing-sky)" />
           <path
             d={breathingWavePath}
             fill="none"
             stroke="var(--breathing-wave)"
+            strokeOpacity="0.85"
             strokeWidth="3"
             strokeLinecap="round"
           />
@@ -246,6 +299,39 @@ function BreathingPanel({
   );
 }
 
+function SoundToggle({
+  audible,
+  waiting,
+  muteLabel,
+  unmuteLabel,
+  onToggle,
+}: {
+  audible: boolean;
+  waiting: boolean;
+  muteLabel: string;
+  unmuteLabel: string;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={audible}
+      aria-label={audible ? muteLabel : unmuteLabel}
+      onClick={onToggle}
+      className={cn(
+        'absolute top-control right-3 z-10 flex size-11 items-center justify-center rounded-full bg-background/60 text-foreground backdrop-blur-sm outline-none hover:bg-background/80 focus-visible:ring-2 focus-visible:ring-ring/50',
+        waiting && 'animate-sound-hint motion-reduce:animate-none',
+      )}
+    >
+      {audible ? (
+        <Volume2 className="size-5" aria-hidden />
+      ) : (
+        <VolumeX className="size-5" aria-hidden />
+      )}
+    </button>
+  );
+}
+
 export function WebExperience({ repository, locale }: WebExperienceProps) {
   const activeLocale = resolveExperienceLocale(locale ?? repository?.locale);
   const copy = visitorStrings[activeLocale];
@@ -259,26 +345,36 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
   const [localUrls, setLocalUrls] = useState<Record<string, string>>({});
   const [oneLiner, setOneLiner] = useState('');
   const [oneLinerDraft, setOneLinerDraft] = useState('');
+  // The calm slider: the value under the visitor's finger, the value last saved, and a
+  // short "Saved" note that replaces the level word for a moment after each save.
+  const [calm, setCalm] = useState<number | null>(null);
+  const [savedCalm, setSavedCalm] = useState<number | null>(null);
+  const [calmNote, setCalmNote] = useState<string | null>(null);
   const [screenIndex, setScreenIndex] = useState(0);
   const [showCover, setShowCover] = useState(true);
   const [uploadTarget, setUploadTarget] = useState<UploadTarget | null>(null);
   const [removalTarget, setRemovalTarget] = useState<UploadTarget | null>(null);
   const [message, setMessage] = useState('');
   const [savingOneLiner, setSavingOneLiner] = useState(false);
+  // soundOn is the visitor's choice; soundBlocked means the browser is holding the
+  // sound until the first tap or key press, as autoplay policies require.
   const [soundOn, setSoundOn] = useState(true);
+  const [soundBlocked, setSoundBlocked] = useState(false);
   const [activeTile, setActiveTile] = useState<UploadTarget | null>(null);
   const [ready, setReady] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const headingRef = useRef<HTMLHeadingElement | null>(null);
+  const swipeStart = useRef<{ x: number; y: number; time: number } | null>(null);
 
   const refresh = useCallback(async () => {
     try {
-      const [nextExperience, nextUploads, nextOneLiner] = await Promise.all([
+      const [nextExperience, nextUploads, nextOneLiner, nextCalm] = await Promise.all([
         repo.readExperience(fallbackSeed),
         repo.readVisitorUploads(),
         repo.readOneLiner(),
+        repo.readCalm(),
       ]);
       const localMedia = [
         ...nextExperience.screens.flatMap((screen) =>
@@ -300,6 +396,8 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
       setLocalUrls(urls);
       setOneLiner(nextOneLiner);
       setOneLinerDraft(nextOneLiner);
+      setCalm(nextCalm);
+      setSavedCalm(nextCalm);
       setScreenIndex((current) =>
         Math.min(current, Math.max(0, nextExperience.screens.length - 1)),
       );
@@ -321,7 +419,7 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
 
   useEffect(() => {
     if (!ready) return;
-    headingRef.current?.focus();
+    headingRef.current?.focus({ preventScroll: true });
   }, [ready, screenIndex, showCover]);
 
   useEffect(() => {
@@ -329,6 +427,12 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
     const timer = window.setTimeout(() => setMessage(''), 5000);
     return () => window.clearTimeout(timer);
   }, [message]);
+
+  useEffect(() => {
+    if (!calmNote) return;
+    const timer = window.setTimeout(() => setCalmNote(null), 2200);
+    return () => window.clearTimeout(timer);
+  }, [calmNote]);
 
   const currentScreen = experience.screens[screenIndex];
   const currentUploads = useMemo(() => uploadMap(uploads), [uploads]);
@@ -345,6 +449,8 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
   const hasPrevious =
     screenIndex > 0 || (screenIndex === 0 && !coverVisible && Boolean(currentCover));
   const hasNext = screenIndex < experience.screens.length - 1;
+  const isFinalOneLiner =
+    experience.oneLiner.enabled && screenIndex === experience.screens.length - 1;
 
   const activeScreen = experience.screens.find((screen) => screen.id === activeTile?.screenId);
   const activeViewTile =
@@ -360,6 +466,7 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
     return null;
   })();
   const showSoundToggle = audibleAudio !== null;
+  const soundAudible = soundOn && !soundBlocked;
 
   useEffect(() => {
     if (!activeTile) return;
@@ -371,17 +478,48 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
     return () => window.removeEventListener('keydown', close);
   }, [activeTile]);
 
+  // Ambient sound starts with the media it belongs to. A browser that blocks sound
+  // before any interaction gets it on the visitor's first tap or key press anywhere,
+  // and a tab that returns from the background picks the sound up again.
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    audio.pause();
-    if (!soundOn || !audibleAudio) return;
+    if (!soundOn || !audibleAudio) {
+      audio.pause();
+      return;
+    }
     if (audio.getAttribute('src') !== audibleAudio) audio.setAttribute('src', audibleAudio);
-    const unlock = () => {
-      void audio.play().catch(() => undefined);
+    let active = true;
+    const stopListening = () => {
+      for (const name of activationEvents) window.removeEventListener(name, unlock, true);
     };
-    void audio.play().catch(() => window.addEventListener('pointerdown', unlock, { once: true }));
-    return () => window.removeEventListener('pointerdown', unlock);
+    const unlock = () => {
+      startAmbient(audio)
+        .then(() => {
+          stopListening();
+          if (active) setSoundBlocked(false);
+        })
+        .catch(() => undefined);
+    };
+    startAmbient(audio)
+      .then(() => {
+        if (active) setSoundBlocked(false);
+      })
+      .catch((error: unknown) => {
+        if (!active || !(error instanceof DOMException) || error.name !== 'NotAllowedError') return;
+        setSoundBlocked(true);
+        for (const name of activationEvents) window.addEventListener(name, unlock, true);
+      });
+    const resume = () => {
+      if (document.visibilityState === 'visible') void startAmbient(audio).catch(() => undefined);
+    };
+    document.addEventListener('visibilitychange', resume);
+    return () => {
+      active = false;
+      stopListening();
+      document.removeEventListener('visibilitychange', resume);
+      audio.pause();
+    };
   }, [audibleAudio, soundOn]);
 
   const activeUpload =
@@ -428,15 +566,47 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
   const toggleSound = () => {
     const audio = audioRef.current;
     if (!audio) return;
-    if (soundOn) {
+    if (soundAudible) {
       audio.pause();
       setSoundOn(false);
       return;
     }
-    void audio
-      .play()
-      .then(() => setSoundOn(true))
-      .catch(() => setSoundOn(false));
+    setSoundOn(true);
+    startAmbient(audio)
+      .then(() => setSoundBlocked(false))
+      .catch(() => undefined);
+  };
+
+  // Phones move through the flow with a horizontal swipe as well as the buttons.
+  // A swipe that starts in a text field is left alone, so text selection still works.
+  const startSwipe = (event: ReactPointerEvent<HTMLElement>) => {
+    if (event.pointerType === 'mouse' || !event.isPrimary) return;
+    if (
+      event.target instanceof Element &&
+      event.target.closest('textarea, input, [role=alertdialog]')
+    )
+      return;
+    swipeStart.current = { x: event.clientX, y: event.clientY, time: event.timeStamp };
+  };
+
+  const endSwipe = (event: ReactPointerEvent<HTMLElement>) => {
+    const start = swipeStart.current;
+    swipeStart.current = null;
+    if (!start || removalTarget) return;
+    const dx = event.clientX - start.x;
+    const dy = event.clientY - start.y;
+    if (Math.abs(dx) < swipeMinDistance || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    if (event.timeStamp - start.time > 900) return;
+    if (activeTile) {
+      setActiveTile(null);
+      return;
+    }
+    if (coverVisible) {
+      if (dx < 0) seeMore();
+      return;
+    }
+    if (dx < 0 && hasNext) navigate('next');
+    if (dx > 0 && hasPrevious) navigate('back');
   };
 
   const saveUpload = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -475,6 +645,18 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
     }
   };
 
+  const saveCalm = async (value: number) => {
+    setCalm(value);
+    if (value === savedCalm) return;
+    try {
+      const saved = await repo.saveCalm(value);
+      setSavedCalm(saved);
+      setCalmNote(copy.calm.saved);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : copy.calm.failed);
+    }
+  };
+
   const saveOneLiner = async (value = oneLinerDraft) => {
     setSavingOneLiner(true);
     try {
@@ -500,8 +682,8 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
         ),
     );
     return (
-      <div className="relative h-full">
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center px-5 pt-12">
+      <div className="relative min-h-full">
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center px-5 pt-overlay">
           <h1
             ref={headingRef}
             tabIndex={-1}
@@ -512,7 +694,8 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
         </div>
         {tiles.length ? (
           <div
-            className="grid h-full grid-cols-2 gap-0"
+            className="gallery-rows grid grid-cols-2 gap-0 pb-nav-space"
+            style={{ '--gallery-rows': Math.ceil(tiles.length / 2) } as CSSProperties}
             aria-label={copy.galleryPhotos(screen.title)}
           >
             {tiles.map((tile, tileIndex) => {
@@ -553,13 +736,13 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
                       <Button
                         type="button"
                         variant="ghost"
-                        size="icon-sm"
+                        size="icon"
                         aria-label={copy.removeTile(tile.label)}
                         onClick={(event) => {
                           event.stopPropagation();
                           setRemovalTarget({ screenId: screen.id, tileId: tile.id });
                         }}
-                        className="absolute top-2 left-2 z-10 h-8 w-8 rounded-full bg-background/70 text-foreground backdrop-blur-sm hover:bg-background/90 focus-visible:ring-3 focus-visible:ring-ring/50"
+                        className="absolute top-2 left-2 z-10 size-10 rounded-full bg-background/70 text-foreground backdrop-blur-sm hover:bg-background/90 focus-visible:ring-3 focus-visible:ring-ring/50"
                       >
                         <Trash2 className="size-4" aria-hidden />
                       </Button>
@@ -568,27 +751,30 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
                 );
               }
               if (tile.type !== 'upload') return null;
-              const alignFacesTop = screen.id === 'friendly-faces';
+              const isFacesScreen = screen.id === 'friendly-faces';
               return (
                 <Button
                   key={tile.id}
                   type="button"
                   variant="ghost"
                   className={cn(
-                    'h-full w-full whitespace-normal rounded-none bg-muted/70 p-0 hover:bg-muted',
-                    alignFacesTop && 'items-start',
+                    'h-full w-full rounded-none border-0 bg-muted/70 p-0 whitespace-normal hover:bg-muted',
+                    isFacesScreen && 'items-start',
                   )}
                   aria-label={tile.label}
                   onClick={() => chooseUpload(screen.id, tile.id)}
                 >
                   <span
                     className={cn(
-                      'flex max-w-44 flex-col items-center gap-2 px-4 text-center whitespace-normal',
-                      alignFacesTop && 'pt-14',
+                      'flex max-w-44 flex-col items-center gap-2 px-4 py-6 text-center whitespace-normal',
+                      // The first row clears the floating screen title.
+                      isFacesScreen && tileIndex < 2 && 'pt-overlay-title',
                     )}
                   >
-                    {screen.id === 'friendly-faces' ? (
-                      <RelaxedFacePlaceholder variant={tileIndex} />
+                    {isFacesScreen ? (
+                      <span className="mb-2">
+                        <RelaxedFacePlaceholder variant={tileIndex} />
+                      </span>
                     ) : (
                       <Camera className="size-5 text-muted-foreground" aria-hidden />
                     )}
@@ -616,8 +802,6 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
   };
 
   const renderGateway = (screen: Extract<ExperienceScreen, { type: 'gateway' }>) => {
-    const isFinalOneLiner =
-      experience.oneLiner.enabled && screenIndex === experience.screens.length - 1;
     const showLogo = !isFinalOneLiner;
     const isLogoGateway = screen.id === 'calm-logo';
     const logo = {
@@ -625,7 +809,7 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
       alt: activeLocale === 'nl' ? 'RUST in de Reuring' : 'CALM in the rush',
     };
     return (
-      <div className="flex min-h-full flex-col items-center justify-center px-5 pb-24 pt-18 text-center">
+      <div className="flex min-h-full flex-col items-center justify-center px-5 pt-overlay pb-screen text-center">
         {showLogo ? (
           <Image
             src={logo.src}
@@ -633,7 +817,7 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
             width={480}
             height={480}
             sizes="16rem"
-            className="h-auto w-64"
+            className="h-auto w-64 drop-shadow-sm"
           />
         ) : null}
         {isLogoGateway ? (
@@ -666,7 +850,7 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
                 href={link.url}
                 target="_blank"
                 rel="noreferrer noopener"
-                className={cn(buttonVariants({ variant: 'outline' }), 'w-full')}
+                className={cn(buttonVariants({ variant: 'outline' }), 'h-11 w-full')}
               >
                 {link.label}
                 <ExternalLink className="size-4" aria-hidden />
@@ -674,11 +858,25 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
             ))}
           </div>
         ) : null}
-        {experience.oneLiner.enabled && screenIndex === experience.screens.length - 1 ? (
+        {isFinalOneLiner ? (
           <>
             {screen.links.length ? <Separator className="mt-8 w-full max-w-72" /> : null}
+            <div className="mt-7 w-full max-w-80">
+              <CalmSlider
+                value={calm}
+                question={copy.calm.question}
+                hint={copy.calm.hint}
+                levels={copy.calm.levels}
+                note={calmNote}
+                onChange={(value) => {
+                  setCalm(value);
+                  setCalmNote(null);
+                }}
+                onCommit={(value) => void saveCalm(value)}
+              />
+            </div>
             <form
-              className="mt-7 w-full max-w-72 text-left"
+              className="mt-7 w-full max-w-80 text-left"
               onSubmit={(event) => {
                 event.preventDefault();
                 void saveOneLiner();
@@ -694,10 +892,11 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
                 <Textarea
                   id="visitor-one-liner"
                   value={oneLinerDraft}
-                  rows={5}
+                  rows={4}
                   maxLength={160}
+                  enterKeyHint="done"
                   placeholder={experience.oneLiner.placeholder}
-                  className="min-h-32 resize-y bg-background/40 text-base leading-relaxed"
+                  className="min-h-28 resize-none rounded-xl bg-background/40 text-base leading-relaxed"
                   onChange={(event) => setOneLinerDraft(event.target.value)}
                 />
               </Field>
@@ -706,8 +905,7 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
                   <Button
                     type="button"
                     variant="link"
-                    size="sm"
-                    className="h-auto px-0"
+                    className="h-11 px-0"
                     disabled={savingOneLiner}
                     onClick={() => {
                       setOneLinerDraft('');
@@ -719,7 +917,11 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
                 ) : (
                   <span />
                 )}
-                <Button type="submit" size="sm" disabled={savingOneLiner || !oneLinerDraft.trim()}>
+                <Button
+                  type="submit"
+                  className="h-11 rounded-full px-6"
+                  disabled={savingOneLiner || !oneLinerDraft.trim()}
+                >
                   {copy.save}
                 </Button>
               </div>
@@ -730,11 +932,23 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
     );
   };
 
+  const screenKey = !ready ? 'preparing' : coverVisible ? 'cover' : `screen-${screenIndex}`;
+  // The install invitation waits for the logo screen: a calm brand moment with no
+  // active media, no breathing cue and no form for the card to cover.
+  const installAllowed =
+    ready && !activeTile && currentScreen?.type === 'gateway' && !isFinalOneLiner;
+  const overMedia = coverVisible || Boolean(activeTile);
+
   return (
     <section
       aria-label={copy.experienceLabel}
       lang={activeLocale}
-      className="relative size-full overflow-hidden rounded-none bg-background sm:rounded-phone-screen"
+      onPointerDown={startSwipe}
+      onPointerUp={endSwipe}
+      onPointerCancel={() => {
+        swipeStart.current = null;
+      }}
+      className="relative size-full touch-pan-y touch-pinch-zoom overflow-hidden rounded-none bg-background framed:rounded-phone-screen"
     >
       <input
         ref={fileInputRef}
@@ -746,12 +960,15 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
         className="sr-only"
         onChange={(event) => void saveUpload(event)}
       />
-      <audio ref={audioRef} loop preload="none" aria-hidden />
+      <audio ref={audioRef} loop preload="auto" aria-hidden />
       <div
         aria-hidden
-        className="absolute top-2.5 left-1/2 z-30 hidden h-4 w-16 -translate-x-1/2 rounded-full bg-device-shell sm:block"
+        className="absolute top-2.5 left-1/2 z-30 hidden h-4 w-16 -translate-x-1/2 rounded-full bg-device-shell framed:block"
       />
-      <div className="absolute inset-0 overflow-y-auto no-scrollbar">
+      <div
+        key={screenKey}
+        className="no-scrollbar screen-container absolute inset-0 animate-screen-in overflow-y-auto overscroll-contain motion-reduce:animate-none"
+      >
         {!ready ? (
           <div className="grid size-full place-items-center p-6 text-center text-sm text-muted-foreground">
             {copy.preparing}
@@ -782,24 +999,18 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
               {currentScreen.title}
             </h1>
             {currentCover.sentence ? (
-              <p className="absolute top-12 left-5 z-10 max-w-64 animate-sentence-drift text-base font-normal leading-relaxed text-stage-foreground/85 motion-reduce:animate-none">
+              <p className="absolute top-overlay left-5 z-10 max-w-64 animate-sentence-drift text-lg leading-relaxed font-normal text-stage-foreground/90 drop-shadow-sm motion-reduce:animate-none">
                 {currentCover.sentence}
               </p>
             ) : null}
             {showSoundToggle ? (
-              <button
-                type="button"
-                aria-pressed={soundOn}
-                aria-label={soundOn ? copy.muteSound : copy.unmuteSound}
-                onClick={toggleSound}
-                className="absolute top-3 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-background/60 text-foreground backdrop-blur-sm hover:bg-background/80 focus-visible:ring-2 focus-visible:ring-ring/50 outline-none"
-              >
-                {soundOn ? (
-                  <Volume2 className="size-4" aria-hidden />
-                ) : (
-                  <VolumeX className="size-4" aria-hidden />
-                )}
-              </button>
+              <SoundToggle
+                audible={soundAudible}
+                waiting={soundOn && soundBlocked}
+                muteLabel={copy.muteSound}
+                unmuteLabel={copy.unmuteSound}
+                onToggle={toggleSound}
+              />
             ) : null}
           </div>
         ) : currentScreen?.type === 'gallery' ? (
@@ -827,7 +1038,7 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
           role="dialog"
           aria-label={activeTitle}
           tabIndex={-1}
-          className="absolute inset-0 z-10 overflow-hidden bg-stage outline-none"
+          className="absolute inset-0 z-10 animate-screen-in overflow-hidden bg-stage outline-none motion-reduce:animate-none"
         >
           {activeViewTile.type === 'upload' ? (
             <button
@@ -865,34 +1076,32 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
             aria-hidden
           />
           {activeSentence ? (
-            <p className="pointer-events-none absolute top-12 left-5 z-10 max-w-64 animate-sentence-drift text-base font-normal leading-relaxed text-stage-foreground/85 motion-reduce:animate-none">
+            <p className="pointer-events-none absolute top-overlay left-5 z-10 max-w-64 animate-sentence-drift text-lg leading-relaxed font-normal text-stage-foreground/90 drop-shadow-sm motion-reduce:animate-none">
               {activeSentence}
             </p>
           ) : null}
           {showSoundToggle ? (
-            <button
-              type="button"
-              aria-pressed={soundOn}
-              aria-label={soundOn ? copy.muteSound : copy.unmuteSound}
-              onClick={toggleSound}
-              className="absolute top-3 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-background/60 text-foreground backdrop-blur-sm hover:bg-background/80 focus-visible:ring-2 focus-visible:ring-ring/50 outline-none"
-            >
-              {soundOn ? (
-                <Volume2 className="size-4" aria-hidden />
-              ) : (
-                <VolumeX className="size-4" aria-hidden />
-              )}
-            </button>
+            <SoundToggle
+              audible={soundAudible}
+              waiting={soundOn && soundBlocked}
+              muteLabel={copy.muteSound}
+              unmuteLabel={copy.unmuteSound}
+              onToggle={toggleSound}
+            />
           ) : null}
         </div>
       ) : null}
-      {coverVisible || activeTile ? (
+      {overMedia ? (
         <nav
           aria-label={copy.navigationLabel}
-          className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-between border-t border-border/25 bg-background/40 px-4 py-3 backdrop-blur-sm"
+          className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-end px-4 pt-3 pb-nav"
         >
-          <span aria-hidden className="inline-block w-9" />
-          <Button type="button" variant="ghost" size="sm" onClick={seeMore}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={seeMore}
+            className="h-11 rounded-full bg-scrim/35 pr-3 pl-5 text-stage-foreground backdrop-blur-md hover:bg-scrim/50 hover:text-stage-foreground"
+          >
             {copy.seeMore}
             <ChevronRight className="size-4" aria-hidden />
           </Button>
@@ -900,27 +1109,25 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
       ) : currentScreen ? (
         <nav
           aria-label={copy.navigationLabel}
-          className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-between border-t border-border/25 bg-background/40 px-4 py-3 backdrop-blur-sm"
+          className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-between border-t border-border/25 bg-background/60 px-2 pt-2 pb-nav backdrop-blur-md"
         >
           <Button
             type="button"
             variant="ghost"
-            size="sm"
+            className="h-11 px-3"
             disabled={!hasPrevious}
             onClick={() => navigate('back')}
           >
             <ChevronLeft className="size-4" aria-hidden />
             {copy.back}
           </Button>
-          <div className="flex items-center gap-1">
-            <p aria-live="polite" className="text-xs text-muted-foreground">
-              {copy.pageOf(screenIndex + 1, experience.screens.length)}
-            </p>
-          </div>
+          <p aria-live="polite" className="text-xs text-muted-foreground tabular-nums">
+            {copy.pageOf(screenIndex + 1, experience.screens.length)}
+          </p>
           <Button
             type="button"
             variant="ghost"
-            size="sm"
+            className="h-11 px-3"
             disabled={!hasNext}
             onClick={() => navigate('next')}
           >
@@ -929,9 +1136,14 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
           </Button>
         </nav>
       ) : null}
+      <InstallPrompt
+        copy={copy.install}
+        allowed={installAllowed}
+        iconSrc={activeLocale === 'nl' ? '/icons/nl-icon-192.png' : '/icons/icon-192.png'}
+      />
       {message ? (
         <Alert
-          className="absolute right-4 bottom-18 left-4 z-30 w-auto text-center shadow-sm"
+          className="absolute right-4 bottom-above-nav left-4 z-30 w-auto text-center shadow-sm"
           aria-live="polite"
         >
           <AlertDescription>{message}</AlertDescription>
@@ -949,10 +1161,20 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
             <DialogDescription>{copy.removePhotoDescription}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setRemovalTarget(null)}>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11"
+              onClick={() => setRemovalTarget(null)}
+            >
               {copy.keepIt}
             </Button>
-            <Button type="button" variant="destructive" onClick={() => void confirmRemoval()}>
+            <Button
+              type="button"
+              variant="destructive"
+              className="h-11"
+              onClick={() => void confirmRemoval()}
+            >
               {copy.remove}
             </Button>
           </DialogFooter>
