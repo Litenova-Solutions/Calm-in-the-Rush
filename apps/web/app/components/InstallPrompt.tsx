@@ -1,4 +1,4 @@
-// Client boundary: install support depends on browser events, media queries, and local storage.
+// Client boundary: install support depends on browser events and media queries.
 'use client';
 
 import { useEffect, useId, useState } from 'react';
@@ -6,21 +6,17 @@ import { Share } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import type { InstallCopy } from '@/lib/content/strings';
-import {
-  detectInstallRoute,
-  installAvailableEvent,
-  isInstallPromptSnoozed,
-  snoozeInstallPrompt,
-  type InstallRoute,
-} from '@/lib/pwa/install';
+import { promptInstall } from '@/lib/pwa/install';
+
+import { useInstallRoute } from './useInstallRoute';
 
 /** Delay before the prompt appears, so it never interrupts the moment a screen opens. */
 const showDelayMs = 1500;
 
 /**
- * Invites a phone visitor to add the app to the home screen. It appears only
- * while `allowed` is true, which the flow sets on its calm screens without
- * active media, and stays away for two weeks after "Not now".
+ * Invites a visitor to add the app to the home screen. It appears on the calm
+ * logo screen before the final reflection, every time that screen opens, and
+ * stays away for the rest of the visit once dismissed.
  */
 export function InstallPrompt({
   copy,
@@ -32,53 +28,33 @@ export function InstallPrompt({
   iconSrc: string;
 }) {
   const titleId = useId();
-  const [route, setRoute] = useState<InstallRoute>('none');
-  const [dismissed, setDismissed] = useState(true);
+  const route = useInstallRoute();
+  const [dismissed, setDismissed] = useState(false);
   const [armed, setArmed] = useState(false);
   const [installing, setInstalling] = useState(false);
 
   useEffect(() => {
-    const update = () => setRoute(detectInstallRoute());
-    const installed = () => setRoute('none');
-    update();
-    setDismissed(isInstallPromptSnoozed());
-    window.addEventListener(installAvailableEvent, update);
-    window.addEventListener('appinstalled', installed);
-    return () => {
-      window.removeEventListener(installAvailableEvent, update);
-      window.removeEventListener('appinstalled', installed);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!allowed || armed) return;
+    if (!allowed) {
+      setArmed(false);
+      setDismissed(false);
+      return;
+    }
     const timer = window.setTimeout(() => setArmed(true), showDelayMs);
     return () => window.clearTimeout(timer);
-  }, [allowed, armed]);
+  }, [allowed]);
 
   if (route === 'none' || dismissed || !armed || !allowed) return null;
 
-  const notNow = () => {
-    snoozeInstallPrompt();
-    setDismissed(true);
-  };
+  const notNow = () => setDismissed(true);
 
   const install = async () => {
-    const event = window.__calmInstallPrompt;
-    if (!event) {
-      setRoute(detectInstallRoute());
-      return;
-    }
     setInstalling(true);
     try {
-      await event.prompt();
-      const choice = await event.userChoice;
-      if (choice.outcome !== 'accepted') snoozeInstallPrompt();
-    } finally {
-      // The browser allows one prompt per event; a new event arrives if it offers again.
-      window.__calmInstallPrompt = null;
-      setInstalling(false);
+      const outcome = await promptInstall();
+      if (outcome === 'unavailable') return;
       setDismissed(true);
+    } finally {
+      setInstalling(false);
     }
   };
 
@@ -100,9 +76,15 @@ export function InstallPrompt({
             {route === 'ios' ? (
               <>
                 {copy.iosStepsBefore}{' '}
-                <Share className="inline size-3.5 align-text-bottom" aria-label={copy.shareIcon} />{' '}
+                <Share
+                  role="img"
+                  className="inline size-3.5 align-text-bottom"
+                  aria-label={copy.shareIcon}
+                />{' '}
                 {copy.iosStepsAfter}
               </>
+            ) : route === 'in-app' ? (
+              copy.inAppSteps
             ) : route === 'menu' ? (
               copy.menuSteps
             ) : (

@@ -45,6 +45,8 @@ export function appMetadata(locale: ExperienceLocale): Metadata {
     applicationName: name,
     manifest: manifestPath(locale),
     appleWebApp: { capable: true, title: name, statusBarStyle: 'default' },
+    // Next emits the standard meta; older iOS versions still read the Apple-prefixed one.
+    other: { 'apple-mobile-web-app-capable': 'yes' },
     icons: {
       icon: [{ url: iconPath(locale, 'icon-192'), sizes: '192x192', type: 'image/png' }],
       apple: [{ url: iconPath(locale, 'apple-icon'), sizes: '180x180', type: 'image/png' }],

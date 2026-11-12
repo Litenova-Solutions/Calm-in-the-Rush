@@ -11,6 +11,7 @@ export interface InstallCopy {
   iosStepsAfter: string;
   shareIcon: string;
   menuSteps: string;
+  inAppSteps: string;
   install: string;
   notNow: string;
   gotIt: string;
@@ -131,13 +132,14 @@ export const visitorStrings: Record<ExperienceLocale, VisitorCopy> = {
         : `${count} photos are saved in this browser.`,
     photosPartial: (saved, total) => `${saved} of ${total} photos are saved in this browser.`,
     install: {
-      title: 'Add Calm in the Rush to your home screen',
+      title: 'Install Calm in the Rush',
       description: 'Open it full screen whenever you need a quiet minute.',
       iosStepsBefore: 'Tap',
       iosStepsAfter: 'then choose Add to Home Screen.',
       shareIcon: 'Share',
-      menuSteps: 'Open the browser menu, then tap Add to Home screen.',
-      install: 'Install',
+      menuSteps: 'Open the browser menu and choose Install app or Add to Home screen.',
+      inAppSteps: 'Open this page in Safari or Chrome, then add it to your home screen.',
+      install: 'Install app',
       notNow: 'Not now',
       gotIt: 'Got it',
     },
@@ -194,13 +196,14 @@ export const visitorStrings: Record<ExperienceLocale, VisitorCopy> = {
     photosPartial: (saved, total) =>
       `${saved} van ${total} foto's zijn opgeslagen in deze browser.`,
     install: {
-      title: 'Zet Rust in de Drukte op je beginscherm',
+      title: 'Installeer Rust in de Drukte',
       description: 'Open het schermvullend wanneer je een rustige minuut nodig hebt.',
       iosStepsBefore: 'Tik op',
       iosStepsAfter: 'en kies Zet op beginscherm.',
       shareIcon: 'Deel',
-      menuSteps: 'Open het browsermenu en tik op Toevoegen aan startscherm.',
-      install: 'Installeren',
+      menuSteps: 'Open het browsermenu en kies App installeren of Toevoegen aan startscherm.',
+      inAppSteps: 'Open deze pagina in Safari of Chrome en zet hem daarna op je beginscherm.',
+      install: 'Installeer app',
       notNow: 'Niet nu',
       gotIt: 'Begrepen',
     },

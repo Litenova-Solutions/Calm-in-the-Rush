@@ -19,18 +19,25 @@ declare global {
   }
 }
 
-export const installAvailableEvent = 'calm:install-available';
+export const installRouteEvent = 'calm:install-route';
 
-export const installCaptureScript = `window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__calmInstallPrompt=e;window.dispatchEvent(new Event('${installAvailableEvent}'));});window.addEventListener('appinstalled',function(){window.__calmInstallPrompt=null;});`;
+export const installCaptureScript = `window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__calmInstallPrompt=e;window.dispatchEvent(new Event('${installRouteEvent}'));});window.addEventListener('appinstalled',function(){window.__calmInstallPrompt=null;window.dispatchEvent(new Event('${installRouteEvent}'));});`;
 
 /**
  * How this browser lets a visitor install the app:
  * - `native`: the browser offered an install prompt we can show on request.
  * - `ios`: Safari and other iOS browsers, through Share and Add to Home Screen.
- * - `menu`: Firefox on Android, through its browser menu.
- * - `none`: already installed, not a phone or tablet, or no known route.
+ * - `menu`: Android and desktop Chromium without a captured prompt, through the browser menu.
+ * - `in-app`: a browser inside another app, which cannot add a home screen icon.
+ * - `none`: already installed, or a browser with no install route.
  */
-export type InstallRoute = 'native' | 'ios' | 'menu' | 'none';
+export type InstallRoute = 'native' | 'ios' | 'menu' | 'in-app' | 'none';
+
+/** What the browser reported after the install prompt closed. */
+export type InstallOutcome = 'accepted' | 'dismissed' | 'unavailable';
+
+/** Set once this page has installed the app, so a later route check keeps the button hidden. */
+let appInstalled = false;
 
 function isStandalone(): boolean {
   return (
@@ -40,33 +47,61 @@ function isStandalone(): boolean {
   );
 }
 
-export function detectInstallRoute(): InstallRoute {
-  if (isStandalone()) return 'none';
-  if (!window.matchMedia('(pointer: coarse)').matches) return 'none';
-  if (window.__calmInstallPrompt) return 'native';
+function isIos(): boolean {
   const agent = navigator.userAgent;
   const iPadOs = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
-  if (/iPhone|iPad|iPod/i.test(agent) || iPadOs) return 'ios';
-  if (/Android/i.test(agent) && /Firefox/i.test(agent)) return 'menu';
+  return /iPhone|iPad|iPod/i.test(agent) || iPadOs;
+}
+
+function isAndroid(): boolean {
+  return /Android/i.test(navigator.userAgent);
+}
+
+/** Chrome, Edge, and other Chromium browsers on a computer install through their menu. */
+function isDesktopChromium(): boolean {
+  return (
+    /Chrome\/|Chromium\/|Edg\//i.test(navigator.userAgent) && !/Mobile/i.test(navigator.userAgent)
+  );
+}
+
+/** Browsers inside social apps cannot add a page to the home screen. */
+function isInAppBrowser(): boolean {
+  return /FBAN|FBAV|FB_IAB|Instagram|Messenger|TikTok|Snapchat|LinkedInApp|Twitter|Pinterest|Line\/|MicroMessenger|GSA\//i.test(
+    navigator.userAgent,
+  );
+}
+
+export function detectInstallRoute(): InstallRoute {
+  if (appInstalled || isStandalone()) return 'none';
+  if (isInAppBrowser()) return 'in-app';
+  if (window.__calmInstallPrompt) return 'native';
+  if (isIos()) return 'ios';
+  if (isAndroid() || isDesktopChromium()) return 'menu';
   return 'none';
 }
 
-const snoozeKey = 'calm:install-prompt-snoozed-until';
-const snoozeDays = 14;
-
-export function isInstallPromptSnoozed(): boolean {
-  try {
-    const until = Number(window.localStorage.getItem(snoozeKey) ?? 0);
-    return Number.isFinite(until) && until > Date.now();
-  } catch {
-    return false;
-  }
+/** Remembers that the app was installed, so route checks stop offering it. */
+export function markAppInstalled(): void {
+  appInstalled = true;
 }
 
-export function snoozeInstallPrompt(): void {
+/**
+ * Opens the browser's install prompt. The call must start inside a click or key
+ * handler, because browsers only allow the prompt while the visitor is active.
+ */
+export async function promptInstall(): Promise<InstallOutcome> {
+  const event = window.__calmInstallPrompt;
+  if (!event) return 'unavailable';
   try {
-    window.localStorage.setItem(snoozeKey, String(Date.now() + snoozeDays * 86_400_000));
+    await event.prompt();
+    const choice = await event.userChoice;
+    if (choice.outcome === 'accepted') appInstalled = true;
+    return choice.outcome;
   } catch {
-    // Storage can be blocked; the prompt then returns on the next visit.
+    return 'unavailable';
+  } finally {
+    // The browser allows one prompt per event; a new event arrives if it offers again.
+    window.__calmInstallPrompt = null;
+    window.dispatchEvent(new Event(installRouteEvent));
   }
 }
