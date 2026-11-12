@@ -219,7 +219,7 @@ function ExperienceVideo({
 
 /**
  * The brand face for an empty Relaxed Faces tile, drawn rather than an emoji so
- * it looks the same on every device. Even tiles are calm and happy, with closed
+ * it looks the same on every device. Even tiles are completely calm, with closed
  * eyes; odd tiles are very calm, with open eyes and a softer smile.
  */
 function RelaxedFacePlaceholder({ variant = 0 }: { variant?: number }) {

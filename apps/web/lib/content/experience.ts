@@ -159,7 +159,7 @@ export const visitorOneLinerSchema = z.object({
   value: z.string().trim().min(1).max(160),
 });
 
-/** How calm and happy the visitor feels: 0 is not calm, 100 is calm and happy. */
+/** How calm the visitor feels: 0 is not calm, 100 is completely calm. */
 export const visitorCalmSchema = z.object({
   calm: z.number().int().min(0).max(100),
 });

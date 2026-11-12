@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils';
 
 /**
  * The brand smiley drawn for any calm value from 0 (not calm: a small frown) to
- * 100 (calm and happy: the logo's wide smile with closed, content eyes). The
+ * 100 (completely calm: the logo's wide smile with closed, content eyes). The
  * mouth blends smoothly between five key expressions, so a slider can move the
  * face continuously. Geometry follows the RiR smiley logo: a yellow disc and a
  * heavy black mouth.

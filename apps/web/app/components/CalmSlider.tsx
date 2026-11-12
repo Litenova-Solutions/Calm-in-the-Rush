@@ -91,7 +91,7 @@ export function CalmSlider({
         />
         <div className="absolute inset-x-0 top-1/2 h-2.5 -translate-y-1/2 overflow-hidden rounded-full bg-foreground/8">
           {/* The fill warms from the brand yellow into orange across the whole track,
-              so it grows warmer as the face moves toward calm and happy. */}
+              so it grows warmer as the face moves toward completely calm. */}
           <div
             className="h-full rounded-full bg-linear-to-r from-brand-sun to-sun-warm"
             style={{ clipPath: `inset(0 calc(100% - ${along}) 0 0 round 999px)` }}

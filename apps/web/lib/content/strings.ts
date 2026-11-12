@@ -62,7 +62,7 @@ interface VisitorCopy {
 export interface CalmCopy {
   question: string;
   hint: string;
-  /** Level words from not calm to calm and happy, one per equal stretch of the slider. */
+  /** Level words from not calm to completely calm, one per equal stretch of the slider. */
   levels: readonly string[];
   saved: string;
   failed: string;
@@ -114,9 +114,9 @@ export const visitorStrings: Record<ExperienceLocale, VisitorCopy> = {
     oneLinerCleared: 'Your one-liner was cleared.',
     oneLinerFailed: 'Your one-liner could not be saved.',
     calm: {
-      question: 'How calm and happy do you feel right now?',
+      question: 'How calm do you feel right now?',
       hint: 'Slide the face to answer',
-      levels: ['Not calm', 'A little calm', 'Calm', 'Very calm', 'Calm and happy'],
+      levels: ['Not calm', 'A little calm', 'Calm', 'Very calm', 'Completely calm'],
       saved: 'Saved in this browser',
       failed: 'Your answer could not be saved.',
     },
@@ -176,9 +176,9 @@ export const visitorStrings: Record<ExperienceLocale, VisitorCopy> = {
     oneLinerCleared: 'Je oneliner is gewist.',
     oneLinerFailed: 'Je oneliner kon niet worden opgeslagen.',
     calm: {
-      question: 'Hoe rustig en blij voel je je nu?',
+      question: 'Hoe rustig voel je je nu?',
       hint: 'Schuif het gezicht om te antwoorden',
-      levels: ['Niet rustig', 'Een beetje rustig', 'Rustig', 'Heel rustig', 'Rustig en blij'],
+      levels: ['Niet rustig', 'Een beetje rustig', 'Rustig', 'Heel rustig', 'Helemaal rustig'],
       saved: 'Opgeslagen in deze browser',
       failed: 'Je antwoord kon niet worden opgeslagen.',
     },
