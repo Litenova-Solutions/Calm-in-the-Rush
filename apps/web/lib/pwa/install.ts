@@ -39,10 +39,17 @@ export type InstallOutcome = 'accepted' | 'dismissed' | 'unavailable';
 /** Set once this page has installed the app, so a later route check keeps the button hidden. */
 let appInstalled = false;
 
+/** Display modes that mean the page already runs as the installed app. */
+const installedDisplayModes = [
+  '(display-mode: standalone)',
+  '(display-mode: fullscreen)',
+  '(display-mode: minimal-ui)',
+  '(display-mode: window-controls-overlay)',
+];
+
 function isStandalone(): boolean {
   return (
-    window.matchMedia('(display-mode: standalone)').matches ||
-    window.matchMedia('(display-mode: fullscreen)').matches ||
+    installedDisplayModes.some((mode) => window.matchMedia(mode).matches) ||
     navigator.standalone === true
   );
 }

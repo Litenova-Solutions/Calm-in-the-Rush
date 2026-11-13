@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Calm in the Rush</string>
-    <string name="experience_label">Rust in de Drukte-ervaring</string>
+    <string name="app_name">RUST in de Reuring</string>
+    <string name="experience_label">RUST in de Reuring-ervaring</string>
     <string name="navigation_label">Ervaringsnavigatie</string>
     <string name="preparing">Je rustmoment wordt voorbereid...</string>
     <string name="choose_photos">Kies foto\'s van je apparaat</string>
@@ -38,6 +38,6 @@
     <string name="replace_tile">%1$s vervangen</string>
     <string name="photos_saved">%1$d foto\'s zijn opgeslagen op dit apparaat.</string>
     <string name="photos_partial">%1$d van %2$d foto\'s zijn opgeslagen op dit apparaat.</string>
-    <string name="logo_calm_description">CALM in the rush</string>
+    <string name="logo_calm_description">Calm in the Rush</string>
     <string name="logo_rust_description">RUST in de Reuring</string>
 </resources>

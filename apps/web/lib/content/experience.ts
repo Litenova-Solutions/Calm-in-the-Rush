@@ -315,9 +315,9 @@ export const seedExperience: ExperienceConfig = {
       tiles: [
         prefilledTile(
           'quiet-city-reading',
-          'CALM in the rush',
+          'Calm in the Rush',
           'A person reading on a city bench while pedestrians move around them.',
-          'CALM in the rush.',
+          'Calm in the Rush.',
           '/media/experience/quiet-city-reading.webp',
         ),
         prefilledTile(
@@ -368,7 +368,7 @@ export const seedExperience: ExperienceConfig = {
     {
       id: 'calm-logo',
       type: 'gateway',
-      title: 'CALM in the Rush',
+      title: 'Calm in the Rush',
       description: '',
       links: [],
     },
@@ -482,9 +482,9 @@ export const seedExperienceNl: ExperienceConfig = {
       tiles: [
         prefilledTile(
           'quiet-city-reading',
-          'Rust in de drukte',
+          'RUST in de Reuring',
           'Iemand die op een bankje in de stad leest terwijl voorbijgangers langslopen.',
-          'RUST in de drukte.',
+          'RUST in de Reuring.',
           '/media/experience/quiet-city-reading.webp',
         ),
         prefilledTile(
@@ -535,7 +535,7 @@ export const seedExperienceNl: ExperienceConfig = {
     {
       id: 'calm-logo',
       type: 'gateway',
-      title: 'Rust in de Drukte',
+      title: 'RUST in de Reuring',
       description: '',
       links: [],
     },

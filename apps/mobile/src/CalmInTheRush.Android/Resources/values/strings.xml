@@ -38,6 +38,6 @@
     <string name="replace_tile">Replace %1$s</string>
     <string name="photos_saved">%1$d photos are saved on this device.</string>
     <string name="photos_partial">%1$d of %2$d photos are saved on this device.</string>
-    <string name="logo_calm_description">CALM in the rush</string>
+    <string name="logo_calm_description">Calm in the Rush</string>
     <string name="logo_rust_description">RUST in de Reuring</string>
 </resources>

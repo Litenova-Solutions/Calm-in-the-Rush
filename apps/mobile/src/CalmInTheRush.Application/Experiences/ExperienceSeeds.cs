@@ -96,9 +96,9 @@ public static class ExperienceSeeds
                 [
                     new PrefilledTile(
                         "quiet-city-reading",
-                        "CALM in the rush",
+                        "Calm in the Rush",
                         "A person reading on a city bench while pedestrians move around them.",
-                        "CALM in the rush.",
+                        "Calm in the Rush.",
                         new BundledImage("media/experience/quiet-city-reading.webp")),
                     new PrefilledTile(
                         "quiet-window-tea",
@@ -136,7 +136,7 @@ public static class ExperienceSeeds
                 "take-a-breath",
                 "Take a Breath",
                 "Follow the gentle movement at your own pace."),
-            new GatewayScreen("calm-logo", "CALM in the Rush", string.Empty, []),
+            new GatewayScreen("calm-logo", "Calm in the Rush", string.Empty, []),
             new GatewayScreen("calm-quote", "Your Calm Quote", string.Empty, []),
         ],
         new OneLinerSettings(true, "What is calm for you?", "For me, calm is..."));
@@ -205,9 +205,9 @@ public static class ExperienceSeeds
                 [
                     new PrefilledTile(
                         "quiet-city-reading",
-                        "Rust in de drukte",
+                        "RUST in de Reuring",
                         "Iemand die op een bankje in de stad leest terwijl voorbijgangers langslopen.",
-                        "RUST in de drukte.",
+                        "RUST in de Reuring.",
                         new BundledImage("media/experience/quiet-city-reading.webp")),
                     new PrefilledTile(
                         "quiet-window-tea",
@@ -245,7 +245,7 @@ public static class ExperienceSeeds
                 "take-a-breath",
                 "Haal rustig adem",
                 "Volg de zachte beweging in je eigen tempo."),
-            new GatewayScreen("calm-logo", "Rust in de Drukte", string.Empty, []),
+            new GatewayScreen("calm-logo", "RUST in de Reuring", string.Empty, []),
             new GatewayScreen("calm-quote", "Jouw Rust Quote", string.Empty, []),
         ],
         new OneLinerSettings(true, "Wat is rust voor jou?", "Voor mij is rust..."));

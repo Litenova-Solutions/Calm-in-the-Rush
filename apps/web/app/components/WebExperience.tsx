@@ -806,7 +806,7 @@ export function WebExperience({ repository, locale }: WebExperienceProps) {
     const isLogoGateway = screen.id === 'calm-logo';
     const logo = {
       src: activeLocale === 'nl' ? '/brand/rir-logo-large.svg' : '/brand/calm-logo-large.png',
-      alt: activeLocale === 'nl' ? 'RUST in de Reuring' : 'CALM in the rush',
+      alt: activeLocale === 'nl' ? 'RUST in de Reuring' : 'Calm in the Rush',
     };
     return (
       <div className="flex min-h-full flex-col items-center justify-center px-5 pt-overlay pb-screen text-center">

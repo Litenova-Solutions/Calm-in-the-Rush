@@ -13,8 +13,8 @@ const appNames: Record<ExperienceLocale, { name: string; shortName: string; desc
       description: 'A quiet minute in the middle of everything.',
     },
     nl: {
-      name: 'Rust in de Drukte',
-      shortName: 'Rust',
+      name: 'RUST in de Reuring',
+      shortName: 'RUST',
       description: 'Een rustige minuut te midden van alles.',
     },
   };

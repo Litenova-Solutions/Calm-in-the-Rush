@@ -145,7 +145,7 @@ export const visitorStrings: Record<ExperienceLocale, VisitorCopy> = {
     },
   },
   nl: {
-    experienceLabel: 'Rust in de Drukte-ervaring',
+    experienceLabel: 'RUST in de Reuring-ervaring',
     navigationLabel: 'Ervaringsnavigatie',
     preparing: 'Je rustmoment wordt voorbereid...',
     choosePhotos: "Kies foto's van je apparaat",
@@ -196,7 +196,7 @@ export const visitorStrings: Record<ExperienceLocale, VisitorCopy> = {
     photosPartial: (saved, total) =>
       `${saved} van ${total} foto's zijn opgeslagen in deze browser.`,
     install: {
-      title: 'Installeer Rust in de Drukte',
+      title: 'Installeer RUST in de Reuring',
       description: 'Open het schermvullend wanneer je een rustige minuut nodig hebt.',
       iosStepsBefore: 'Tik op',
       iosStepsAfter: 'en kies Zet op beginscherm.',

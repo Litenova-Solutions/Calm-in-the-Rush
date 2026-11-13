@@ -29,6 +29,12 @@ Read `C:\Users\a.shafie\.config\writing-rules.md` before editing prose. Keep pro
 The mobile solution is `apps/mobile/CalmInTheRush.Mobile.slnx`. The Android app packs its media
 from `apps/web/public/media/experience/`, so the web demo stays the single media source.
 
+## Names
+
+The product name is always `Calm in the Rush` in English and `RUST in de Reuring` in Dutch. Do not
+use `Rust in de Drukte` or another translation in visitor-facing copy, metadata, manifests, or app
+labels.
+
 ## Commands
 
 ```bash
