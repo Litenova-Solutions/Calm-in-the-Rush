@@ -114,6 +114,8 @@
   --scrim: oklch(0.2 0.045 155 / 56%);
   /* Dims everything outside the tour spotlight. */
   --tour-dim: oklch(0.2 0.045 155 / 62%);
+  /* The soft halo just outside the tour spotlight's border. */
+  --tour-halo: oklch(0.985 0.018 95 / 35%);
   /* The page beside the app column on screens wider than a phone. */
   --app-canvas: oklch(0.91 0.045 120);
   /* The RiR smiley logo colours, used by the calm rating faces. */
@@ -162,9 +164,13 @@
   top: calc(0.75rem + var(--safe-top));
 }
 
-/* The tour spotlight: a huge spread shadow dims everything outside the lit box. */
+/* The tour spotlight: a light border, a soft halo, and a huge spread shadow that
+   dims everything outside the lit box. */
 @utility shadow-tour-dim {
-  box-shadow: 0 0 0 100vmax var(--tour-dim);
+  box-shadow:
+    0 0 0 2px var(--stage-foreground),
+    0 0 0 6px var(--tour-halo),
+    0 0 0 100vmax var(--tour-dim);
 }
 
 /* Gallery rows share the screen height and never shrink below a readable photo. */

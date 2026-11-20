@@ -31,6 +31,9 @@ export function markTourComplete(): void {
 /** Bar controls are round, so the spotlight around them is a circle with a little air. */
 const roundTargets: ReadonlySet<TourTarget> = new Set(['sound', 'logo', 'gallery']);
 const roundPadding = 4;
+/** Other targets get a rounded box with some air, kept this far inside the app so its edge shows. */
+const boxPadding = 6;
+const boxEdgeGap = 8;
 
 type Spot = { left: number; top: number; width: number; height: number };
 
@@ -53,13 +56,22 @@ function useSpot(container: RefObject<HTMLElement | null>, target: TourTarget): 
       }
       const outer = root.getBoundingClientRect();
       const inner = element.getBoundingClientRect();
-      const pad = roundTargets.has(target) ? roundPadding : 0;
-      setSpot({
-        left: inner.left - outer.left - pad,
-        top: inner.top - outer.top - pad,
-        width: inner.width + pad * 2,
-        height: inner.height + pad * 2,
-      });
+      if (roundTargets.has(target)) {
+        setSpot({
+          left: inner.left - outer.left - roundPadding,
+          top: inner.top - outer.top - roundPadding,
+          width: inner.width + roundPadding * 2,
+          height: inner.height + roundPadding * 2,
+        });
+        return;
+      }
+      // Full-bleed targets such as a menu row would push the box off screen,
+      // so the padded box is clamped inside the app with a small gap.
+      const left = Math.max(boxEdgeGap, inner.left - outer.left - boxPadding);
+      const top = Math.max(boxEdgeGap, inner.top - outer.top - boxPadding);
+      const right = Math.min(outer.width - boxEdgeGap, inner.right - outer.left + boxPadding);
+      const bottom = Math.min(outer.height - boxEdgeGap, inner.bottom - outer.top + boxPadding);
+      setSpot({ left, top, width: right - left, height: bottom - top });
     };
     root
       .querySelector<HTMLElement>(`[data-tour="${target}"]`)
@@ -148,8 +160,8 @@ export function Tour({
         <div
           aria-hidden
           className={cn(
-            'pointer-events-none absolute z-30 shadow-tour-dim ring-2 ring-stage-foreground transition-[left,top,width,height] duration-300 ease-out motion-reduce:transition-none',
-            round ? 'rounded-full' : 'ring-inset',
+            'pointer-events-none absolute z-30 shadow-tour-dim transition-[left,top,width,height] duration-300 ease-out motion-reduce:transition-none',
+            round ? 'rounded-full' : 'rounded-2xl',
           )}
           style={{ left: spot.left, top: spot.top, width: spot.width, height: spot.height }}
         />

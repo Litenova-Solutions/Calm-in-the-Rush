@@ -38,6 +38,9 @@ import {
 import { CalmFace } from './CalmFace';
 import { brandLogo } from './TopBar';
 
+/** The relaxed faces gallery; its empty states show a relaxed face instead of a photo icon. */
+const relaxedFacesId = 'friendly-faces';
+
 const focusRing =
   'outline-none focus-visible:ring-3 focus-visible:ring-ring/60 focus-visible:ring-inset';
 
@@ -152,9 +155,16 @@ export function TopicsView({
                     </>
                   ) : topic.kind === 'breathing' ? (
                     <span className="absolute inset-0 bg-linear-to-br from-breathing-sky-start to-breathing-sky-end">
-                      <span className="absolute top-1/2 right-6 w-1/2 -translate-y-1/2 opacity-90">
-                        <BreathingIllustration still bare />
+                      <span className="absolute inset-x-3 top-1/2 -translate-y-1/2">
+                        <BreathingIllustration bare />
                       </span>
+                    </span>
+                  ) : topic.id === relaxedFacesId ? (
+                    <span className="absolute inset-0 bg-linear-to-br from-secondary to-accent">
+                      <CalmFace
+                        value={100}
+                        className="absolute top-1/2 right-6 size-24 -translate-y-1/2 drop-shadow-md"
+                      />
                     </span>
                   ) : (
                     <span className="absolute inset-0 bg-linear-to-br from-secondary to-accent">
@@ -359,7 +369,7 @@ function GalleryTile({
   }
 
   if (tile.type !== 'upload') return null;
-  const isFaces = screen.id === 'friendly-faces';
+  const isFaces = screen.id === relaxedFacesId;
   return (
     <button
       type="button"
